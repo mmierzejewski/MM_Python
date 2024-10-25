@@ -48,10 +48,10 @@ def main():
 
     najwieksza_wartosc = max(max(trojkat) for trojkat in trojkaty)
 
-    print(f"\nNajwiększa wartość w tabeli: {najwieksza_wartosc}")
+   # print(f"\nNajwiększa wartość w tabeli: {najwieksza_wartosc}")
 
     liczby_pierwsze = liczby_pierwsze_do(najwieksza_wartosc)
-    print("\nWszystkie liczby pierwsze:")
+    # print("\nWszystkie liczby pierwsze:")
 
     for liczba in liczby_pierwsze:
         print(liczba)
