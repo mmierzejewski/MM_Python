@@ -1,2 +1,2 @@
-# MM_Phyton
-Phyton works
+# MM_Python
+Python works
