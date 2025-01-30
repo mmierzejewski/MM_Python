@@ -13,6 +13,17 @@ def generate_primes(limit: int) -> List[int]:
     return [x for x, is_prime in enumerate(primes) if is_prime]
 
 
+def save_to_file(numbers: List[int], filename: str) -> None:
+    """Save a list of numbers to a text file."""
+    try:
+        with open(filename, "w") as file:
+            for number in numbers:
+                file.write(f"{number}\n")
+        print(f"Numbers successfully saved to {filename}.")
+    except Exception as e:
+        print(f"An error occurred while saving to {filename}: {e}")
+
+
 def display_time_taken(key: str, start: datetime, stop: datetime) -> None:
     """Print the time duration for a specific process."""
     duration = stop - start
@@ -46,7 +57,13 @@ def main():
     step_end = datetime.now()
     display_time_taken("Prime number generation", step_start, step_end)
 
-    # Step 2: Highest Prime Calculation
+    # Step 2: Save Primes to File
+    step_start = datetime.now()
+    save_to_file(primes, "primes.txt")
+    step_end = datetime.now()
+    display_time_taken("Saving primes to file", step_start, step_end)
+
+    # Step 3: Highest Prime Calculation
     step_start = datetime.now()
     highest_prime = primes[-1] if primes else None
     step_end = datetime.now()
