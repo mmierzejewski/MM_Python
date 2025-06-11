@@ -1,57 +1,74 @@
-from pytubefix import YouTube
 import os
+import re
+from pytubefix import YouTube
 from tqdm import tqdm
 import subprocess
 
+def sanitize_filename(filename):
+    # Replace invalid characters with underscores and normalize spaces
+    filename = re.sub(r'[<>:"/\\|?*\n\r]', '_', filename)
+    filename = re.sub(r'\s+', '_', filename.strip())
+    return filename
+
 def download_youtube_video(url, output_path):
     try:
-        # Check if the directory exists, if not - try to create it
+        # Normalize and create output directory
+        output_path = os.path.normpath(output_path)
         if not os.path.exists(output_path):
             os.makedirs(output_path)
 
-        # Create a YouTube object from the given link
+        # Create YouTube object
         yt = YouTube(url)
 
-        # Get the best video stream (highest resolution)
+        # Get best video and audio streams
         video_stream = yt.streams.filter(file_extension='mp4', only_video=True).order_by('resolution').desc().first()
-
-        # Get the best audio stream (highest bitrate)
         audio_stream = yt.streams.filter(only_audio=True).order_by('abr').desc().first()
 
         if not video_stream or not audio_stream:
             print("Could not find suitable video or audio streams.")
             return
 
-        # Download video with progress bar
+        # Sanitize title for filenames
+        sanitized_title = sanitize_filename(yt.title)
+
+        # Download video
         print(f"\nDownloading video: {yt.title} in resolution {video_stream.resolution}")
-        video_file_path = os.path.join(output_path, yt.title + "_video.mp4")
+        video_file_path = os.path.join(output_path, f"{sanitized_title}_video.mp4")
         video_file_size = video_stream.filesize
 
-        with tqdm(total=video_file_size, unit='B', unit_scale=True, desc="Video Download", ascii=True) as progress_bar:
-            def on_video_progress(stream, chunk, bytes_remaining):
-                progress_bar.update(len(chunk))
+        video_progress_bar = tqdm(total=video_file_size, unit='B', unit_scale=True, desc="Video Download", ascii=True)
+        audio_progress_bar = tqdm(total=audio_stream.filesize, unit='B', unit_scale=True, desc="Audio Download", ascii=True)
 
-            yt.register_on_progress_callback(on_video_progress)
-            video_stream.download(output_path=output_path, filename=yt.title + "_video.mp4")
+        def on_progress(stream, chunk, bytes_remaining):
+            if stream == video_stream:
+                video_progress_bar.update(len(chunk))
+            else:
+                audio_progress_bar.update(len(chunk))
 
-        # Download audio with progress bar
+        yt.register_on_progress_callback(on_progress)
+        video_stream.download(output_path=output_path, filename=f"{sanitized_title}_video.mp4")
+
+        # Download audio
         print(f"\nDownloading audio: {yt.title} with bitrate {audio_stream.abr}")
-        audio_file_path = os.path.join(output_path, yt.title + "_audio.mp4")
-        audio_file_size = audio_stream.filesize
+        audio_file_path = os.path.join(output_path, f"{sanitized_title}_audio.mp4")
+        audio_progress_bar.reset()  # Reset for audio
+        audio_stream.download(output_path=output_path, filename=f"{sanitized_title}_audio.mp4")
 
-        with tqdm(total=audio_file_size, unit='B', unit_scale=True, desc="Audio Download", ascii=True) as progress_bar:
-            def on_audio_progress(stream, chunk, bytes_remaining):
-                progress_bar.update(len(chunk))
+        # Verify files exist
+        if not os.path.exists(video_file_path) or not os.path.exists(audio_file_path):
+            print(f"Error: Video file ({video_file_path}) or audio file ({audio_file_path}) not found.")
+            return
 
-            yt.register_on_progress_callback(on_audio_progress)
-            audio_stream.download(output_path=output_path, filename=yt.title + "_audio.mp4")
-
-        # Merge video and audio using ffmpeg
-        merged_file_path = os.path.join(output_path, yt.title + ".mp4")
+        # Merge video and audio
+        merged_file_path = os.path.join(output_path, f"{sanitized_title}.mp4")
         print(f"\nMerging video and audio into: {merged_file_path}")
-        subprocess.run([
+        result = subprocess.run([
             'ffmpeg', '-i', video_file_path, '-i', audio_file_path, '-c:v', 'copy', '-c:a', 'aac', '-strict', 'experimental', merged_file_path
-        ])
+        ], capture_output=True, text=True)
+
+        if result.returncode != 0:
+            print(f"FFmpeg merge failed: {result.stderr}")
+            return
 
         # Clean up temporary files
         os.remove(video_file_path)
@@ -70,13 +87,8 @@ def download_youtube_video(url, output_path):
         print("Check the link and try again.")
 
 def main():
-    # Get the link and directory path from the user
     url = input("Enter the YouTube video link: ")
-    output_path = input("Enter the directory path to save the video (e.g., C:/Videos): ")
-
-    # Normalize the path
-    output_path = os.path.normpath(output_path.strip())
-
+    output_path = input("Enter the directory path to save the video (e.g., /Users/yourname/Videos): ") or os.getcwd()
     download_youtube_video(url, output_path)
 
 if __name__ == "__main__":
