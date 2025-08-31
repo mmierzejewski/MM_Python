@@ -1,0 +1,2 @@
+https://github.com/andrzejkrawczyk/python-course
+jupyter część anacondy
