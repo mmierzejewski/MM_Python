@@ -33,19 +33,17 @@ def display_time_taken(key: str, start: datetime, stop: datetime) -> None:
 
 
 def main():
-    # Input Handling
-    try:
-        limit = int(input("Enter the range (a positive integer >= 2): "))
-        if limit < 2:
-            print("The range must be at least 2. Please try again.")
-            return
-    except ValueError:
-        print("Invalid input! Please enter a valid positive integer.")
+    # Set limit value directly (no user interaction)
+    limit = 100000  # Change this value as needed
+    
+    # Validate the limit
+    if limit < 2:
+        print("The range must be at least 2.")
         return
 
     # Format Range Value
     formatted_limit = f"{limit:,}"
-    print(f"\nPrime number range: {formatted_limit}")
+    print(f"Prime number range: {formatted_limit}")
 
     # Start Prime Calculation
     overall_start = datetime.now()
