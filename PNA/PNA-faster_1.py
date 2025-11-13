@@ -34,7 +34,7 @@ def display_time_taken(key: str, start: datetime, stop: datetime) -> None:
 
 def main():
     # Set limit value directly (no user interaction)
-    limit = 100000  # Change this value as needed
+    limit = 1000000  # Change this value as needed
     
     # Validate the limit
     if limit < 2:
