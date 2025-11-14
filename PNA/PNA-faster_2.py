@@ -139,7 +139,7 @@ def main():
     get_system_info()
 
     # Set limit value directly (no user interaction)
-    limit = 1000000000  # Change this value as needed
+    limit = 5000000000  # Change this value as needed
 
     # Validate the limit
     if limit < 2:
