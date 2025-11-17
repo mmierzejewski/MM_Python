@@ -1,2 +1,2 @@
-# MM_Python
+# MM Python
 Python works
