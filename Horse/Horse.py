@@ -17,7 +17,7 @@ import signal
 
 
 # Konfiguracja loggingu
-log_file = Path.cwd() / 'knights_tour.log'
+log_file = Path(__file__).parent / 'knights_tour.log'
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -278,7 +278,9 @@ class KnightsTour:
         """
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"knights_tour_{self.height}x{self.width}_{timestamp}.txt"
+            # Zapisz w katalogu gdzie jest skrypt (Horse/)
+            script_dir = Path(__file__).parent
+            filename = script_dir / f"knights_tour_{self.height}x{self.width}_{timestamp}.txt"
         
         try:
             with open(filename, 'w', encoding='utf-8') as f:

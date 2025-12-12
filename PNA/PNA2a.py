@@ -38,7 +38,7 @@ def generate_primes_segmented(limit: int, verbose: bool = False) -> list[int]:
 
     # Krok 1: Znajdź małe liczby pierwsze do √limit używając standardowego sita
     if verbose:
-        print(f"Phase 1/2: Finding base primes up to {sqrt_limit:,}...")
+        print(f"Faza 1/2: Wyszukiwanie podstawowych liczb pierwszych do {sqrt_limit:,}...")
 
     result = generate_primes(sqrt_limit, verbose=False)
 
@@ -49,7 +49,7 @@ def generate_primes_segmented(limit: int, verbose: bool = False) -> list[int]:
     total_segments = math.ceil((limit - sqrt_limit) / segment_size)
 
     if verbose:
-        print(f"Phase 2/2: Processing {total_segments} segments of size {segment_size:,}...")
+        print(f"Faza 2/2: Przetwarzanie {total_segments} segmentów o rozmiarze {segment_size:,}...")
 
     segment_num = 0
     while low <= limit:
@@ -76,7 +76,7 @@ def generate_primes_segmented(limit: int, verbose: bool = False) -> list[int]:
 
         if verbose:
             progress = (segment_num / total_segments) * 100
-            print(f"Progress: {progress:.1f}% (processed up to {high:,})", end='\r', flush=True)
+            print(f"Postęp: {progress:.1f}% (przetworzono do {high:,})", end='\r', flush=True)
 
         low = high + 1
 
@@ -129,7 +129,7 @@ def generate_primes(limit: int, verbose: bool = False) -> list[int]:
 
             if verbose and i % 1000 == 0:
                 progress = (i / sqrt_limit) * 100
-                print(f"Progress: {progress:.1f}% (checking {i:,})", end='\r', flush=True)
+                print(f"Postęp: {progress:.1f}% (sprawdzanie {i:,})", end='\r', flush=True)
 
     if verbose:
         print(" " * 50, end='\r', flush=True)  # Wyczyść linię postępu
@@ -168,40 +168,40 @@ def get_valid_limit() -> Optional[tuple[int, bool]]:
         Krotka (limit, use_segmented) lub None jeśli anulowano/nieprawidłowe
     """
     try:
-        limit_str = input("Enter the range (positive integer >= 2): ").strip()
+        limit_str = input("Podaj zakres (liczba całkowita >= 2): ").strip()
         limit = int(limit_str)
 
         if limit < 2:
-            print("❌ The range must be at least 2.")
+            print("❌ Zakres musi wynosić co najmniej 2.")
             return None
 
         # Szacowanie pamięci: ~1 bajt na liczbę
         estimated_mb = limit / 1024 / 1024
 
         if limit > 1_000_000_000:
-            print(f"⚠️  VERY LARGE limit ({limit:,})!")
+            print(f"⚠️  BARDZO DUŻY zakres ({limit:,})!")
             sqrt_limit = int(math.sqrt(limit))
             segmented_mb = sqrt_limit / 1024 / 1024
-            print(f"   Standard sieve: ~{estimated_mb:.0f} MB (~{estimated_mb/1024:.1f} GB)")
-            print(f"   Segmented sieve: ~{segmented_mb:.0f} MB (recommended!)")
-            print(f"\n   💡 Segmented sieve uses much less memory for large ranges")
-            confirm = input("   Use segmented sieve? (T/N) [T]: ").strip().upper() or "T"
+            print(f"   Standardowe sito: ~{estimated_mb:.0f} MB (~{estimated_mb/1024:.1f} GB)")
+            print(f"   Sito segmentowane: ~{segmented_mb:.0f} MB (zalecane!)")
+            print(f"\n   💡 Sito segmentowane używa znacznie mniej pamięci dla dużych zakresów")
+            confirm = input("   Użyć sita segmentowanego? (T/N) [T]: ").strip().upper() or "T"
             if confirm != "T":
-                print("Operation cancelled.")
+                print("Operacja anulowana.")
                 return None
             return (limit, True)  # Zwróć krotkę: (limit, use_segmented)
         elif limit > 10_000_000:
-            print(f"⚠️  Large limit ({limit:,}) may take significant time and memory!")
-            print(f"   Estimated memory: ~{estimated_mb:.0f} MB")
-            confirm = input("   Continue? (T/N) [N]: ").strip().upper() or "N"
+            print(f"⚠️  Duży zakres ({limit:,}) może wymagać znacznego czasu i pamięci!")
+            print(f"   Szacowana pamięć: ~{estimated_mb:.0f} MB")
+            confirm = input("   Kontynuować? (T/N) [N]: ").strip().upper() or "N"
             if confirm != "T":
-                print("Operation cancelled.")
+                print("Operacja anulowana.")
                 return None
 
         return (limit, False)  # Zwróć krotkę: (limit, use_segmented)
 
     except ValueError:
-        print("❌ Invalid input! Please enter a valid positive integer.")
+        print("❌ Nieprawidłowe dane! Proszę podać poprawną liczbę całkowitą dodatnią.")
         return None
 
 
@@ -209,13 +209,15 @@ def save_primes_to_file(primes: list[int], limit: int, filename: Optional[str] =
     """Zapisuje liczby pierwsze do pliku tekstowego."""
     if filename is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"primes_up_to_{limit}_{timestamp}.txt"
+        # Zapisz w katalogu gdzie jest skrypt (PNA/)
+        script_dir = sys.path[0] if sys.path[0] else '.'
+        filename = f"{script_dir}/primes_up_to_{limit}_{timestamp}.txt"
 
     try:
         with open(filename, 'w', encoding='utf-8') as f:
-            f.write(f"Prime numbers up to {limit:,}\n")
-            f.write(f"Total count: {len(primes):,}\n")
-            f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"Liczby pierwsze do {limit:,}\n")
+            f.write(f"Liczba znalezionych: {len(primes):,}\n")
+            f.write(f"Wygenerowano: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write("=" * 60 + "\n\n")
 
             # Zapisz liczby pierwsze, 10 na linię
@@ -223,9 +225,9 @@ def save_primes_to_file(primes: list[int], limit: int, filename: Optional[str] =
                 line = ', '.join(map(str, primes[i:i+10]))
                 f.write(line + '\n')
 
-        print(f"✅ Primes saved to: {filename}")
+        print(f"✅ Liczby pierwsze zapisano do: {filename}")
     except IOError as e:
-        print(f"❌ Error saving file: {e}")
+        print(f"❌ Błąd podczas zapisu pliku: {e}")
 
 
 def analyze_primes(primes: list[int], limit: int, save_to_file: bool = False) -> None:
@@ -237,30 +239,30 @@ def analyze_primes(primes: list[int], limit: int, save_to_file: bool = False) ->
         save_to_file: Jeśli True, oferuje zapisanie wyników do pliku
     """
     if not primes:
-        print("\n📊 No primes found in this range.")
+        print("\n📊 Nie znaleziono liczb pierwszych w tym zakresie.")
         return
 
     prime_count = len(primes)
     density = (prime_count / limit) * 100
 
     print(f"\n{'='*60}")
-    print("📊 PRIME STATISTICS")
+    print("📊 STATYSTYKI LICZB PIERWSZYCH")
     print(f"{'='*60}")
-    print(f"Range:           2 to {limit:,}")
-    print(f"Total primes:    {prime_count:,}")
-    print(f"Density:         {density:.4f}%")
-    print(f"Smallest prime:  {primes[0]:,}")
-    print(f"Largest prime:   {primes[-1]:,}")
+    print(f"Zakres:              2 do {limit:,}")
+    print(f"Liczby pierwsze:     {prime_count:,}")
+    print(f"Gęstość:             {density:.4f}%")
+    print(f"Najmniejsza:         {primes[0]:,}")
+    print(f"Największa:          {primes[-1]:,}")
 
     # Pokaż pierwsze i ostatnie liczby pierwsze
     if prime_count <= 10:
-        print(f"All primes:      {', '.join(map(str, primes))}")
+        print(f"Wszystkie liczby:    {', '.join(map(str, primes))}")
 
     print(f"{'='*60}\n")
 
     # Zaoferuj zapisanie do pliku dla dużych zestawów wyników
     if save_to_file and prime_count > 100:
-        save_option = input("💾 Save primes to file? (T/N) [T]: ").strip().upper() or "T"
+        save_option = input("💾 Zapisać liczby pierwsze do pliku? (T/N) [T]: ").strip().upper() or "T"
         if save_option == "T":
             save_primes_to_file(primes, limit)
 
@@ -273,8 +275,8 @@ def main() -> int:
         0 w przypadku sukcesu, 1 w przypadku błędu
     """
     print("╔" + "═" * 58 + "╗")
-    print("║" + " " * 10 + "PRIME NUMBER GENERATOR" + " " * 26 + "║")
-    print("║" + " " * 10 + "(Sieve of Eratosthenes)" + " " * 25 + "║")
+    print("║" + " " * 8 + "GENERATOR LICZB PIERWSZYCH" + " " * 24 + "║")
+    print("║" + " " * 12 + "(Sito Eratostenesa)" + " " * 27 + "║")
     print("╚" + "═" * 58 + "╝\n")
 
     # Pobierz dane wejściowe
@@ -288,9 +290,9 @@ def main() -> int:
     else:
         limit, use_segmented = result, False
 
-    print(f"\n🔍 Searching for primes up to {limit:,}...")
+    print(f"\n🔍 Wyszukiwanie liczb pierwszych do {limit:,}...")
     if use_segmented:
-        print("   Using segmented sieve (memory optimized)")
+        print("   Używanie sita segmentowanego (optymalizacja pamięci)")
 
     # Generuj liczby pierwsze z pomiarem czasu
     start_time = datetime.now()
@@ -302,17 +304,17 @@ def main() -> int:
         else:
             primes = generate_primes(limit, verbose=verbose)
     except MemoryError as e:
-        print(f"\n❌ Memory Error: {e}")
-        print("\n💡 Suggestions:")
-        print("   • Try a smaller limit")
-        print("   • Use segmented sieve option for large ranges")
-        print("   • Close other applications to free memory")
+        print(f"\n❌ Błąd pamięci: {e}")
+        print("\n💡 Sugestie:")
+        print("   • Spróbuj mniejszego zakresu")
+        print("   • Użyj opcji sita segmentowanego dla dużych zakresów")
+        print("   • Zamknij inne aplikacje, aby zwolnić pamięć")
         return 1
 
     end_time = datetime.now()
 
     # Wyświetl wyniki
-    display_timing("Generation time", start_time, end_time)
+    display_timing("Czas generowania", start_time, end_time)
     analyze_primes(primes, limit, save_to_file=True)
 
     return 0
@@ -322,5 +324,5 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
+        print(f"\n❌ Nieoczekiwany błąd: {e}")
         sys.exit(1)
