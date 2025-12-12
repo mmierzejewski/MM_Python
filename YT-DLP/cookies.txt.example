@@ -1,0 +1,38 @@
+# Netscape HTTP Cookie File
+# This is a generated file! Do not edit.
+# 
+# HOW TO GET YOUR COOKIES:
+# 
+# Method 1 - Browser Extension (Easiest):
+#   Chrome/Edge: Install "Get cookies.txt" extension
+#   Firefox: Install "cookies.txt" extension
+#   1. Go to the website (e.g., youtube.com)
+#   2. Log in to your account
+#   3. Click the extension icon
+#   4. Export and save as "cookies.txt"
+# 
+# Method 2 - Using yt-dlp:
+#   yt-dlp --cookies-from-browser chrome
+#   yt-dlp --cookies-from-browser firefox
+#   yt-dlp --cookies-from-browser edge
+# 
+# Place your actual cookies.txt file in one of these locations:
+#   - Same directory as yt-dlp.py
+#   - Current working directory
+#   - Your home directory (~/)
+#   - ~/WORK/
+#   - ~/Downloads/
+# 
+# Example cookie format (DO NOT USE - these are fake examples):
+# .youtube.com	TRUE	/	TRUE	1234567890	CONSENT	YES+cb
+# .youtube.com	TRUE	/	FALSE	1234567890	VISITOR_INFO1_LIVE	cookie_value_here
+# .youtube.com	TRUE	/	TRUE	1234567890	__Secure-YT-ID	your_token_here
+# 
+# Each line has 7 tab-separated fields:
+# domain  flag  path  secure  expiration  name  value
+#
+# IMPORTANT NOTES:
+# - Cookies expire! Re-export if downloads start failing
+# - Keep your cookies.txt private (contains login session)
+# - Never share your cookies file publicly
+# - Delete this file after adding real cookies

@@ -1,4 +1,65 @@
-.vscode
+# IDEs
+.vscode/
 .DS_Store
-.idea
-.venv
+.idea/
+*.swp
+*.swo
+*~
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# BMI Calculator
+BMI/*.log
+BMI/bmi_wynik_*.txt
+BMI/bmi_calculator.log
+
+# YT-DLP Downloads & Logs
+YT-DLP/*.log
+YT-DLP/*.mp4
+YT-DLP/*.mp3
+YT-DLP/*.webm
+YT-DLP/*.mkv
+YT-DLP/cookies.txt
+YT-DLP/yt-dlp-downloader.log
+
+# PITAGORAS exports
+PITAGORAS/primes_*.txt
+
+# PNA exports  
+PNA/primes_*.txt
+PNA/*.log
+
+# Fibonacci exports
+Fibonacci/*.log
+Fibonacci/fibonacci_*.txt
+
+# Horse (Knight's Tour) exports
+Horse/*.log
+Horse/knights_tour_*.txt
+
+# Logs (global)
+*.log
+
+# Export files (global)
+*_wynik_*.txt
+*_result_*.txt
+
+# OS specific
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup

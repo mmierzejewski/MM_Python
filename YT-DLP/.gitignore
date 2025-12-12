@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Logs
+*.log
+
+# Downloaded videos
+*.mp4
+*.mp3
+*.webm
+*.mkv
+*.avi
+*.mov
+*.flv
+*.wmv
+*.m4a
+*.wav
+*.flac
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*.temp
+
+# Cookie files (NEVER commit real cookies!)
+cookies.txt
+*cookies*.txt
+!cookies.txt.example
+
+# Backup files
+*.backup
+*.bak
