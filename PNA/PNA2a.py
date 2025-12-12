@@ -4,12 +4,84 @@
 Prime Number Generator using Sieve of Eratosthenes.
 
 Efficiently generates all prime numbers up to a given limit with
-performance timing and detailed statistics.
+performance timing and detailed statistics. Includes segmented sieve
+for very large ranges.
 """
 
 from datetime import datetime
 from typing import Optional
 import sys
+import math
+
+
+def generate_primes_segmented(limit: int, verbose: bool = False) -> list[int]:
+    """
+    Generate primes using segmented sieve for very large limits.
+    Uses much less memory than standard sieve.
+
+    Args:
+        limit: Upper bound for prime generation (inclusive)
+        verbose: If True, print progress
+
+    Returns:
+        List of all prime numbers from 2 to limit
+
+    Complexity:
+        Time: O(n log log n)
+        Space: O(√n) instead of O(n)
+    """
+    if limit < 2:
+        return []
+
+    sqrt_limit = int(math.sqrt(limit))
+
+    # Step 1: Find small primes up to √limit using standard sieve
+    if verbose:
+        print(f"Phase 1/2: Finding base primes up to {sqrt_limit:,}...")
+
+    small_primes = generate_primes(sqrt_limit, verbose=False)
+    result = small_primes.copy()
+
+    # Step 2: Process segments
+    segment_size = max(sqrt_limit, 1_000_000)  # At least 1M for efficiency
+    low = sqrt_limit + 1
+
+    total_segments = math.ceil((limit - sqrt_limit) / segment_size)
+
+    if verbose:
+        print(f"Phase 2/2: Processing {total_segments} segments of size {segment_size:,}...")
+
+    segment_num = 0
+    while low <= limit:
+        high = min(low + segment_size - 1, limit)
+        segment_num += 1
+
+        # Create segment sieve
+        segment = [True] * (high - low + 1)
+
+        # Mark multiples of small primes in this segment
+        for prime in small_primes:
+            # Find first multiple of prime in [low, high]
+            start = max(prime * prime, ((low + prime - 1) // prime) * prime)
+
+            for j in range(start, high + 1, prime):
+                segment[j - low] = False
+
+        # Collect primes from this segment
+        for i in range(len(segment)):
+            if segment[i]:
+                result.append(low + i)
+
+        if verbose:
+            progress = (segment_num / total_segments) * 100
+            print(f"Progress: {progress:.1f}% (processed up to {high:,})", end='\r')
+
+        low = high + 1
+
+    if verbose:
+        print(" " * 70, end='\r')  # Clear progress line
+
+    return result
 
 
 def generate_primes(limit: int, verbose: bool = False) -> list[int]:
@@ -23,6 +95,9 @@ def generate_primes(limit: int, verbose: bool = False) -> list[int]:
     Returns:
         List of all prime numbers from 2 to limit
 
+    Raises:
+        MemoryError: If limit is too large for available memory
+
     Complexity:
         Time: O(n log log n)
         Space: O(n)
@@ -30,9 +105,16 @@ def generate_primes(limit: int, verbose: bool = False) -> list[int]:
     if limit < 2:
         return []
 
-    # Initialize sieve
-    is_prime = [True] * (limit + 1)
-    is_prime[0] = is_prime[1] = False
+    try:
+        # Initialize sieve
+        is_prime = [True] * (limit + 1)
+        is_prime[0] = is_prime[1] = False
+    except MemoryError:
+        estimated_mb = (limit + 1) / 1024 / 1024
+        raise MemoryError(
+            f"Not enough memory to create sieve for {limit:,}. "
+            f"Estimated memory needed: ~{estimated_mb:.1f} MB"
+        )
 
     sqrt_limit = int(limit ** 0.5)
 
@@ -45,7 +127,7 @@ def generate_primes(limit: int, verbose: bool = False) -> list[int]:
 
             if verbose and i % 1000 == 0:
                 progress = (i / sqrt_limit) * 100
-                print(f"Progress: {progress:.1f}% (checking {i})", end='\r')
+                print(f"Progress: {progress:.1f}% (checking {i:,})", end='\r')
 
     if verbose:
         print(" " * 50, end='\r')  # Clear progress line
@@ -87,20 +169,33 @@ def get_valid_limit() -> Optional[int]:
             print("❌ The range must be at least 2.")
             return None
 
-        if limit > 10_000_000:
+        # Memory estimation: ~1 byte per number
+        estimated_mb = limit / 1024 / 1024
+
+        if limit > 1_000_000_000:
+            print(f"⚠️  VERY LARGE limit ({limit:,})!")
+            sqrt_limit = int(math.sqrt(limit))
+            segmented_mb = sqrt_limit / 1024 / 1024
+            print(f"   Standard sieve: ~{estimated_mb:.0f} MB (~{estimated_mb/1024:.1f} GB)")
+            print(f"   Segmented sieve: ~{segmented_mb:.0f} MB (recommended!)")
+            print(f"\n   💡 Segmented sieve uses much less memory for large ranges")
+            confirm = input("   Use segmented sieve? (yes/no): ").strip().lower()
+            if confirm not in ['yes', 'y']:
+                print("Operation cancelled.")
+                return None
+            return (limit, True)  # Return tuple: (limit, use_segmented)
+        elif limit > 10_000_000:
             print(f"⚠️  Large limit ({limit:,}) may take significant time and memory!")
+            print(f"   Estimated memory: ~{estimated_mb:.0f} MB")
             confirm = input("   Continue? (yes/no): ").strip().lower()
             if confirm not in ['yes', 'y']:
                 print("Operation cancelled.")
                 return None
 
-        return limit
+        return (limit, False)  # Return tuple: (limit, use_segmented)
 
     except ValueError:
         print("❌ Invalid input! Please enter a valid positive integer.")
-        return None
-    except (KeyboardInterrupt, EOFError):
-        print("\n\n👋 Operation cancelled by user.")
         return None
 
 
@@ -125,11 +220,6 @@ def analyze_primes(primes: list[int], limit: int) -> None:
     # Show first and last few primes
     if prime_count <= 10:
         print(f"All primes:      {', '.join(map(str, primes))}")
-    else:
-        first_few = ', '.join(map(str, primes[:5]))
-        last_few = ', '.join(map(str, primes[-5:]))
-        print(f"First 5:         {first_few}")
-        print(f"Last 5:          {last_few}")
 
     print(f"{'='*60}\n")
 
@@ -147,16 +237,37 @@ def main() -> int:
     print("╚" + "═" * 58 + "╝\n")
 
     # Get input
-    limit = get_valid_limit()
-    if limit is None:
+    result = get_valid_limit()
+    if result is None:
         return 1
 
+    # Unpack result - can be (limit, use_segmented) or just limit
+    if isinstance(result, tuple):
+        limit, use_segmented = result
+    else:
+        limit, use_segmented = result, False
+
     print(f"\n🔍 Searching for primes up to {limit:,}...")
+    if use_segmented:
+        print("   Using segmented sieve (memory optimized)")
 
     # Generate primes with timing
     start_time = datetime.now()
     verbose = limit > 1_000_000
-    primes = generate_primes(limit, verbose=verbose)
+
+    try:
+        if use_segmented:
+            primes = generate_primes_segmented(limit, verbose=verbose)
+        else:
+            primes = generate_primes(limit, verbose=verbose)
+    except MemoryError as e:
+        print(f"\n❌ Memory Error: {e}")
+        print("\n💡 Suggestions:")
+        print("   • Try a smaller limit")
+        print("   • Use segmented sieve option for large ranges")
+        print("   • Close other applications to free memory")
+        return 1
+
     end_time = datetime.now()
 
     # Display results
