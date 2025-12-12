@@ -1,68 +1,174 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Prime Number Generator using Sieve of Eratosthenes.
+
+Efficiently generates all prime numbers up to a given limit with
+performance timing and detailed statistics.
+"""
+
 from datetime import datetime
-from typing import List
+from typing import Optional
+import sys
 
 
-def generate_primes(limit: int) -> List[int]:
-    """Generate a list of prime numbers up to a given limit using the Sieve of Eratosthenes."""
-    primes = [True] * (limit + 1)
-    primes[0] = primes[1] = False  # 0 and 1 are not prime numbers
-    for i in range(2, int(limit ** 0.5) + 1):  # Only iterate up to sqrt(limit)
-        if primes[i]:
-            for j in range(i * i, limit + 1, i):  # Mark multiples of i as non-prime
-                primes[j] = False
-    return [x for x, is_prime in enumerate(primes) if is_prime]
+def generate_primes(limit: int, verbose: bool = False) -> list[int]:
+    """
+    Generate a list of prime numbers up to a given limit using the Sieve of Eratosthenes.
+
+    Args:
+        limit: Upper bound for prime generation (inclusive)
+        verbose: If True, print progress for large limits
+
+    Returns:
+        List of all prime numbers from 2 to limit
+
+    Complexity:
+        Time: O(n log log n)
+        Space: O(n)
+    """
+    if limit < 2:
+        return []
+
+    # Initialize sieve
+    is_prime = [True] * (limit + 1)
+    is_prime[0] = is_prime[1] = False
+
+    sqrt_limit = int(limit ** 0.5)
+
+    # Sieve of Eratosthenes
+    for i in range(2, sqrt_limit + 1):
+        if is_prime[i]:
+            # Mark multiples of i as composite
+            for j in range(i * i, limit + 1, i):
+                is_prime[j] = False
+
+            if verbose and i % 1000 == 0:
+                progress = (i / sqrt_limit) * 100
+                print(f"Progress: {progress:.1f}% (checking {i})", end='\r')
+
+    if verbose:
+        print(" " * 50, end='\r')  # Clear progress line
+
+    # Extract primes
+    return [num for num, prime in enumerate(is_prime) if prime]
 
 
-def display_time_taken(key: str, start: datetime, stop: datetime) -> None:
-    """Print the time duration for a specific process."""
-    duration = stop - start
-    print(f"{key} started at: {start}")
-    print(f"{key} ended at: {stop}")
-    print(f"{key} duration: {duration}\n")
+def format_duration(duration) -> str:
+    """Format duration in human-readable format."""
+    total_seconds = duration.total_seconds()
+
+    if total_seconds < 0.001:
+        return f"{total_seconds * 1_000_000:.2f} μs"
+    elif total_seconds < 1:
+        return f"{total_seconds * 1000:.2f} ms"
+    elif total_seconds < 60:
+        return f"{total_seconds:.3f} s"
+    else:
+        minutes = int(total_seconds // 60)
+        seconds = total_seconds % 60
+        return f"{minutes}m {seconds:.2f}s"
 
 
-def main():
-    # Input Handling
+def display_timing(label: str, start: datetime, end: datetime) -> None:
+    """Display timing information for a process."""
+    duration = end - start
+    formatted_duration = format_duration(duration)
+    print(f"⏱️  {label}: {formatted_duration}")
+
+
+def get_valid_limit() -> Optional[int]:
+    """Get and validate limit from user input."""
     try:
-        limit = int(input("Enter the range (a positive integer >= 2): "))
+        limit_str = input("Enter the range (positive integer >= 2): ").strip()
+        limit = int(limit_str)
+
         if limit < 2:
-            print("The range must be at least 2. Please try again.")
-            return
+            print("❌ The range must be at least 2.")
+            return None
+
+        if limit > 10_000_000:
+            print(f"⚠️  Large limit ({limit:,}) may take significant time and memory!")
+            confirm = input("   Continue? (yes/no): ").strip().lower()
+            if confirm not in ['yes', 'y']:
+                print("Operation cancelled.")
+                return None
+
+        return limit
+
     except ValueError:
-        print("Invalid input! Please enter a valid positive integer.")
+        print("❌ Invalid input! Please enter a valid positive integer.")
+        return None
+    except (KeyboardInterrupt, EOFError):
+        print("\n\n👋 Operation cancelled by user.")
+        return None
+
+
+def analyze_primes(primes: list[int], limit: int) -> None:
+    """Display detailed analysis of found primes."""
+    if not primes:
+        print("\n📊 No primes found in this range.")
         return
 
-    # Format Range Value
-    formatted_limit = f"{limit:,}"
-    print(f"\nPrime number range: {formatted_limit}")
-
-    # Start Prime Calculation
-    overall_start = datetime.now()
-
-    # Step 1: Prime Number Calculation
-    step_start = datetime.now()
-    primes = generate_primes(limit)
     prime_count = len(primes)
-    step_end = datetime.now()
-    display_time_taken("Prime number generation", step_start, step_end)
+    density = (prime_count / limit) * 100
 
-    # Step 2: Highest Prime Calculation
-    step_start = datetime.now()
-    highest_prime = primes[-1] if primes else None
-    step_end = datetime.now()
-    display_time_taken("Highest prime determination", step_start, step_end)
+    print(f"\n{'='*60}")
+    print("📊 PRIME STATISTICS")
+    print(f"{'='*60}")
+    print(f"Range:           2 to {limit:,}")
+    print(f"Total primes:    {prime_count:,}")
+    print(f"Density:         {density:.4f}%")
+    print(f"Smallest prime:  {primes[0]:,}")
+    print(f"Largest prime:   {primes[-1]:,}")
 
-    # Print Results
-    print(f"Total primes in the range 2 to {formatted_limit}: {prime_count:,}")
-    if highest_prime:
-        print(f"The highest prime in the range is: {highest_prime:,}")
+    # Show first and last few primes
+    if prime_count <= 10:
+        print(f"All primes:      {', '.join(map(str, primes))}")
     else:
-        print("No primes found in this range.")
+        first_few = ', '.join(map(str, primes[:5]))
+        last_few = ', '.join(map(str, primes[-5:]))
+        print(f"First 5:         {first_few}")
+        print(f"Last 5:          {last_few}")
 
-    # Overall Timing
-    overall_end = datetime.now()
-    display_time_taken("Overall computation", overall_start, overall_end)
+    print(f"{'='*60}\n")
+
+
+def main() -> int:
+    """
+    Main function to run the prime number generator.
+
+    Returns:
+        0 on success, 1 on error
+    """
+    print("╔" + "═" * 58 + "╗")
+    print("║" + " " * 10 + "PRIME NUMBER GENERATOR" + " " * 26 + "║")
+    print("║" + " " * 10 + "(Sieve of Eratosthenes)" + " " * 25 + "║")
+    print("╚" + "═" * 58 + "╝\n")
+
+    # Get input
+    limit = get_valid_limit()
+    if limit is None:
+        return 1
+
+    print(f"\n🔍 Searching for primes up to {limit:,}...")
+
+    # Generate primes with timing
+    start_time = datetime.now()
+    verbose = limit > 1_000_000
+    primes = generate_primes(limit, verbose=verbose)
+    end_time = datetime.now()
+
+    # Display results
+    display_timing("Generation time", start_time, end_time)
+    analyze_primes(primes, limit)
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        sys.exit(main())
+    except Exception as e:
+        print(f"\n❌ Unexpected error: {e}")
+        sys.exit(1)
