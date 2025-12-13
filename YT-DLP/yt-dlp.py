@@ -20,10 +20,10 @@ try:
     from yt_dlp import YoutubeDL
     from tqdm import tqdm
 except ImportError as e:
-    print(f"❌ Missing required package: {e.name}")
-    print("\n📦 Install dependencies:")
+    print(f"❌ Brak wymaganego pakietu: {e.name}")
+    print("\n📦 Zainstaluj zależności:")
     print("   pip install -r requirements.txt")
-    print("   or")
+    print("   lub")
     print("   pip install yt-dlp tqdm")
     sys.exit(1)
 
@@ -64,7 +64,7 @@ class ProgressBar:
                     total=total_bytes,
                     unit='B',
                     unit_scale=True,
-                    desc='Downloading',
+                    desc='Pobieranie',
                     ascii=True,
                     ncols=80
                 )
@@ -97,40 +97,29 @@ class ProgressBar:
 def check_dependencies() -> bool:
     """Sprawdza czy wymagane zależności są dostępne."""
     all_ok = True
-    
-    # Sprawdź yt-dlp
+
     try:
         import yt_dlp
-        logging.info(f"yt-dlp version: {yt_dlp.version.__version__}")
+        logging.info(f"Wersja yt-dlp: {yt_dlp.version.__version__}")
     except ImportError:
-        print("❌ yt-dlp not installed!")
+        print("❌ yt-dlp nie jest zainstalowany!")
         print("   pip install yt-dlp")
         all_ok = False
-    
-    # Sprawdź ffmpeg
+
     if not shutil.which("ffmpeg"):
-        print("❌ ffmpeg not found!")
-        print("\n📦 Installation:")
+        print("❌ ffmpeg nie został znaleziony!")
+        print("\n📦 Instalacja:")
         print("   macOS:    brew install ffmpeg")
         print("   Ubuntu:   sudo apt install ffmpeg")
         print("   Windows:  choco install ffmpeg")
         all_ok = False
-    
+
     return all_ok
 
 
 def find_cookie_file() -> Optional[Path]:
     """
     Znajduje plik cookie w typowych lokalizacjach.
-    
-    Szuka cookies.txt w:
-    - Bieżący katalog
-    - Katalog skryptu
-    - Katalog domowy
-    - Katalog ~/WORK
-    
-    Returns:
-        Ścieżka do pliku cookie lub None jeśli nie znaleziono
     """
     possible_locations = [
         Path.cwd() / 'cookies.txt',
@@ -139,44 +128,35 @@ def find_cookie_file() -> Optional[Path]:
         Path.home() / 'WORK' / 'cookies.txt',
         Path.home() / 'Downloads' / 'cookies.txt',
     ]
-    
+
     for location in possible_locations:
         if location.exists() and location.is_file():
-            # Podstawowa walidacja - sprawdź czy plik wygląda jak format Netscape cookie
             try:
                 with open(location, 'r', encoding='utf-8') as f:
                     first_line = f.readline().strip()
-                    # Prawidłowy plik cookie powinien zaczynać się od komentarza lub wpisu cookie
                     if first_line.startswith('#') or '\t' in first_line:
-                        logging.info(f"Found cookie file: {location}")
+                        logging.info(f"Znaleziono plik cookie: {location}")
                         return location
             except Exception as e:
-                logging.warning(f"Error reading cookie file {location}: {e}")
+                logging.warning(f"Błąd podczas czytania pliku cookie {location}: {e}")
                 continue
-    
+
     return None
 
 
 def validate_cookie_file(cookie_path: Path) -> bool:
     """
     Waliduje format pliku cookie.
-    
-    Args:
-        cookie_path: Ścieżka do pliku cookie
-    
-    Returns:
-        True jeśli prawidłowy format Netscape, False w przeciwnym razie
     """
     if not cookie_path.exists() or not cookie_path.is_file():
         return False
-    
+
     try:
         with open(cookie_path, 'r', encoding='utf-8') as f:
-            content = f.read(500)  # Czytaj pierwsze 500 znaków
-            # Sprawdź markery formatu Netscape cookie
-            return ('# Netscape HTTP Cookie File' in content or 
+            content = f.read(500)
+            return ('# Netscape HTTP Cookie File' in content or
                     '# HTTP Cookie File' in content or
-                    '\t' in content)  # Wartości rozdzielone tabulatorami
+                    '\t' in content)
     except Exception:
         return False
 
@@ -184,12 +164,6 @@ def validate_cookie_file(cookie_path: Path) -> bool:
 def validate_url(url: str) -> bool:
     """
     Waliduje czy ciąg znaków jest prawidłowym URL.
-
-    Args:
-        url: Ciąg URL do walidacji
-
-    Returns:
-        True jeśli prawidłowy URL, False w przeciwnym razie
     """
     url = url.strip()
     if not url:
@@ -211,23 +185,10 @@ def download_video(
 ) -> bool:
     """
     Pobiera wideo z URL.
-
-    Args:
-        url: URL wideo
-        output_path: Katalog wyjściowy
-        quality: Ustawienie jakości wideo
-        mode: Tryb pobierania (wideo lub audio)
-        cookie_file: Opcjonalna ścieżka do pliku cookie w formacie Netscape
-
-    Returns:
-        True jeśli sukces, False w przeciwnym razie
     """
-    # Upewnij się że katalog wyjściowy istnieje
     output_path.mkdir(parents=True, exist_ok=True)
-
     progress = ProgressBar()
 
-    # Opcje podstawowe
     ydl_opts = {
         'format': quality.value,
         'outtmpl': str(output_path / '%(title).180B.%(ext)s'),
@@ -236,15 +197,13 @@ def download_video(
         'quiet': True,
         'no_warnings': True,
         'restrictfilenames': True,
-        'windowsfilenames': True,  # Bezpieczne nazwy plików na wszystkich platformach
+        'windowsfilenames': True,
     }
-    
-    # Dodaj plik cookie jeśli podano i jest prawidłowy
+
     if cookie_file and validate_cookie_file(cookie_file):
         ydl_opts['cookiefile'] = str(cookie_file)
-        logging.info(f"Using cookie file: {cookie_file}")
+        logging.info(f"Używam pliku cookie: {cookie_file}")
 
-    # Ustawienia tylko audio
     if mode == DownloadMode.AUDIO or quality == Quality.AUDIO_ONLY:
         ydl_opts['format'] = 'bestaudio/best'
         ydl_opts['postprocessors'] = [{
@@ -254,37 +213,35 @@ def download_video(
         }]
         ydl_opts['outtmpl'] = str(output_path / '%(title).180B.%(ext)s')
     else:
-        # Ustawienia wideo
         ydl_opts['merge_output_format'] = 'mp4'
         ydl_opts['postprocessors'] = [{
             'key': 'FFmpegVideoConvertor',
             'preferedformat': 'mp4',
         }]
 
-    mode_str = "🎵 Audio" if mode == DownloadMode.AUDIO else "🎬 Video"
-    print(f"📥 Downloading {mode_str} from: {url}")
-    print(f"📂 Output directory: {output_path}")
-    print(f"⚙️  Quality: {quality.name}")
+    mode_str = "🎵 Audio" if mode == DownloadMode.AUDIO else "🎬 Wideo"
+    print(f"📥 Pobieranie {mode_str} z: {url}")
+    print(f"📂 Katalog wyjściowy: {output_path}")
+    print(f"⚙️  Jakość: {quality.name}")
     if cookie_file and validate_cookie_file(cookie_file):
         print(f"🍪 Cookies: {cookie_file.name}")
     print()
 
     try:
         with YoutubeDL(ydl_opts) as ydl:
-            logging.info(f"Starting download: {url}")
+            logging.info(f"Rozpoczynam pobieranie: {url}")
             info = ydl.extract_info(url, download=True)
             if info:
                 filename = ydl.prepare_filename(info)
-                # Dla audio, zaktualizuj rozszerzenie
                 if mode == DownloadMode.AUDIO or quality == Quality.AUDIO_ONLY:
                     filename = Path(filename).with_suffix('.mp3')
-                print(f"\n✅ Saved to: {filename}")
-                logging.info(f"Download successful: {filename}")
+                print(f"\n✅ Zapisano do: {filename}")
+                logging.info(f"Pobieranie zakończone sukcesem: {filename}")
                 return True
     except Exception as e:
         error_msg = str(e)
-        print(f"\n❌ Download error: {error_msg}")
-        logging.error(f"Download failed for {url}: {error_msg}")
+        print(f"\n❌ Błąd pobierania: {error_msg}")
+        logging.error(f"Pobieranie nieudane dla {url}: {error_msg}")
         return False
     finally:
         progress.reset()
@@ -294,15 +251,15 @@ def download_video(
 
 def get_quality_choice() -> Quality:
     """Pobiera wybór jakości od użytkownika."""
-    print("\n📺 Select quality:")
-    print("   1. Best (highest available)")
-    print("   2. High (1080p)")
-    print("   3. Medium (720p)")
-    print("   4. Low (480p)")
-    print("   5. Audio only (MP3)")
-    
-    choice = input("   Choice [1]: ").strip() or "1"
-    
+    print("\n📺 Wybierz jakość:")
+    print("   1. Najlepsza (najwyższa dostępna)")
+    print("   2. Wysoka (1080p)")
+    print("   3. Średnia (720p)")
+    print("   4. Niska (480p)")
+    print("   5. Tylko audio (MP3)")
+
+    choice = input("   Wybór [1]: ").strip() or "1"
+
     quality_map = {
         "1": Quality.BEST,
         "2": Quality.HIGH,
@@ -310,7 +267,7 @@ def get_quality_choice() -> Quality:
         "4": Quality.LOW,
         "5": Quality.AUDIO_ONLY,
     }
-    
+
     return quality_map.get(choice, Quality.BEST)
 
 
@@ -323,16 +280,16 @@ def get_output_directory() -> Path:
     """Pobiera katalog wyjściowy od użytkownika lub używa bieżącego katalogu."""
     current_dir = Path.cwd()
 
-    print(f"📂 Output directory [current: {current_dir}]:")
-    user_input = input("   (press Enter for current directory): ").strip()
+    print(f"📂 Katalog wyjściowy [domyślnie: {current_dir}]:")
+    user_input = input("   (wciśnij Enter, aby użyć bieżącego katalogu): ").strip()
 
     if user_input:
         path = Path(user_input).expanduser().resolve()
         if not path.exists():
-            print(f"⚠️  Directory doesn't exist: {path}")
-            create = input("   Create it? (yes/no): ").strip().lower()
-            if create not in ['yes', 'y']:
-                print("Using current directory instead.")
+            print(f"⚠️  Katalog nie istnieje: {path}")
+            create = input("   Utworzyć katalog? (T/N): ").strip().lower()
+            if create not in ['t', 'tak']:
+                print("Używam bieżącego katalogu.")
                 return current_dir
         return path
 
@@ -346,41 +303,29 @@ def download_batch(
     mode: DownloadMode,
     cookie_file: Optional[Path] = None
 ) -> tuple[int, int]:
-    """Pobiera wiele filmów.
-    
-    Args:
-        urls: Lista URL-i wideo
-        output_path: Katalog wyjściowy
-        quality: Jakość wideo
-        mode: Tryb pobierania
-        cookie_file: Opcjonalny plik cookie dla autoryzacji
-    
-    Returns:
-        Krotka (liczba_sukces, liczba_błąd)
-    """
+    """Pobiera wiele filmów."""
     successful = 0
     failed = 0
     total = len(urls)
-    
-    print(f"\n📦 Batch download: {total} URL(s)\n")
-    
+
+    print(f"\n📦 Pobieranie wsadowe: {total} URL(i)\n")
+
     for i, url in enumerate(urls, 1):
         print(f"\n[{i}/{total}] {'='*50}")
         if download_video(url, output_path, quality, mode, cookie_file):
             successful += 1
         else:
             failed += 1
-    
+
     print(f"\n{'='*60}")
-    print(f"📊 Batch complete: ✅ {successful} successful, ❌ {failed} failed")
+    print(f"📊 Zakończono wsadowo: ✅ {successful} sukcesów, ❌ {failed} błędów")
     print(f"{'='*60}")
-    
+
     return successful, failed
 
 
 def main() -> int:
     """Główna funkcja programu."""
-    # Konfiguracja loggingu
     log_file = Path.cwd() / 'yt-dlp-downloader.log'
     logging.basicConfig(
         level=logging.INFO,
@@ -390,48 +335,45 @@ def main() -> int:
             logging.StreamHandler(sys.stdout) if os.getenv('DEBUG') else logging.NullHandler()
         ]
     )
-    
+
     print("╔" + "═" * 58 + "╗")
-    print("║" + " " * 15 + "VIDEO DOWNLOADER" + " " * 27 + "║")
+    print("║" + " " * 15 + "POBIERANIE WIDEO" + " " * 27 + "║")
     print("║" + " " * 17 + "(yt-dlp)" + " " * 32 + "║")
     print("╚" + "═" * 58 + "╝\n")
 
-    # Sprawdź zależności
     if not check_dependencies():
         return 1
-    
-    # Znajdź i opcjonalnie użyj pliku cookie
+
     cookie_file = find_cookie_file()
     use_cookies = False
-    
+
     if cookie_file:
-        print(f"\n🍪 Found cookie file: {cookie_file}")
-        print("   (Useful for private videos, age-restricted content, member-only content)")
-        response = input("   Use this cookie file? (yes/no) [yes]: ").strip().lower()
-        use_cookies = response in ['', 'yes', 'y']
+        print(f"\n🍪 Znaleziono plik cookie: {cookie_file}")
+        print("   (Przydatne dla prywatnych filmów, treści z ograniczeniem wiekowym, tylko dla członków)")
+        response = input("   Użyć tego pliku cookie? (T/N) [T]: ").strip().lower()
+        use_cookies = response in ['', 't', 'tak']
         if use_cookies:
-            logging.info(f"User selected to use cookie file: {cookie_file}")
+            logging.info(f"Użytkownik wybrał użycie pliku cookie: {cookie_file}")
         else:
             cookie_file = None
-            logging.info("User declined to use cookie file")
+            logging.info("Użytkownik zrezygnował z użycia pliku cookie")
     else:
-        print("\nℹ️  No cookie file found (optional - only needed for restricted content)")
-        response = input("   Specify custom cookie file path? (yes/no) [no]: ").strip().lower()
-        if response in ['yes', 'y']:
-            custom_path = input("   Path to cookies.txt: ").strip()
+        print("\nℹ️  Nie znaleziono pliku cookie (opcjonalne - potrzebne tylko do treści z ograniczeniami)")
+        response = input("   Wskazać własną ścieżkę do pliku cookie? (T/N) [N]: ").strip().lower()
+        if response in ['t', 'tak']:
+            custom_path = input("   Ścieżka do cookies.txt: ").strip()
             if custom_path:
                 cookie_file = Path(custom_path).expanduser().resolve()
                 if not validate_cookie_file(cookie_file):
-                    print("   ⚠️  Invalid cookie file format, proceeding without cookies")
+                    print("   ⚠️  Nieprawidłowy format pliku cookie, kontynuuję bez cookies")
                     cookie_file = None
                 else:
-                    print(f"   ✅ Cookie file validated: {cookie_file}")
+                    print(f"   ✅ Plik cookie poprawny: {cookie_file}")
                     use_cookies = True
 
-    # Pobierz URL-e
-    print("🔗 Supported: YouTube, TikTok, Vimeo, Facebook, Instagram, Twitter, etc.")
-    print("   Enter URLs (one per line, empty line to finish):")
-    
+    print("🔗 Obsługiwane: YouTube, TikTok, Vimeo, Facebook, Instagram, Twitter, itd.")
+    print("   Wprowadź adresy URL (każdy w nowej linii, pusta linia kończy):")
+
     urls = []
     while True:
         url = input("   URL: ").strip()
@@ -439,26 +381,22 @@ def main() -> int:
             if urls:
                 break
             else:
-                print("   Please enter at least one URL")
+                print("   Wprowadź przynajmniej jeden adres URL")
                 continue
-        
+
         if validate_url(url):
             urls.append(url)
             if len(urls) == 1:
-                print("   (press Enter to finish, or add more URLs)")
+                print("   (wciśnij Enter, aby zakończyć lub dodaj kolejne adresy)")
         else:
-            print("   ⚠️  Invalid URL, skipping...")
-    
-    # Pobierz jakość
+            print("   ⚠️  Nieprawidłowy adres URL, pomijam...")
+
     quality = get_quality_choice()
     mode = get_download_mode(quality)
-    
-    # Pobierz katalog wyjściowy
     output_path = get_output_directory()
 
-    # Pobierz wideo
-    logging.info(f"Starting download session: {len(urls)} URL(s), cookies: {use_cookies}")
-    
+    logging.info(f"Rozpoczęcie pobierania: {len(urls)} URL(i), cookies: {use_cookies}")
+
     if len(urls) == 1:
         print()
         success = download_video(urls[0], output_path, quality, mode, cookie_file if use_cookies else None)
@@ -472,8 +410,8 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except KeyboardInterrupt:
-        print("\n\n👋 Cancelled by user")
+        print("\n\n👋 Przerwano przez użytkownika")
         sys.exit(130)
     except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
+        print(f"\n❌ Nieoczekiwany błąd: {e}")
         sys.exit(1)
