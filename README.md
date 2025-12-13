@@ -109,15 +109,27 @@ cd PNA && python PNA.py
 **Uniwersalny downloader wideo** obsługujący 1000+ stron z zaawansowanym wyborem ścieżek audio.
 
 **Features:**
-- 🍪 Obsługa cookies (prywatne treści)
-- 📊 5 poziomów jakości (Best, 1080p, 720p, 480p, Audio)
-- 🎵 Tryb audio-only (MP3)
-- 🔊 Wybór konkretnej ścieżki dźwiękowej z szczegółowymi informacjami
-- 📋 Wyświetlanie parametrów technicznych (bitrate, format, rozmiar)
-- 🎧 Detekcja i oznaczanie audiodeskrypcji [AD]
-- 📦 Batch download z indywidualnym wyborem audio
-- 📈 Real-time progress bar
-- 🔄 Automatyczna konwersja formatów
+- 🍪 Obsługa cookies (prywatne treści/tylko dla członków)
+- 🎬 Zawsze najlepsza jakość wideo (automatycznie)
+- 🔊 **Zaawansowany wybór ścieżek audio** - szczegółowe parametry techniczne:
+  - Format ID (f6-a1-x3, f7-a2-x3)
+  - Bitrate (kbps), rozmiar pliku, język
+  - Typ ścieżki (DASH, HLS)
+  - Automatyczne filtrowanie audiodeskrypcji
+- 📦 Batch download z indywidualnym wyborem audio dla każdego URL
+- 📈 Real-time progress bar z tqdm
+- 🔄 Automatyczna konwersja formatów (ffmpeg)
+- 📝 Logowanie wszystkich operacji do pliku
+- ✅ Pełna walidacja URL i plików cookie
+- 🛡️ Kompleksowa obsługa błędów
+
+**Przykład wyboru audio:**
+```
+🔊 Dostępne ścieżki dźwiękowe:
+   1. f7-a2-x3   m4a   ~42.07MiB   132kbps [pl] Polski (DASH)
+   2. f6-a1-x3   m4a   ~41.76MiB   131kbps [pl] Polski (DASH)
+   Wybór [1-2]: 1
+```
 
 ```bash
 cd YT-DLP && python yt-dlp.py
