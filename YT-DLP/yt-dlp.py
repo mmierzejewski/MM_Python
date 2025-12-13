@@ -176,15 +176,203 @@ def validate_url(url: str) -> bool:
         return False
 
 
+def get_audio_tracks(url: str, cookie_file: Optional[Path] = None) -> list[dict]:
+    """
+    Pobiera listę dostępnych ścieżek dźwiękowych z wideo.
+    
+    Args:
+        url: URL wideo
+        cookie_file: Opcjonalny plik cookie
+    
+    Returns:
+        Lista słowników z informacjami o ścieżkach audio
+    """
+    ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'skip_download': True,
+    }
+    
+    if cookie_file and validate_cookie_file(cookie_file):
+        ydl_opts['cookiefile'] = str(cookie_file)
+    
+    try:
+        with YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            if not info:
+                return []
+            
+            audio_tracks = []
+            formats = info.get('formats', [])
+            
+            # Przejdź przez wszystkie formaty i zbierz WSZYSTKIE ścieżki audio
+            for fmt in formats:
+                acodec = fmt.get('acodec', 'none')
+                vcodec = fmt.get('vcodec', 'none')
+                
+                # Pomiń formaty bez audio
+                if acodec == 'none' or not acodec:
+                    continue
+                
+                # Tylko formaty audio-only (pomijamy wideo+audio)
+                if vcodec != 'none':
+                    continue
+                
+                # Pobierz informacje o formacie
+                format_id = fmt.get('format_id', '')
+                format_note = fmt.get('format_note', '')
+                ext = fmt.get('ext', 'unknown')
+                abr = fmt.get('abr', 0) or 0
+                
+                # Pobierz informacje o języku
+                lang = fmt.get('language', '')
+                
+                # Spróbuj określić język z różnych źródeł
+                if not lang or lang == 'und':
+                    format_lower = format_id.lower()
+                    if 'pol' in format_lower or 'pl' in format_lower:
+                        lang = 'pl'
+                    elif 'eng' in format_lower or 'en' in format_lower:
+                        lang = 'en'
+                    else:
+                        lang = 'und'
+                
+                # Określ nazwę wyświetlaną z format_note lub format_id
+                display_name = format_note
+                
+                # Jeśli format_note zawiera nazwę języka/wariantu, użyj jej
+                if not display_name or display_name in ['DASH audio', 'audio only', 'm4a_dash']:
+                    # Sprawdź format_id dla audiodeskrypcji i wariantów
+                    if 'audiodeskrypcja' in format_id.lower():
+                        display_name = 'Audiodeskrypcja'
+                    elif 'polski' in format_id.lower():
+                        display_name = 'Polski'
+                    elif 'english' in format_id.lower() or 'eng' in format_id.lower():
+                        display_name = 'Angielski'
+                    else:
+                        # Mapowanie języków
+                        lang_map = {
+                            'pl': 'Polski',
+                            'en': 'Angielski',
+                            'de': 'Niemiecki',
+                            'fr': 'Francuski',
+                            'es': 'Hiszpański',
+                            'it': 'Włoski',
+                            'ru': 'Rosyjski',
+                            'uk': 'Ukraiński',
+                            'und': 'Nieokreślony'
+                        }
+                        display_name = lang_map.get(lang, lang)
+                
+                # Dodaj szczegóły techniczne do nazwy
+                tech_details = []
+                if 'dash' in format_note.lower() or 'dash' in format_id.lower():
+                    tech_details.append('DASH')
+                if 'm3u8' in ext or 'hls' in format_note.lower():
+                    tech_details.append('HLS')
+                
+                if tech_details:
+                    display_name = f"{display_name} ({', '.join(tech_details)})"
+                
+                # Pomiń audiodeskrypcję
+                if 'audiodeskrypcja' in display_name.lower() or 'audiodeskrypcja' in format_id.lower():
+                    continue
+                
+                # Dodaj ścieżkę do listy (wszystkie, bez deduplikacji)
+                audio_tracks.append({
+                    'language': lang,
+                    'language_name': display_name,
+                    'format_id': format_id,
+                    'format_note': format_note,
+                    'ext': ext,
+                    'abr': abr,
+                })
+            
+            # Sortuj według bitrate malejąco
+            audio_tracks.sort(key=lambda x: -x['abr'])
+            
+            logging.info(f"Znaleziono {len(audio_tracks)} ścieżek audio dla {url}")
+            return audio_tracks
+    
+    except Exception as e:
+        logging.error(f"Błąd podczas pobierania informacji o ścieżkach audio: {e}")
+        return []
+
+
+def select_audio_track(audio_tracks: list[dict]) -> Optional[str]:
+    """
+    Pozwala użytkownikowi wybrać ścieżkę dźwiękową z szczegółowymi informacjami.
+    
+    Args:
+        audio_tracks: Lista dostępnych ścieżek audio (bez audiodeskrypcji)
+    
+    Returns:
+        format_id wybranej ścieżki lub None dla domyślnego
+    """
+    if not audio_tracks:
+        print("\nℹ️  Nie znaleziono informacji o ścieżkach dźwiękowych.")
+        print("   Zostanie użyta domyślna ścieżka audio.\n")
+        return None
+    
+    print("\n🔊 Dostępne ścieżki dźwiękowe:")
+    
+    for i, track in enumerate(audio_tracks, 1):
+        format_id = track.get('format_id', 'unknown')
+        ext = track.get('ext', 'unknown')
+        abr = track.get('abr', 0) or 0
+        filesize = track.get('filesize', 0)
+        lang = track.get('language', 'und')
+        lang_name = track.get('language_name', 'Nieokreślony')
+        format_note = track.get('format_note', '')
+        
+        # Formatowanie rozmiaru pliku
+        if filesize and filesize > 0:
+            size_mb = filesize / (1024 * 1024)
+            size_str = f"~{size_mb:.2f}MiB"
+        else:
+            size_str = "?MiB"
+        
+        # Formatowanie bitrate
+        bitrate_str = f"{abr}kbps" if abr > 0 else "?kbps"
+        
+        # Wyświetl szczegółowe informacje
+        print(f"   {i}. {format_id:20} {ext:4} {size_str:>12} {bitrate_str:>8} [{lang}] {lang_name} {format_note}")
+    
+    while True:
+        choice = input(f"\n   Wybór [1-{len(audio_tracks)}]: ").strip()
+        
+        try:
+            idx = int(choice)
+            if 1 <= idx <= len(audio_tracks):
+                selected = audio_tracks[idx - 1]
+                print(f"   ✅ Wybrano: {selected['format_id']} - {selected['language_name']} "
+                      f"({selected['ext']}, {selected.get('abr', 0)}kbps)\n")
+                logging.info(f"Wybrano ścieżkę audio: {selected['format_id']}")
+                return selected['format_id']
+            else:
+                print(f"   ⚠️  Nieprawidłowy wybór. Podaj liczbę od 1 do {len(audio_tracks)}")
+        except ValueError:
+            print("   ⚠️  Nieprawidłowe dane. Podaj liczbę.")
+
+
 def download_video(
     url: str,
     output_path: Path,
     quality: Quality = Quality.BEST,
     mode: DownloadMode = DownloadMode.VIDEO,
-    cookie_file: Optional[Path] = None
+    cookie_file: Optional[Path] = None,
+    audio_format_id: Optional[str] = None
 ) -> bool:
     """
     Pobiera wideo z URL.
+    
+    Args:
+        url: URL wideo
+        output_path: Ścieżka zapisu
+        quality: Jakość wideo
+        mode: Tryb pobierania (video/audio)
+        cookie_file: Opcjonalny plik cookie
+        audio_format_id: Wybrany format_id audio (None = domyślny)
     """
     output_path.mkdir(parents=True, exist_ok=True)
     progress = ProgressBar()
@@ -199,6 +387,12 @@ def download_video(
         'restrictfilenames': True,
         'windowsfilenames': True,
     }
+    
+    # Dodaj preferowany format audio jeśli wybrano
+    if audio_format_id:
+        # Użyj konkretnego format_id + najlepsze wideo
+        ydl_opts['format'] = f"bestvideo+{audio_format_id}/{quality.value}"
+        logging.info(f"Wybrany format audio: {audio_format_id}")
 
     if cookie_file and validate_cookie_file(cookie_file):
         ydl_opts['cookiefile'] = str(cookie_file)
@@ -223,6 +417,8 @@ def download_video(
     print(f"📥 Pobieranie {mode_str} z: {url}")
     print(f"📂 Katalog wyjściowy: {output_path}")
     print(f"⚙️  Jakość: {quality.name}")
+    if audio_format_id:
+        print(f"🔊 Format audio: {audio_format_id}")
     if cookie_file and validate_cookie_file(cookie_file):
         print(f"🍪 Cookies: {cookie_file.name}")
     print()
@@ -297,22 +493,30 @@ def get_output_directory() -> Path:
 
 
 def download_batch(
-    urls: list[str],
+    url_audio_pairs: list[tuple[str, Optional[str]]],
     output_path: Path,
     quality: Quality,
     mode: DownloadMode,
     cookie_file: Optional[Path] = None
 ) -> tuple[int, int]:
-    """Pobiera wiele filmów."""
+    """Pobiera wiele filmów z odpowiednimi ścieżkami audio.
+    
+    Args:
+        url_audio_pairs: Lista par (url, audio_format_id)
+        output_path: Katalog wyjściowy
+        quality: Jakość wideo
+        mode: Tryb pobierania
+        cookie_file: Opcjonalny plik cookie
+    """
     successful = 0
     failed = 0
-    total = len(urls)
+    total = len(url_audio_pairs)
 
     print(f"\n📦 Pobieranie wsadowe: {total} URL(i)\n")
 
-    for i, url in enumerate(urls, 1):
+    for i, (url, audio_format) in enumerate(url_audio_pairs, 1):
         print(f"\n[{i}/{total}] {'='*50}")
-        if download_video(url, output_path, quality, mode, cookie_file):
+        if download_video(url, output_path, quality, mode, cookie_file, audio_format):
             successful += 1
         else:
             failed += 1
@@ -372,37 +576,59 @@ def main() -> int:
                     use_cookies = True
 
     print("🔗 Obsługiwane: YouTube, TikTok, Vimeo, Facebook, Instagram, Twitter, itd.")
-    print("   Wprowadź adresy URL (każdy w nowej linii, pusta linia kończy):")
+    print("📺 Jakość: Zawsze NAJLEPSZA (wideo + audio)")
+    print("🔊 Audio: Automatyczny wybór najlepszej ścieżki (bez audiodeskrypcji)")
+    print("\n   Wprowadź adresy URL (każdy w nowej linii, pusta linia kończy):\n")
 
-    urls = []
+    # Zbieraj pary (url, audio_language) dla każdego linku
+    url_audio_pairs = []
+    url_count = 0
+    
     while True:
-        url = input("   URL: ").strip()
+        url_count += 1
+        url = input(f"   URL #{url_count}: ").strip()
+        
         if not url:
-            if urls:
+            if url_audio_pairs:
                 break
             else:
                 print("   Wprowadź przynajmniej jeden adres URL")
+                url_count -= 1
                 continue
 
-        if validate_url(url):
-            urls.append(url)
-            if len(urls) == 1:
-                print("   (wciśnij Enter, aby zakończyć lub dodaj kolejne adresy)")
-        else:
-            print("   ⚠️  Nieprawidłowy adres URL, pomijam...")
+        if not validate_url(url):
+            print("   ⚠️  Nieprawidłowy adres URL, spróbuj ponownie...")
+            url_count -= 1
+            continue
+        
+        # Wykryj i pozwól użytkownikowi wybrać ścieżkę audio
+        print(f"🔍 Sprawdzanie ścieżek audio...")
+        audio_tracks = get_audio_tracks(url, cookie_file if use_cookies else None)
+        audio_format_id = select_audio_track(audio_tracks)
+        
+        # Zapisz parę (url, audio_format_id)
+        url_audio_pairs.append((url, audio_format_id))
+        
+        print(f"✅ URL #{url_count} dodany")
+        if url_count == 1:
+            print("   (wciśnij Enter, aby zakończyć lub podaj kolejny URL)\n")
 
-    quality = get_quality_choice()
-    mode = get_download_mode(quality)
+    # Zawsze używamy najlepszej jakości dla video
+    quality = Quality.BEST
+    mode = DownloadMode.VIDEO
+
+    # Pytaj o katalog wyjściowy na końcu
     output_path = get_output_directory()
 
-    logging.info(f"Rozpoczęcie pobierania: {len(urls)} URL(i), cookies: {use_cookies}")
+    logging.info(f"Rozpoczęcie pobierania: {len(url_audio_pairs)} URL(i), cookies: {use_cookies}")
 
-    if len(urls) == 1:
+    if len(url_audio_pairs) == 1:
         print()
-        success = download_video(urls[0], output_path, quality, mode, cookie_file if use_cookies else None)
+        url, audio_format = url_audio_pairs[0]
+        success = download_video(url, output_path, quality, mode, cookie_file if use_cookies else None, audio_format)
         return 0 if success else 1
     else:
-        successful, failed = download_batch(urls, output_path, quality, mode, cookie_file if use_cookies else None)
+        successful, failed = download_batch(url_audio_pairs, output_path, quality, mode, cookie_file if use_cookies else None)
         return 0 if failed == 0 else 1
 
 
