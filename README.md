@@ -4,7 +4,7 @@ Kolekcja zaawansowanych skryptów Python z pełną dokumentacją i profesjonaln�
 
 ## 📚 Projekty
 
-### � [Bike Service Proxy](BIKE/)
+### 🚴 [Bike Service Proxy](BIKE/)
 **Proxy do serwisu rowerowego rowermevo.pl** z monitoringiem lokalizacji i baterii.
 
 **Features:**
@@ -21,7 +21,7 @@ cd BIKE && python bike_service_proxy.py
 
 ---
 
-### �📊 [BMI Calculator](BMI/)
+### 💪 [BMI Calculator](BMI/)
 **Zaawansowany kalkulator BMI** z rekomendacjami zdrowotnymi.
 
 **Features:**
@@ -38,7 +38,7 @@ cd BMI && python BMI.py
 
 ---
 
-### � [Fibonacci Calculator](Fibonacci/)
+### 🔢 [Fibonacci Calculator](Fibonacci/)
 **Zaawansowane narzędzia do ciągu Fibonacciego** z wieloma algorytmami.
 
 **Features:**
@@ -105,6 +105,22 @@ cd PNA && python PNA.py
 
 ---
 
+### 📚 [Python Course](python-course-master/)
+**Kompleksowy kurs Python** z interaktywnymi notebookami Jupyter i Docker.
+
+**Features:**
+- 🐳 Środowisko Docker (łatwa konfiguracja)
+- 📓 Jupyter Notebooks (interaktywna nauka)
+- 📖 Materiały szkoleniowe
+- 🎯 Przykłady praktyczne
+- 💻 Gotowe środowisko deweloperskie
+
+```bash
+cd python-course-master && docker-compose up
+```
+
+---
+
 ### 🎬 [Video Downloader (YT-DLP)](YT-DLP/)
 **Uniwersalny downloader wideo** obsługujący 1000+ stron z zaawansowanym wyborem ścieżek audio.
 
@@ -142,6 +158,8 @@ cd YT-DLP && python yt-dlp.py
 - Python 3.10+
 - Standardowa biblioteka (większość projektów)
 - Specyficzne zależności w `requirements.txt` w każdym projekcie
+- **ffmpeg** (wymagany dla YT-DLP - konwersja formatów wideo)
+- **Docker** (opcjonalnie dla python-course-master)
 
 ## 📖 Dokumentacja
 
