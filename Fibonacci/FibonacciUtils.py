@@ -343,9 +343,17 @@ def main() -> None:
                 if len(result) <= 20:
                     print(f"\n✅ Pierwsze {n} liczby: {result}")
                 else:
-                    print(f"\n✅ Pierwsze 10: {result[:10]}")
-                    print(f"   Ostatnie 10: {result[-10:]}")
-                    print(f"   (pominięto {len(result) - 20} środkowych)")
+                    show_all = input("Wyświetlić wszystkie liczby? (T/N) [N]: ").strip().upper()
+                    if show_all == "T":
+                        print(f"\n✅ Wszystkie {n} liczby:")
+                        # Wyświetl liczby, 10 na linię
+                        for i in range(0, len(result), 10):
+                            line = ', '.join(map(str, result[i:i+10]))
+                            print(f"   F({i})-F({min(i+9, len(result)-1)}): {line}")
+                    else:
+                        print(f"\n✅ Pierwsze 10: {result[:10]}")
+                        print(f"   Ostatnie 10: {result[-10:]}")
+                        print(f"   (pominięto {len(result) - 20} środkowych)")
 
             elif choice == "4":
                 n = int(input("Podaj n (0-indexed, dla dużych n): "))
