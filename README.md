@@ -43,11 +43,13 @@ cd BMI && python BMI.py
 
 **Features:**
 - ⚡ Algorytm macierzowy O(log n) dla dużych liczb
-- 📊 6 różnych trybów obliczeniowych
+- 📊 7 różnych trybów obliczeniowych
 - 🎯 Test przynależności do ciągu
 - 📈 Analiza zbieżności do złotego podziału φ
 - 🔢 Obsługa bardzo dużych liczb
 - 🎨 Interaktywne menu
+- 📋 **Opcja wyświetlania wszystkich n liczb** (10 na linię) lub tylko pierwszych/ostatnich 10
+- 💾 Eksport ciągów do pliku z timestampem
 
 ```bash
 cd Fibonacci && python FibonacciUtils.py
@@ -185,14 +187,49 @@ python yt-dlp.py
 
 ```
 MM_Python/
+├── .gitignore              # Ignorowane pliki (logi, eksporty, venv)
+├── README.md               # Dokumentacja główna
+├── fibonacci.log           # Log generowany przez Fibonacci Calculator
+│
 ├── BIKE/                   # Proxy do rowermevo.pl (lokalizacje rowerów)
+│   ├── bike_service_proxy.py
+│   ├── locations.csv
+│   └── requirements.txt
+│
 ├── BMI/                    # Kalkulator BMI z rekomendacjami
-├── Fibonacci/              # Kalkulator Fibonacciego (6 algorytmów)
+│   ├── BMI.py
+│   └── README.md
+│
+├── Fibonacci/              # Kalkulator Fibonacciego (7 trybów + opcje wyświetlania)
+│   ├── FibonacciUtils.py
+│   └── README.md
+│
 ├── Horse/                  # Knight's Tour Problem (Warnsdorff)
+│   ├── Horse.py
+│   └── README.md
+│
 ├── PITAGORAS/              # Generator trójek pitagorejskich
+│   ├── Pitagoras.py
+│   └── README.md
+│
 ├── PNA/                    # Liczby pierwsze (Sito Eratostenesa)
+│   ├── PNA.py
+│   └── README.md
+│
 ├── YT-DLP/                 # Universal video downloader (wybór ścieżek audio)
+│   ├── yt-dlp.py
+│   ├── cookies.txt.example
+│   ├── README.md
+│   └── requirements.txt
+│
 └── python-course-master/   # Kurs Python (Docker + Jupyter)
+    ├── Dockerfile
+    ├── docker-compose.yml
+    ├── requirements.txt
+    ├── README.md
+    ├── part_1/             # Podstawy Python
+    ├── part_2/             # Zaawansowane tematy
+    └── workshops/          # Zadania praktyczne
 ```
 
 ## 🤝 Kontakt
