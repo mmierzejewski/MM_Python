@@ -1,2 +1,8 @@
+# Video downloader core
 yt-dlp
+
+# Progress bar for downloads
 tqdm
+
+# Colored terminal output
+colorama
