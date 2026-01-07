@@ -230,13 +230,12 @@ def save_primes_to_file(primes: list[int], limit: int, filename: Optional[str] =
         print(f"❌ Błąd podczas zapisu pliku: {e}")
 
 
-def analyze_primes(primes: list[int], limit: int, save_to_file: bool = False) -> None:
+def analyze_primes(primes: list[int], limit: int) -> None:
     """Wyświetla szczegółową analizę znalezionych liczb pierwszych.
 
     Args:
         primes: Lista liczb pierwszych
         limit: Górny limit użyty do generowania
-        save_to_file: Jeśli True, oferuje zapisanie wyników do pliku
     """
     if not primes:
         print("\n📊 Nie znaleziono liczb pierwszych w tym zakresie.")
@@ -260,11 +259,10 @@ def analyze_primes(primes: list[int], limit: int, save_to_file: bool = False) ->
 
     print(f"{'='*60}\n")
 
-    # Zaoferuj zapisanie do pliku dla dużych zestawów wyników
-    if save_to_file and prime_count > 100:
-        save_option = input("💾 Zapisać liczby pierwsze do pliku? (T/N) [T]: ").strip().upper() or "T"
-        if save_option == "T":
-            save_primes_to_file(primes, limit)
+    # Zapytaj użytkownika o zapis po wyświetleniu statystyk
+    save_option = input("💾 Zapisać liczby pierwsze do pliku? (T/N) [N]: ").strip().upper() or "N"
+    if save_option == "T":
+        save_primes_to_file(primes, limit)
 
 
 def main() -> int:
@@ -315,7 +313,7 @@ def main() -> int:
 
     # Wyświetl wyniki
     display_timing("Czas generowania", start_time, end_time)
-    analyze_primes(primes, limit, save_to_file=True)
+    analyze_primes(primes, limit)
 
     return 0
 
