@@ -541,8 +541,8 @@ def main() -> int:
     )
 
     print("╔" + "═" * 58 + "╗")
-    print("║" + " " * 15 + "POBIERANIE WIDEO" + " " * 27 + "║")
-    print("║" + " " * 17 + "(yt-dlp)" + " " * 32 + "║")
+    print("║" + " " * 21 + "POBIERANIE WIDEO" + " " * 21 + "║")
+    print("║" + " " * 25 + "(yt-dlp)" + " " * 25 + "║")
     print("╚" + "═" * 58 + "╝\n")
 
     if not check_dependencies():
