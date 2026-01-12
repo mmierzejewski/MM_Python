@@ -16,6 +16,17 @@
 
 ## ⭐ Kluczowe Funkcje
 
+### 🎯 Dwa Tryby Działania
+
+#### Tryb 1: Liczby Pierwsze do Limitu
+Znajdź wszystkie liczby pierwsze od 2 do podanego limitu n.
+
+#### Tryb 2: Pierwsze n Liczb Pierwszych ⭐ NOWOŚĆ!
+Znajdź dokładnie pierwsze n liczb pierwszych (np. pierwsze 100, 1000, 10000 liczb pierwszych).
+- **Automatyczne szacowanie**: Używa przybliżenia matematycznego n * (ln(n) + ln(ln(n)))
+- **Inteligentne rozszerzanie**: Automatycznie zwiększa limit jeśli potrzeba
+- **Optymalizacja**: Dla dużych n wykorzystuje wydajne sito
+
 ### 🚀 Dwie Metody Generowania
 
 #### 1. Standardowe Sito Eratostenesa
@@ -100,12 +111,18 @@ python PNA.py
 python PNA.py
 ```
 
-### Krok 2: Wprowadź zakres
+### Krok 2: Wybierz tryb działania
 ```
 ╔══════════════════════════════════════════════════════╗
 ║        GENERATOR LICZB PIERWSZYCH                    ║
 ║            (Sito Eratostenesa)                       ║
 ╚══════════════════════════════════════════════════════╝
+
+Wybierz tryb działania:
+  1. Znajdź wszystkie liczby pierwsze do podanego limitu
+  2. Znajdź pierwsze n liczb pierwszych
+
+Twój wybór (1/2): 1
 
 Podaj zakres (liczba całkowita >= 2): 100
 ```
@@ -188,35 +205,61 @@ Największa:          1,999,999,973
 
 ## 📊 Przykłady Użycia
 
-### Przykład 1: Małe Zakresy
+### Przykład 1: Pierwsze n Liczb Pierwszych (NOWOŚĆ!)
 ```bash
 python PNA.py
+# Wybór: 2 (Pierwsze n liczb pierwszych)
+# Wejście: 100
+# Wyjście: Pierwsze 100 liczb pierwszych
+# Największa: 541
+# Czas: < 5 ms
+
+# Przykład wyjścia:
+============================================================
+📊 STATYSTYKI LICZB PIERWSZYCH
+============================================================
+Tryb:                Pierwsze 100 liczb pierwszych
+Znaleziono:          100
+Najmniejsza:         2
+Największa:          541
+Pierwsze 10:         2, 3, 5, 7, 11, 13, 17, 19, 23, 29
+Ostatnie 10:         467, 479, 487, 491, 499, 503, 509, 521, 523, 541
+============================================================
+```
+
+### Przykład 2: Małe Zakresy (Tryb Limitu)
+```bash
+python PNA.py
+# Wybór: 1 (Limit)
 # Wejście: 1000
 # Wyjście: 168 liczb pierwszych (16.8%)
 # Czas: < 1 ms
 ```
 
-### Przykład 2: Średnie Zakresy
+### Przykład 3: Średnie Zakresy (Tryb Limitu)
 ```bash
 python PNA.py
+# Wybór: 1 (Limit)
 # Wejście: 10000000 (10 milionów)
 # Wyjście: 664,579 liczb pierwszych (6.6%)
 # Czas: ~0.5s
 # Pamięć: ~10 MB
 ```
 
-### Przykład 3: Duże Zakresy
+### Przykład 4: Duże Zakresy (Tryb Limitu)
 ```bash
 python PNA.py
+# Wybór: 1 (Limit)
 # Wejście: 100000000 (100 milionów)
 # Wyjście: 5,761,455 liczb pierwszych (5.76%)
 # Czas: ~5s
 # Pamięć: ~100 MB
 ```
 
-### Przykład 4: Bardzo Duże Zakresy (Sito Segmentowane)
+### Przykład 5: Bardzo Duże Zakresy (Sito Segmentowane)
 ```bash
 python PNA.py
+# Wybór: 1 (Limit)
 # Wejście: 1000000000 (1 miliard)
 # Metoda: Sito segmentowane (automatycznie)
 # Wyjście: 50,847,534 liczb pierwszych (5.08%)
@@ -224,9 +267,38 @@ python PNA.py
 # Pamięć: ~32 MB (zamiast ~950 MB!)
 ```
 
+### Przykład 6: Pierwsze 1 Milion Liczb Pierwszych
+```bash
+python PNA.py
+# Wybór: 2 (Pierwsze n)
+# Wejście: 1000000
+# Wyjście: Pierwsze 1,000,000 liczb pierwszych
+# Największa: 15,485,863
+# Czas: ~1.5s
+```
+
 ## 🎯 Funkcje Zaawansowane
 
-### 1. Sito Segmentowane
+### 1. Pierwsze n Liczb Pierwszych (NOWOŚĆ!)
+```python
+def first_n_primes(n: int, verbose: bool = False) -> list[int]
+    """
+    Generuje pierwsze n liczb pierwszych.
+    
+    Algorytm:
+    - Używa przybliżenia n * (ln(n) + ln(ln(n))) dla górnej granicy
+    - Automatycznie rozszerza limit jeśli potrzeba (1.5x)
+    - Optymalizuje dla dużych n (verbose dla n > 10,000)
+    
+    Przykłady:
+    - n = 10: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+    - n = 100: pierwsze 100 liczb (do 541)
+    - n = 1000: pierwsze 1000 liczb (do 7919)
+    - n = 1,000,000: pierwsze milion liczb (do 15,485,863)
+    """
+```
+
+### 2. Sito Segmentowane
 ```python
 def generate_primes_segmented(limit: int, verbose: bool = False) -> list[int]
     """
@@ -244,7 +316,7 @@ def generate_primes_segmented(limit: int, verbose: bool = False) -> list[int]
     """
 ```
 
-### 2. Standardowe Sito
+### 3. Standardowe Sito
 ```python
 def generate_primes(limit: int, verbose: bool = False) -> list[int]
     """
@@ -259,7 +331,7 @@ def generate_primes(limit: int, verbose: bool = False) -> list[int]
     """
 ```
 
-### 3. Formatowanie Czasu
+### 4. Formatowanie Czasu
 ```python
 def format_duration(duration) -> str
     """
@@ -271,7 +343,7 @@ def format_duration(duration) -> str
     """
 ```
 
-### 4. Zapis do Pliku
+### 5. Zapis do Pliku
 ```python
 def save_primes_to_file(primes: list[int], limit: int, filename: Optional[str] = None)
     """
@@ -376,6 +448,12 @@ Podaj zakres (liczba całkowita >= 2): abc
 ```
 
 ## ❓ FAQ
+
+### Q: Jaka jest różnica między trybem 1 a 2?
+**A:** Tryb 1 znajduje wszystkie liczby pierwsze do limitu (np. do 100). Tryb 2 znajduje dokładnie n pierwszych liczb pierwszych (np. pierwsze 100 liczb, czyli 2, 3, 5... aż do 541).
+
+### Q: Jak program szacuje limit dla pierwszych n liczb?
+**A:** Używa przybliżenia matematycznego n * (ln(n) + ln(ln(n))) * 1.3, a następnie automatycznie rozszerza limit jeśli potrzeba.
 
 ### Q: Jaka jest maksymalna wartość zakresu?
 **A:** Teoretycznie nie ma limitu dzięki situ segmentowanemu. Praktycznie ogranicza czas obliczeń (np. 10 miliardów zajmie ~20 minut).
