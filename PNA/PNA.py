@@ -138,6 +138,35 @@ def generate_primes(limit: int, verbose: bool = False) -> list[int]:
     return [num for num, prime in enumerate(is_prime) if prime]
 
 
+def is_prime(n: int) -> bool:
+    """
+    Sprawdza, czy podana liczba jest liczbą pierwszą.
+
+    Args:
+        n: Liczba do sprawdzenia
+
+    Returns:
+        True jeśli liczba jest pierwsza, False w przeciwnym razie
+
+    Złożoność:
+        Czas: O(√n)
+    """
+    if n < 2:
+        return False
+    if n == 2:
+        return True
+    if n % 2 == 0:
+        return False
+    
+    # Sprawdź nieparzystych dzielników do √n
+    sqrt_n = int(math.sqrt(n))
+    for i in range(3, sqrt_n + 1, 2):
+        if n % i == 0:
+            return False
+    
+    return True
+
+
 def first_n_primes(n: int, verbose: bool = False) -> list[int]:
     """
     Generuje pierwsze n liczb pierwszych.
@@ -217,14 +246,15 @@ def get_user_choice() -> Optional[str]:
     """Pobiera wybór trybu od użytkownika.
 
     Returns:
-        '1' dla limitu, '2' dla pierwszych n, None jeśli nieprawidłowy wybór
+        '1' dla limitu, '2' dla pierwszych n, '3' dla sprawdzenia pojedynczej liczby, None jeśli nieprawidłowy wybór
     """
     print("Wybierz tryb działania:")
     print("  1. Znajdź wszystkie liczby pierwsze do podanego limitu")
     print("  2. Znajdź pierwsze n liczb pierwszych")
-    choice = input("\nTwój wybór (1/2): ").strip()
+    print("  3. Sprawdź czy liczba jest pierwsza")
+    choice = input("\nTwój wybór (1/2/3): ").strip()
     
-    if choice not in ['1', '2']:
+    if choice not in ['1', '2', '3']:
         print("❌ Nieprawidłowy wybór!")
         return None
     
@@ -444,7 +474,7 @@ def main() -> int:
         display_timing("Czas generowania", start_time, end_time)
         analyze_primes(primes, limit=limit)
 
-    else:
+    elif choice == '2':
         # Tryb: pierwsze n liczb pierwszych
         n = get_first_n_count()
         if n is None:
@@ -468,6 +498,31 @@ def main() -> int:
         # Wyświetl wyniki
         display_timing("Czas generowania", start_time, end_time)
         analyze_primes(primes, first_n=n)
+
+    else:
+        # Tryb: sprawdzanie czy liczba jest pierwsza
+        try:
+            n_str = input("Podaj liczbę do sprawdzenia: ").strip()
+            n = int(n_str)
+
+            print(f"\n🔍 Sprawdzanie czy {n:,} jest liczbą pierwszą...")
+
+            start_time = datetime.now()
+            result = is_prime(n)
+            end_time = datetime.now()
+
+            print(f"\n{'='*60}")
+            if result:
+                print(f"✅ Liczba {n:,} JEST liczbą pierwszą")
+            else:
+                print(f"❌ Liczba {n:,} NIE JEST liczbą pierwszą")
+            print(f"{'='*60}")
+
+            display_timing("Czas sprawdzania", start_time, end_time)
+
+        except ValueError:
+            print("❌ Nieprawidłowe dane! Proszę podać poprawną liczbę całkowitą.")
+            return 1
 
     return 0
 

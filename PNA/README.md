@@ -16,16 +16,22 @@
 
 ## ⭐ Kluczowe Funkcje
 
-### 🎯 Dwa Tryby Działania
+### 🎯 Trzy Tryby Działania
 
 #### Tryb 1: Liczby Pierwsze do Limitu
 Znajdź wszystkie liczby pierwsze od 2 do podanego limitu n.
 
-#### Tryb 2: Pierwsze n Liczb Pierwszych ⭐ NOWOŚĆ!
+#### Tryb 2: Pierwsze n Liczb Pierwszych
 Znajdź dokładnie pierwsze n liczb pierwszych (np. pierwsze 100, 1000, 10000 liczb pierwszych).
 - **Automatyczne szacowanie**: Używa przybliżenia matematycznego n * (ln(n) + ln(ln(n)))
 - **Inteligentne rozszerzanie**: Automatycznie zwiększa limit jeśli potrzeba
 - **Optymalizacja**: Dla dużych n wykorzystuje wydajne sito
+
+#### Tryb 3: Sprawdzanie Liczby Pierwszej ⭐ NOWOŚĆ!
+Sprawdź, czy podana liczba jest liczbą pierwszą.
+- **Szybka weryfikacja**: Algorytm O(√n)
+- **Optymalizacja**: Sprawdza tylko nieparzyste dzielniki
+- **Pomiar czasu**: Szczegółowy pomiar wydajności sprawdzania
 
 ### 🚀 Dwie Metody Generowania
 
@@ -121,8 +127,9 @@ python PNA.py
 Wybierz tryb działania:
   1. Znajdź wszystkie liczby pierwsze do podanego limitu
   2. Znajdź pierwsze n liczb pierwszych
+  3. Sprawdź czy liczba jest pierwsza
 
-Twój wybór (1/2): 1
+Twój wybór (1/2/3): 1
 
 Podaj zakres (liczba całkowita >= 2): 100
 ```
@@ -274,31 +281,51 @@ python PNA.py
 # Wejście: 1000000
 # Wyjście: Pierwsze 1,000,000 liczb pierwszych
 # Największa: 15,485,863
-# Czas: ~1.5s
-```
+# C
 
-## 🎯 Funkcje Zaawansowane
-
-### 1. Pierwsze n Liczb Pierwszych (NOWOŚĆ!)
+### Przykład 7: Sprawdzanie Pojedynczej Liczby (NOWOŚĆ!)
+```bash
+python PNA.py
+# WybórSprawdzanie Liczby Pierwszej (NOWOŚĆ!)
 ```python
-def first_n_primes(n: int, verbose: bool = False) -> list[int]
+def is_prime(n: int) -> bool
     """
-    Generuje pierwsze n liczb pierwszych.
+    Sprawdza, czy podana liczba jest liczbą pierwszą.
     
     Algorytm:
-    - Używa przybliżenia n * (ln(n) + ln(ln(n))) dla górnej granicy
-    - Automatycznie rozszerza limit jeśli potrzeba (1.5x)
-    - Optymalizuje dla dużych n (verbose dla n > 10,000)
+    - Sprawdza czy n < 2 (zwraca False)
+    - Obsługuje specjalny przypadek n = 2 (True)
+    - Odrzuca liczby parzyste > 2 (False)
+    - Sprawdza nieparzyste dzielniki od 3 do √n
+    
+    Złożoność: O(√n)
     
     Przykłady:
-    - n = 10: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
-    - n = 100: pierwsze 100 liczb (do 541)
-    - n = 1000: pierwsze 1000 liczb (do 7919)
-    - n = 1,000,000: pierwsze milion liczb (do 15,485,863)
+    - is_prime(2) → True (najmniejsza liczba pierwsza)
+    - is_prime(17) → True
+    - is_prime(97) → True
+    - is_prime(100) → False (100 = 2 × 50)
+    - is_prime(1) → False (nie jest liczbą pierwszą)
     """
 ```
 
-### 2. Sito Segmentowane
+### 2. Pierwsze n Liczb Pierwszych
+# Wejście: 97
+# Wyjście:
+============================================================
+✅ Liczba 97 JEST liczbą pierwszą
+============================================================
+⏱️  Czas sprawdzania: 3.81 μs
+
+# Przykład - liczba złożona:
+# Wejście: 100
+# Wyjście:
+============================================================
+❌ Liczba 100 NIE JEST liczbą pierwszą
+============================================================
+⏱️  Czas sprawdzania: 2.15 μs
+```zas: ~1.5s
+```3. Sito Segmentowane
 ```python
 def generate_primes_segmented(limit: int, verbose: bool = False) -> list[int]
     """
@@ -316,11 +343,34 @@ def generate_primes_segmented(limit: int, verbose: bool = False) -> list[int]
     """
 ```
 
-### 3. Standardowe Sito
+### 4. Standardowe Sito
 ```python
 def generate_primes(limit: int, verbose: bool = False) -> list[int]
     """
     Klasyczne Sito Eratostenesa.
+    
+    Zalety:
+    - Bardzo szybkie dla zakresów < 100M
+    - Proste i sprawdzone
+    - Progress bar dla zakresów > 1M
+    
+    Złożoność: O(n log log n)
+    """
+```
+
+### 5. Formatowanie Czasu
+```python
+def format_duration(duration) -> str
+    """
+    Automatyczne formatowanie czasu:
+    - μs (mikrosekundy): < 1ms
+    - ms (milisekundy): < 1s
+    - s (sekundy): < 60s
+    - m (minuty) + s: ≥ 60s
+    """
+```
+
+### 6lasyczne Sito Eratostenesa.
     
     Zalety:
     - Bardzo szybkie dla zakresów < 100M
@@ -426,8 +476,11 @@ Program obsługuje:
 - ⚠️ **Ostrzeżenia**: Duże zakresy (> 10M) z szacowaniem pamięci
 - 💡 **Sugestie**: Automatyczna rekomendacja sita segmentowanego
 - 🚨 **MemoryError**: Łapanie błędów pamięci z sugestiami
-- 🛑 **Ctrl+C**: Bezpieczne przerwanie
-- 📝 **IOError**: Obsługa błędów zapisu pliku
+- 🛑 **Ctrl+C**: Bezpieczne przerwanie, 2 a 3?
+**A:** 
+- **Tryb 1** znajduje wszystkie liczby pierwsze do limitu (np. do 100 znajdzie 25 liczb pierwszych).
+- **Tryb 2** znajduje dokładnie n pierwszych liczb pierwszych (np. pierwsze 100 liczb, czyli 2, 3, 5... aż do 541).
+- **Tryb 3** sprawdza, czy pojedyncza liczba jest pierwsza (np. czy 97 jest liczbą pierwszą → TAK
 
 ### Przykłady Obsługi Błędów
 

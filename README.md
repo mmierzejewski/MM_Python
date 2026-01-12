@@ -95,13 +95,17 @@ cd PITAGORAS && python Pitagoras.py
 **Efektywny generator liczb pierwszych** używający sita Eratostenesa.
 
 **Features:**
-- 🎯 **Dwa tryby**: liczby pierwsze do limitu LUB pierwsze n liczb pierwszych
+- 🎯 **Trzy tryby**: 
+  - Liczby pierwsze do limitu
+  - Pierwsze n liczb pierwszych
+  - **Sprawdzanie pojedynczej liczby** ⭐ NOWOŚĆ!
 - ⚡ Optymalizacja pamięci (sito segmentowane)
 - 🧮 Automatyczne szacowanie limitu dla pierwszych n liczb
-- 📊 Szczegółowe statystyki dla obu trybów
+- ✅ Szybki test pierwszości O(√n)
+- 📊 Szczegółowe statystyki dla wszystkich trybów
 - 💾 Zapis do pliku
 - 📈 Progress bar dla dużych zakresów
-- ⏱️ Pomiar wydajności
+- ⏱️ Pomiar wydajności (μs, ms, s)
 
 ```bash
 cd PNA && python PNA.py
