@@ -152,6 +152,24 @@ def analyze_primes_in_triple(triple: PythagoreanTriple, primes: Set[int]) -> Lis
     return [num for num in (triple.a, triple.b, triple.c) if num in primes]
 
 
+def get_user_choice() -> str:
+    """Pobiera wybór użytkownika: generowanie trójek lub wyjście.
+    
+    Returns:
+        '1' dla generowania, '2' dla wyjścia, None jeśli nieprawidłowy wybór
+    """
+    print("\nWybierz opcję:")
+    print("  1. Generuj trójki pitagorejskie")
+    print("  2. Koniec (wyjście z programu)")
+    choice = input("\nTwój wybór (1/2): ").strip()
+    
+    if choice not in ['1', '2']:
+        print("❌ Nieprawidłowy wybór!")
+        return None
+    
+    return choice
+
+
 def get_valid_count() -> int:
     """Pobiera i waliduje liczbę trójek od użytkownika."""
     while True:
@@ -174,8 +192,8 @@ def get_valid_count() -> int:
         except ValueError:
             print("❌ Proszę podać poprawną liczbę całkowitą")
         except (KeyboardInterrupt, EOFError):
-            print("\n\n👋 Anulowano")
-            exit(0)
+            print("\n👋 Anulowano")
+            return None
 
 
 def display_triples(triples: List[PythagoreanTriple], primes: Set[int]) -> None:
@@ -282,52 +300,69 @@ def main():
     print("╔" + "═" * 88 + "╗")
     print("║" + " " * 16 + "GENERATOR TRÓJEK PITAGOREJSKICH" + " " * 41 + "║")
     print("║" + " " * 25 + "(Tylko prymitywne)" + " " * 46 + "║")
-    print("╚" + "═" * 88 + "╝\n")
+    print("╚" + "═" * 88 + "╝")
     
-    # Pobierz dane wejściowe
-    count = get_valid_count()
-    
-    print(f"\n🔍 Generowanie {count} prymitywnych trójek pitagorejskich...")
-    print("   (Eliminacja wielokrotności takich jak 3,4,5 i 6,8,10)\n")
-    
-    # Rozpocznij pomiar czasu
-    start_time = datetime.now()
-    
-    # Generuj trójki prymitywne
-    triples = generate_primitive_triples(count)
-    
-    if not triples:
-        print("❌ Nie udało się wygenerować trójek pitagorejskich")
-        return
-    
-    print(f"✅ Wygenerowano {len(triples)} trójek prymitywnych")
-    
-    # Generuj liczby pierwsze do analizy
-    max_value = max(max(t.a, t.b, t.c) for t in triples)
-    print(f"🔢 Wyszukiwanie liczb pierwszych do {max_value}...")
-    primes = sieve_of_eratosthenes(max_value)
-    
-    end_time = datetime.now()
-    elapsed = end_time - start_time
-    
-    # Wyświetl wyniki
-    display_triples(triples, primes)
-    
-    # Weryfikuj brak duplikatów
-    verify_no_duplicates(triples)
-    
-    # Wyświetl statystyki
-    display_statistics(triples, primes)
-    
-    # Informacje o czasie
-    print(f"\n⏱️  Czas generowania: {elapsed.total_seconds():.3f}s")
-    print(f"   Średnio na trójkę: {elapsed.total_seconds() / len(triples):.6f}s\n")
-    
-    # Pokaż pierwsze przykłady z pełnym wzorem
-    print("\n💡 Przykładowa weryfikacja (pierwsze 3 trójki):")
-    for i, triple in enumerate(triples[:3], 1):
-        print(f"   {i}. {triple.a}² + {triple.b}² = {triple.a**2} + {triple.b**2} = "
-              f"{triple.a**2 + triple.b**2} = {triple.c**2} = {triple.c}²  ✓")
+    # Pętla główna programu
+    while True:
+        choice = get_user_choice()
+        if choice is None:
+            continue  # Nieprawidłowy wybór, pokaż menu ponownie
+        
+        # Opcja wyjścia
+        if choice == '2':
+            print("\n👋 Do widzenia!")
+            return
+        
+        # Pobierz dane wejściowe
+        count = get_valid_count()
+        if count is None:
+            print()  # Dodaj pustą linię przed powrotem do menu
+            continue
+        
+        print(f"\n🔍 Generowanie {count} prymitywnych trójek pitagorejskich...")
+        print("   (Eliminacja wielokrotności takich jak 3,4,5 i 6,8,10)\n")
+        
+        # Rozpocznij pomiar czasu
+        start_time = datetime.now()
+        
+        # Generuj trójki prymitywne
+        triples = generate_primitive_triples(count)
+        
+        if not triples:
+            print("❌ Nie udało się wygenerować trójek pitagorejskich")
+            print()  # Dodaj pustą linię przed powrotem do menu
+            continue
+        
+        print(f"✅ Wygenerowano {len(triples)} trójek prymitywnych")
+        
+        # Generuj liczby pierwsze do analizy
+        max_value = max(max(t.a, t.b, t.c) for t in triples)
+        print(f"🔢 Wyszukiwanie liczb pierwszych do {max_value}...")
+        primes = sieve_of_eratosthenes(max_value)
+        
+        end_time = datetime.now()
+        elapsed = end_time - start_time
+        
+        # Wyświetl wyniki
+        display_triples(triples, primes)
+        
+        # Weryfikuj brak duplikatów
+        verify_no_duplicates(triples)
+        
+        # Wyświetl statystyki
+        display_statistics(triples, primes)
+        
+        # Informacje o czasie
+        print(f"\n⏱️  Czas generowania: {elapsed.total_seconds():.3f}s")
+        print(f"   Średnio na trójkę: {elapsed.total_seconds() / len(triples):.6f}s\n")
+        
+        # Pokaż pierwsze przykłady z pełnym wzorem
+        print("\n💡 Przykładowa weryfikacja (pierwsze 3 trójki):")
+        for i, triple in enumerate(triples[:3], 1):
+            print(f"   {i}. {triple.a}² + {triple.b}² = {triple.a**2} + {triple.b**2} = "
+                  f"{triple.a**2 + triple.b**2} = {triple.c**2} = {triple.c}²  ✓")
+        
+        print()  # Dodaj pustą linię przed powrotem do menu
 
 
 if __name__ == "__main__":

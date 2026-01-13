@@ -318,6 +318,24 @@ class KnightsTour:
             logging.error(f"Błąd eksportu: {e}")
 
 
+def get_user_choice() -> Optional[str]:
+    """Pobiera wybór użytkownika: rozwiązanie problemu lub wyjście.
+    
+    Returns:
+        '1' dla rozwiązania, '2' dla wyjścia, None jeśli nieprawidłowy wybór
+    """
+    print("\nWybierz opcję:")
+    print("  1. Rozwiąż problem trasy skoczka")
+    print("  2. Koniec (wyjście z programu)")
+    choice = input("\nTwój wybór (1/2): ").strip()
+    
+    if choice not in ['1', '2']:
+        print("❌ Nieprawidłowy wybór!")
+        return None
+    
+    return choice
+
+
 def get_board_dimensions():
     """Pobiera i waliduje wymiary planszy od użytkownika."""
     while True:
@@ -340,41 +358,59 @@ def get_board_dimensions():
         except ValueError:
             print("❌ Proszę podać liczby całkowite!\n")
         except (KeyboardInterrupt, EOFError):
-            print("\n\n👋 Przerwano przez użytkownika.")
-            exit(0)
+            print("\n👋 Anulowano.")
+            return None
 
 
 def main():
     """Główna funkcja programu."""
-    print("=== Problem Trasy Skoczka Szachowego ===\n")
+    print("=== Problem Trasy Skoczka Szachowego ===")
     logging.info("Uruchomiono program Knight's Tour")
 
-    height, width = get_board_dimensions()
+    # Pętla główna programu
+    while True:
+        choice = get_user_choice()
+        if choice is None:
+            continue  # Nieprawidłowy wybór, pokaż menu ponownie
+        
+        # Opcja wyjścia
+        if choice == '2':
+            print("\n👋 Do widzenia!")
+            logging.info("Zakończono program przez użytkownika")
+            return
 
-    print(f"\n{'='*50}")
-    try:
-        solver = KnightsTour(height, width, verbose=True)
-        solver.solve(start_x=0, start_y=0, timeout=300)
-        solver.print_result()
+        # Rozwiązywanie problemu
+        dimensions = get_board_dimensions()
+        if dimensions is None:
+            print()  # Dodaj pustą linię przed powrotem do menu
+            continue
         
-        # Opcja eksportu
-        eksport = input("\nEksportować rozwiązanie do pliku? (T/N) [T]: ").strip().upper() or "T"
-        if eksport == "T":
-            custom_name = input("Nazwa pliku (Enter = auto): ").strip()
-            solver.export_solution(custom_name if custom_name else None)
+        height, width = dimensions
+
+        print(f"\n{'='*50}")
+        try:
+            solver = KnightsTour(height, width, verbose=True)
+            solver.solve(start_x=0, start_y=0, timeout=300)
+            solver.print_result()
+            
+            # Opcja eksportu
+            eksport = input("\nEksportować rozwiązanie do pliku? (T/N) [T]: ").strip().upper() or "T"
+            if eksport == "T":
+                custom_name = input("Nazwa pliku (Enter = auto): ").strip()
+                solver.export_solution(custom_name if custom_name else None)
+            
+        except ValueError as e:
+            print(f"❌ Błąd: {e}")
+            logging.error(f"ValueError: {e}")
+        except TimeoutError as e:
+            print(f"⏱️  {e}")
+            logging.error(f"TimeoutError: {e}")
+        except Exception as e:
+            print(f"❌ Nieoczekiwany błąd: {e}")
+            logging.error(f"Nieoczekiwany błąd: {e}", exc_info=True)
         
-    except ValueError as e:
-        print(f"❌ Błąd: {e}")
-        logging.error(f"ValueError: {e}")
-    except TimeoutError as e:
-        print(f"⏱️  {e}")
-        logging.error(f"TimeoutError: {e}")
-    except Exception as e:
-        print(f"❌ Nieoczekiwany błąd: {e}")
-        logging.error(f"Nieoczekiwany błąd: {e}", exc_info=True)
-    
-    print(f"{'='*50}\n")
-    logging.info("Zakończono program")
+        print(f"{'='*50}\n")
+        # Program wraca do menu głównego
 
 
 if __name__ == "__main__":

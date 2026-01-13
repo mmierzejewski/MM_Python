@@ -313,13 +313,13 @@ def main() -> None:
         print("5. Sprawdź, czy liczba jest liczbą Fibonacciego")
         print("6. Szczegółowe informacje o F(n)")
         print("7. Eksportuj ostatni ciąg do pliku")
-        print("0. Wyjście")
+        print("8. Koniec (wyjście z programu)")
 
         try:
-            choice = input("\n👉 Twój wybór (0-7): ").strip()
+            choice = input("\n👉 Twój wybór (1-8): ").strip()
 
-            if choice == "0":
-                print("\n👋 Do zobaczenia!")
+            if choice == "8":
+                print("\n👋 Do widzenia!")
                 logging.info("Zakończono działanie kalkulatora")
                 break
 
@@ -386,7 +386,7 @@ def main() -> None:
                         )
 
             else:
-                print("\n❌ Nieprawidłowy wybór! Wybierz 0-7.")
+                print("\n❌ Nieprawidłowy wybór! Wybierz 1-8.")
 
         except ValueError as e:
             print("\n❌ Nieprawidłowe dane! Podaj liczbę całkowitą.")

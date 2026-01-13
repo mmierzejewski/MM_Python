@@ -20,7 +20,10 @@ Knight's Tour (Trasa Skoczka) to klasyczny problem matematyczny polegający na z
 
 ### 🎨 Interface:
 
-- 🖥️ Interaktywne menu
+- 🖥️ Interaktywne menu z opcjami:
+  - 1. Rozwiąż problem trasy skoczka
+  - 2. Koniec (wyjście z programu)
+- 🔄 **Pętla menu** - ciągły tryb pracy bez ponownego uruchamiania ⭐ NOWOŚĆ!
 - ⚠️ Ostrzeżenia dla dużych plansz
 - 📊 Progress tracking (verbose mode)
 - 🎯 Wizualizacja planszy z ramką Unicode
@@ -51,6 +54,12 @@ python3 Horse.py
 ```
 === Problem Trasy Skoczka Szachowego ===
 
+Wybierz opcję:
+  1. Rozwiąż problem trasy skoczka
+  2. Koniec (wyjście z programu)
+
+Twój wybór (1/2): 1
+
 Podaj wysokość planszy (min 3, zalecane max 8): 5
 Podaj szerokość planszy (min 3, zalecane max 8): 5
 
@@ -77,6 +86,19 @@ Plansza 5x5:
   Backtracki: 0
   Maksymalna głębokość: 24
   Skuteczność: 100.0%
+
+Eksportować rozwiązanie do pliku? (T/N) [T]: N
+
+==================================================
+
+# Program wraca do menu głównego
+Wybierz opcję:
+  1. Rozwiąż problem trasy skoczka
+  2. Koniec (wyjście z programu)
+
+Twój wybór (1/2): 2
+
+👋 Do widzenia!
 ```
 
 ### 2. Interpretacja planszy

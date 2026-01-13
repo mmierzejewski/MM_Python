@@ -4,24 +4,7 @@ Kolekcja zaawansowanych skryptów Python z pełną dokumentacją i profesjonaln�
 
 ## 📚 Projekty
 
-### 🚴 [Bike Service Proxy](BIKE/)
-**Proxy do serwisu rowerowego rowermevo.pl** z monitoringiem lokalizacji i baterii.
-
-**Features:**
-- 📍 Pobieranie lokalizacji rowerów w czasie rzeczywistym
-- 🔋 Monitoring poziomu baterii
-- 🗺️ Dane z API rowermevo.pl
-- 💾 Zapis do CSV
-- 🌐 Integracja z requests
-- 📊 Analiza danych stacji rowerowych
-
-```bash
-cd BIKE && python bike_service_proxy.py
-```
-
----
-
-### 💪 [BMI Calculator](BMI/)
+###  [BMI Calculator](BMI/)
 **Zaawansowany kalkulator BMI** z rekomendacjami zdrowotnymi.
 
 **Features:**
@@ -44,10 +27,12 @@ cd BMI && python BMI.py
 **Features:**
 - ⚡ Algorytm macierzowy O(log n) dla dużych liczb
 - 📊 7 różnych trybów obliczeniowych
+- 🔄 **Pętla menu** - ciągły tryb pracy bez ponownego uruchamiania ⭐ NOWOŚĆ!
+- 🚪 Opcja "Koniec" - eleganckie wyjście z programu
 - 🎯 Test przynależności do ciągu
 - 📈 Analiza zbieżności do złotego podziału φ
 - 🔢 Obsługa bardzo dużych liczb
-- 🎨 Interaktywne menu
+- 🎨 Interaktywne menu (8 opcji)
 - 📋 **Opcja wyświetlania wszystkich n liczb** (10 na linię) lub tylko pierwszych/ostatnich 10
 - 💾 Eksport ciągów do pliku z timestampem
 
@@ -63,6 +48,8 @@ cd Fibonacci && python FibonacciUtils.py
 **Features:**
 - ♟️ Heurystyka Warnsdorffa (inteligentna optymalizacja)
 - 🔄 Backtracking z timeout protection
+- 🔄 **Pętla menu** - ciągły tryb pracy bez ponownego uruchamiania ⭐ NOWOŚĆ!
+- 🚪 Opcja "Koniec" - eleganckie wyjście z programu
 - 📊 Szczegółowe statystyki (czas, backtracki, głębokość)
 - 💾 Eksport rozwiązań do pliku
 - 📝 Logging wszystkich operacji
@@ -80,6 +67,8 @@ cd Horse && python Horse.py
 
 **Features:**
 - ✅ Tylko trójki prymitywne (eliminacja duplikatów 3,4,5 i 6,8,10)
+- 🔄 **Pętla menu** - ciągły tryb pracy bez ponownego uruchamiania ⭐ NOWOŚĆ!
+- 🚪 Opcja "Koniec" - eleganckie wyjście z programu
 - 📊 Wymiary, obwód, powierzchnia
 - 🔢 Detekcja liczb pierwszych
 - 📈 Szczegółowe statystyki
@@ -95,13 +84,16 @@ cd PITAGORAS && python Pitagoras.py
 **Efektywny generator liczb pierwszych** używający sita Eratostenesa.
 
 **Features:**
-- 🎯 **Trzy tryby**: 
+- 🎯 **Cztery tryby**: 
   - Liczby pierwsze do limitu
   - Pierwsze n liczb pierwszych
   - **Sprawdzanie pojedynczej liczby** ⭐ NOWOŚĆ!
+  - **Koniec** - wyjście z programu
 - ⚡ Optymalizacja pamięci (sito segmentowane)
 - 🧮 Automatyczne szacowanie limitu dla pierwszych n liczb
 - ✅ Szybki test pierwszości O(√n)
+- 🔢 **Wyświetlanie dzielników** dla liczb niepier wszych ⭐ NOWOŚĆ!
+- 🔄 **Pętla menu** - ciągły tryb pracy bez ponownego uruchamiania ⭐ NOWOŚĆ!
 - 📊 Szczegółowe statystyki dla wszystkich trybów
 - 💾 Zapis do pliku
 - 📈 Progress bar dla dużych zakresów
@@ -113,7 +105,24 @@ cd PNA && python PNA.py
 
 ---
 
-### 📚 [Python Course](python-course-master/)
+### 🚴 [Bike Service Proxy](Courses/BIKE/)
+**Proxy do serwisu rowerowego rowermevo.pl** z monitoringiem lokalizacji i baterii.
+
+**Features:**
+- 📍 Pobieranie lokalizacji rowerów w czasie rzeczywistym
+- 🔋 Monitoring poziomu baterii
+- 🗺️ Dane z API rowermevo.pl
+- 💾 Zapis do CSV
+- 🌐 Integracja z requests
+- 📊 Analiza danych stacji rowerowych
+
+```bash
+cd Courses/BIKE && python bike_service_proxy.py
+```
+
+---
+
+### 📚 [Python Course](Courses/python-course-master/)
 **Kompleksowy kurs Python** z interaktywnymi notebookami Jupyter i Docker.
 
 **Features:**
@@ -124,7 +133,7 @@ cd PNA && python PNA.py
 - 💻 Gotowe środowisko deweloperskie
 
 ```bash
-cd python-course-master && docker-compose up
+cd Courses/python-course-master && docker-compose up
 ```
 
 ---
@@ -184,9 +193,13 @@ Każdy projekt zawiera własny `README.md` z:
 git clone https://github.com/mmierzejewski/MM_Python.git
 cd MM_Python
 
-# Wybierz projekt i uruchom (przykład)
-cd YT-DLP
-python yt-dlp.py
+# Wybierz projekt i uruchom (przykład - Generator liczb pierwszych)
+cd PNA
+python PNA.py
+
+# Przykład - Fibonacci
+cd Fibonacci
+python FibonacciUtils.py
 ```
 
 ## 📁 Struktura
@@ -195,48 +208,60 @@ python yt-dlp.py
 MM_Python/
 ├── .gitignore              # Ignorowane pliki (logi, eksporty, venv)
 ├── README.md               # Dokumentacja główna
-├── fibonacci.log           # Log generowany przez Fibonacci Calculator
-│
-├── BIKE/                   # Proxy do rowermevo.pl (lokalizacje rowerów)
-│   ├── bike_service_proxy.py
-│   ├── locations.csv
-│   └── requirements.txt
 │
 ├── BMI/                    # Kalkulator BMI z rekomendacjami
 │   ├── BMI.py
 │   └── README.md
 │
-├── Fibonacci/              # Kalkulator Fibonacciego (7 trybów + opcje wyświetlania)
+├── Fibonacci/              # Kalkulator Fibonacciego (8 opcji + pętla menu)
 │   ├── FibonacciUtils.py
 │   └── README.md
 │
-├── Horse/                  # Knight's Tour Problem (Warnsdorff)
+├── Horse/                  # Knight's Tour Problem (Warnsdorff + pętla menu)
 │   ├── Horse.py
 │   └── README.md
 │
-├── PITAGORAS/              # Generator trójek pitagorejskich
+├── PITAGORAS/              # Generator trójek pitagorejskich (pętla menu)
 │   ├── Pitagoras.py
 │   └── README.md
 │
-├── PNA/                    # Liczby pierwsze (Sito Eratostenesa)
+├── PNA/                    # Liczby pierwsze (Sito Eratostenesa + pętla menu)
 │   ├── PNA.py
 │   └── README.md
 │
-├── YT-DLP/                 # Universal video downloader (wybór ścieżek audio)
-│   ├── yt-dlp.py
-│   ├── cookies.txt.example
-│   ├── README.md
-│   └── requirements.txt
+├── Courses/                # Projekty edukacyjne i kursy
+│   ├── BIKE/              # Proxy do rowermevo.pl (lokalizacje rowerów)
+│   │   ├── bike_service_proxy.py
+│   │   ├── locations.csv
+│   │   └── requirements.txt
+│   │
+│   └── python-course-master/  # Kurs Python (Docker + Jupyter)
+│       ├── Dockerfile
+│       ├── docker-compose.yml
+│       ├── requirements.txt
+│       ├── README.md
+│       ├── part_1/        # Podstawy Python
+│       ├── part_2/        # Zaawansowane tematy
+│       └── workshops/     # Zadania praktyczne
 │
-└── python-course-master/   # Kurs Python (Docker + Jupyter)
-    ├── Dockerfile
-    ├── docker-compose.yml
-    ├── requirements.txt
+└── YT-DLP/                 # Universal video downloader (wybór ścieżek audio)
+    ├── yt-dlp.py
+    ├── cookies.txt.example
     ├── README.md
-    ├── part_1/             # Podstawy Python
-    ├── part_2/             # Zaawansowane tematy
-    └── workshops/          # Zadania praktyczne
+    └── requirements.txt
 ```
+
+## 🎯 Wspólne Cechy Głównych Projektów
+
+Wszystkie główne skrypty (PNA, Fibonacci, Horse, PITAGORAS) zostały zunifikowane i oferują:
+
+- 🔄 **Pętla menu** - działają w trybie ciągłym bez konieczności ponownego uruchamiania
+- 🚪 **Opcja "Koniec"** - eleganckie wyjście z programu
+- 🎨 **Interaktywny interface** - przyjazne menu z numerowanymi opcjami
+- 📊 **Szczegółowe statystyki** - pełna analiza wyników
+- 💾 **Eksport do pliku** - możliwość zapisywania wyników
+- ⏱️ **Pomiar wydajności** - dokładne mierzenie czasu operacji
+- 🛡️ **Obsługa błędów** - walidacja inputu i łapanie wyjątków
 
 ## 🤝 Kontakt
 
