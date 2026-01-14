@@ -92,7 +92,7 @@ cd PITAGORAS && python Pitagoras.py
 - ⚡ Optymalizacja pamięci (sito segmentowane)
 - 🧮 Automatyczne szacowanie limitu dla pierwszych n liczb
 - ✅ Szybki test pierwszości O(√n)
-- 🔢 **Wyświetlanie dzielników** dla liczb niepier wszych ⭐ NOWOŚĆ!
+- 🔢 **Wyświetlanie dzielników właściwych** (bez 1 i samej liczby) dla liczb niepier wszych ⭐ NOWOŚĆ!
 - 🔄 **Pętla menu** - ciągły tryb pracy bez ponownego uruchamiania ⭐ NOWOŚĆ!
 - 📊 Szczegółowe statystyki dla wszystkich trybów
 - 💾 Zapis do pliku

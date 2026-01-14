@@ -138,12 +138,13 @@ def generate_primes(limit: int, verbose: bool = False) -> list[int]:
     return [num for num, prime in enumerate(is_prime) if prime]
 
 
-def get_divisors(n: int) -> list[int]:
+def get_divisors(n: int, exclude_trivial: bool = False) -> list[int]:
     """
     Znajduje wszystkie dzielniki podanej liczby.
 
     Args:
         n: Liczba do sprawdzenia
+        exclude_trivial: Jeśli True, wyklucz 1 i samą liczbę n
 
     Returns:
         Lista wszystkich dzielników liczby n
@@ -163,7 +164,17 @@ def get_divisors(n: int) -> list[int]:
             if i != n // i:  # Unikaj duplikatów dla liczb kwadratowych
                 divisors.append(n // i)
     
-    return sorted(divisors)
+    divisors = sorted(divisors)
+    
+    if exclude_trivial:
+        # Usuń 1 i samą liczbę n
+        if len(divisors) > 2:
+            return divisors[1:-1]
+        else:
+            # Dla liczb pierwszych (tylko 1 i n) zwróć pustą listę
+            return []
+    
+    return divisors
 
 
 def is_prime(n: int) -> bool:
@@ -559,22 +570,25 @@ def main() -> int:
                 else:
                     print(f"❌ Liczba {n:,} NIE JEST liczbą pierwszą")
                     
-                    # Znajdź i wyświetl dzielniki
-                    divisors = get_divisors(n)
-                    print(f"\n📋 Dzielniki liczby {n:,}:")
-                    
-                    # Wyświetl dzielniki w czytelnym formacie
-                    if len(divisors) <= 20:
-                        print(f"   {', '.join(map(str, divisors))}")
+                    # Znajdź i wyświetl dzielniki (bez 1 i samej liczby)
+                    divisors = get_divisors(n, exclude_trivial=True)
+                    if divisors:
+                        print(f"\n📋 Dzielniki liczby {n:,} (bez 1 i {n:,}):")
+                        
+                        # Wyświetl dzielniki w czytelnym formacie
+                        if len(divisors) <= 20:
+                            print(f"   {', '.join(map(str, divisors))}")
+                        else:
+                            # Dla dużej liczby dzielników, pokaż pierwsze i ostatnie
+                            first_10 = ', '.join(map(str, divisors[:10]))
+                            last_10 = ', '.join(map(str, divisors[-10:]))
+                            print(f"   Pierwsze 10: {first_10}")
+                            print(f"   ...")
+                            print(f"   Ostatnie 10: {last_10}")
+                        
+                        print(f"   Liczba dzielników właściwych: {len(divisors)}")
                     else:
-                        # Dla dużej liczby dzielników, pokaż pierwsze i ostatnie
-                        first_10 = ', '.join(map(str, divisors[:10]))
-                        last_10 = ', '.join(map(str, divisors[-10:]))
-                        print(f"   Pierwsze 10: {first_10}")
-                        print(f"   ...")
-                        print(f"   Ostatnie 10: {last_10}")
-                    
-                    print(f"   Liczba dzielników: {len(divisors)}")
+                        print(f"\n📋 Brak dzielników właściwych (liczba pierwsza lub błąd)")
                 print(f"{'='*60}")
 
                 display_timing("Czas sprawdzania", start_time, end_time)

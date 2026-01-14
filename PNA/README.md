@@ -31,7 +31,7 @@ Znajdź dokładnie pierwsze n liczb pierwszych (np. pierwsze 100, 1000, 10000 li
 Sprawdź, czy podana liczba jest liczbą pierwszą.
 - **Szybka weryfikacja**: Algorytm O(√n)
 - **Optymalizacja**: Sprawdza tylko nieparzyste dzielniki
-- **Wyświetlanie dzielników**: Jeśli liczba nie jest pierwsza, program pokazuje wszystkie jej dzielniki
+- **Wyświetlanie dzielników**: Jeśli liczba nie jest pierwsza, program pokazuje jej dzielniki właściwe (bez 1 i samej liczby)
 - **Pomiar czasu**: Szczegółowy pomiar wydajności sprawdzania
 
 ### 🚀 Dwie Metody Generowania
@@ -312,9 +312,9 @@ python PNA.py
 ============================================================
 ❌ Liczba 24 NIE JEST liczbą pierwszą
 
-📋 Dzielniki liczby 24:
-   1, 2, 3, 4, 6, 8, 12, 24
-   Liczba dzielników: 8
+📋 Dzielniki liczby 24 (bez 1 i 24):
+   2, 3, 4, 6, 8, 12
+   Liczba dzielników właściwych: 6
 ============================================================
 ⏱️  Czas sprawdzania: 3.42 μs
 ```
