@@ -1,10 +1,10 @@
 # Trójkąt 3D
 
-Skrypt rysujący trójkąt prostokątny o bokach 3, 4, 5 w przestrzeni 3D.
+Skrypt rysujący trójkąt w przestrzeni 3D z dowolnymi współrzędnymi wierzchołków.
 
 ## Opis
 
-Program wykorzystuje bibliotekę Matplotlib do wizualizacji trójkąta prostokątnego w przestrzeni trójwymiarowej. Trójkąt o bokach 3, 4, 5 to klasyczny trójkąt prostokątny (spełniający twierdzenie Pitagorasa: 3² + 4² = 5²).
+Program wykorzystuje bibliotekę Matplotlib do wizualizacji trójkąta w przestrzeni trójwymiarowej. Program interaktywnie pyta użytkownika o współrzędne (X, Y, Z) dla trzech wierzchołków trójkąta.
 
 ## Wymagania
 
@@ -15,7 +15,7 @@ Program wykorzystuje bibliotekę Matplotlib do wizualizacji trójkąta prostoką
 ## Instalacja zależności
 
 ```bash
-pip install matplotlib numpy
+pip install -r requirements.txt
 ```
 
 ## Uruchomienie
@@ -24,22 +24,41 @@ pip install matplotlib numpy
 python triangle_3d.py
 ```
 
+Program poprosi Cię o podanie współrzędnych X, Y, Z dla każdego z trzech wierzchołków (A, B, C).
+
+## Przykład użycia
+
+```
+============================================================
+Rysowanie trójkąta w przestrzeni 3D
+============================================================
+
+Program narysuje trójkąt na podstawie podanych współrzędnych
+trzech wierzchołków w przestrzeni 3D (X, Y, Z).
+
+Podaj współrzędne wierzchołka A:
+  XA: 0
+  YA: 0
+  ZA: 0
+
+Podaj współrzędne wierzchołka B:
+  XB: 3
+  YB: 0
+  ZB: 0
+
+Podaj współrzędne wierzchołka C:
+  XC: 0
+  YC: 4
+  ZC: 0
+```
+
 ## Funkcjonalność
 
-- Rysuje trójkąt w przestrzeni 3D
-- Wyświetla współrzędne wierzchołków
-- Pokazuje długości boków
+- Interaktywne pobieranie współrzędnych wierzchołków od użytkownika
+- Rysuje trójkąt w przestrzeni 3D z dowolnymi współrzędnymi
+- Automatycznie oblicza długości boków
+- Wyświetla współrzędne wierzchołków i długości boków
 - Wypełnia trójkąt kolorem z przezroczystością
 - Oznacza wierzchołki i krawędzie
-
-## Współrzędne wierzchołków
-
-- A: (0, 0, 0)
-- B: (3, 0, 0)
-- C: (0, 4, 0)
-
-## Długości boków
-
-- AB = 3
-- AC = 4
-- BC = 5
+- Automatycznie dopasowuje skalę wykresu do rozmiaru trójkąta
+- Obsługa błędów przy wprowadzaniu danych
