@@ -31,6 +31,7 @@ Znajdź dokładnie pierwsze n liczb pierwszych (np. pierwsze 100, 1000, 10000 li
 Sprawdź, czy podana liczba jest liczbą pierwszą.
 - **Szybka weryfikacja**: Algorytm O(√n)
 - **Optymalizacja**: Sprawdza tylko nieparzyste dzielniki
+- **Wyświetlanie dzielników**: Jeśli liczba nie jest pierwsza, program pokazuje jej dzielniki właściwe (bez 1 i samej liczby)
 - **Pomiar czasu**: Szczegółowy pomiar wydajności sprawdzania
 
 ### 🚀 Dwie Metody Generowania
@@ -59,6 +60,12 @@ Sprawdź, czy podana liczba jest liczbą pierwszą.
 - Format: `primes_up_to_{limit}_{timestamp}.txt`
 - Zawartość: Header + liczby pierwsze (10 na linię)
 - Oferowane dla zestawów > 100 liczb
+
+### 🔄 Pętla Menu
+- Program działa w trybie ciągłym
+- Po wykonaniu obliczeń automatyczny powrót do menu głównego
+- Możliwość wykonywania wielu operacji bez ponownego uruchamiania
+- Opcja 4: "Koniec" - eleganckie wyjście z programu
 
 ### ⚡ Optymalizacje Wydajności
 - Progress bar dla dużych zakresów (> 1M)
@@ -128,8 +135,9 @@ Wybierz tryb działania:
   1. Znajdź wszystkie liczby pierwsze do podanego limitu
   2. Znajdź pierwsze n liczb pierwszych
   3. Sprawdź czy liczba jest pierwsza
+  4. Koniec (wyjście z programu)
 
-Twój wybór (1/2/3): 1
+Twój wybór (1/2/3/4): 1
 
 Podaj zakres (liczba całkowita >= 2): 100
 ```
@@ -283,20 +291,45 @@ python PNA.py
 # Największa: 15,485,863
 # C
 
-### Przykład 7: Sprawdzanie Pojedynczej Liczby (NOWOŚĆ!)
+### Przykład 7a: Sprawdzanie Liczby Pierwszej (NOWOŚĆ!)
 ```bash
 python PNA.py
-# WybórSprawdzanie Liczby Pierwszej (NOWOŚĆ!)
+# Wybór: 3 (Sprawdź czy liczba jest pierwsza)
+# Wejście: 17
+# Wyjście: 
+============================================================
+✅ Liczba 17 JEST liczbą pierwszą
+============================================================
+⏱️  Czas sprawdzania: 2.15 μs
+```
+
+### Przykład 7b: Sprawdzanie Liczby Niepier wszej z Dzielnikami (NOWOŚĆ!)
+```bash
+python PNA.py
+# Wybór: 3 (Sprawdź czy liczba jest pierwsza)
+# Wejście: 24
+# Wyjście:
+============================================================
+❌ Liczba 24 NIE JEST liczbą pierwszą
+
+📋 Dzielniki liczby 24 (bez 1 i 24):
+   2, 3, 4, 6, 8, 12
+   Liczba dzielników właściwych: 6
+============================================================
+⏱️  Czas sprawdzania: 3.42 μs
+```
+
+### Przykład 8: Funkcja get_divisors() (NOWOŚĆ!)
 ```python
-def is_prime(n: int) -> bool
+def get_divisors(n: int) -> list[int]:
     """
-    Sprawdza, czy podana liczba jest liczbą pierwszą.
+    Znajduje wszystkie dzielniki podanej liczby.
     
     Algorytm:
-    - Sprawdza czy n < 2 (zwraca False)
-    - Obsługuje specjalny przypadek n = 2 (True)
-    - Odrzuca liczby parzyste > 2 (False)
-    - Sprawdza nieparzyste dzielniki od 3 do √n
+    - Iteruje od 1 do √n
+    - Dla każdego dzielnika i dodaje zarówno i jak i n/i
+    - Unika duplikatów dla liczb kwadratowych
+    - Zwraca posortowaną listę dzielników
     
     Złożoność: O(√n)
     

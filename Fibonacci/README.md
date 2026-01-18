@@ -27,7 +27,9 @@ F(n) = F(n-1) + F(n-2)
 - 📝 **Logging** - rejestracja wszystkich operacji do `fibonacci.log`
 
 ### 🎨 Interface:
-- 🖥️ Interaktywne menu
+- 🖥️ Interaktywne menu z 8 opcjami
+- 🔄 **Pętla menu** - ciągły tryb pracy bez ponownego uruchamiania
+- 🚪 Opcja "Koniec" - eleganckie wyjście z programu
 - 📊 Szczegółowe statystyki
 - 🛡️ Pełna walidacja inputu
 - 🔢 Formatowanie dużych liczb
@@ -54,6 +56,7 @@ python3 FibonacciUtils.py
 📌 Wszystkie funkcje używają indeksowania 0-based
    (F(0)=0, F(1)=1, F(2)=1, F(3)=2...)
 
+Wybierz opcję:
 1. Generuj liczby Fibonacciego do wartości
 2. Pobierz n-tą liczbę Fibonacciego (0-indexed)
 3. Generuj pierwsze n liczb Fibonacciego
@@ -61,7 +64,7 @@ python3 FibonacciUtils.py
 5. Sprawdź, czy liczba jest liczbą Fibonacciego
 6. Szczegółowe informacje o F(n)
 7. Eksportuj ostatni ciąg do pliku
-0. Wyjście
+8. Koniec (wyjście z programu)
 ```
 
 ## 📚 Przykłady użycia

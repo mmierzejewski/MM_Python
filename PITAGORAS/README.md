@@ -43,6 +43,12 @@ Dla każdej trójki program oblicza:
 - Detekcja dokładnych duplikatów
 - Przykładowa weryfikacja wzoru Pitagorasa
 
+### 🔄 Pętla Menu ⭐ NOWOŚĆ!
+- Program działa w trybie ciągłym
+- Po wygenerowaniu trójek automatyczny powrót do menu głównego
+- Możliwość wykonywania wielu generacji bez ponownego uruchamiania
+- Opcja "Koniec" - eleganckie wyjście z programu
+
 ## 🔬 Algorytm: Wzór Euklidesa
 
 Program wykorzystuje **wzór Euklidesa** do generowania prymitywnych trójek pitagorejskich:
@@ -94,12 +100,18 @@ python Pitagoras.py
 python Pitagoras.py
 ```
 
-### Krok 2: Podaj liczbę trójek
+### Krok 2: Wybierz opcję i podaj liczbę trójek
 ```
-╔══════════════════════════════════════════════════════════════════════════════════════╗
+╔════════════════════════════════════════════════════════════════════════════════════════╗
 ║                GENERATOR TRÓJEK PITAGOREJSKICH                                       ║
 ║                         (Tylko prymitywne)                                           ║
-╚══════════════════════════════════════════════════════════════════════════════════════╝
+╚════════════════════════════════════════════════════════════════════════════════════════╝
+
+Wybierz opcję:
+  1. Generuj trójki pitagorejskie
+  2. Koniec (wyjście z programu)
+
+Twój wybór (1/2): 1
 
 Podaj liczbę trójek pitagorejskich do wygenerowania (1-1000): 10
 ```

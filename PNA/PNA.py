@@ -138,6 +138,45 @@ def generate_primes(limit: int, verbose: bool = False) -> list[int]:
     return [num for num, prime in enumerate(is_prime) if prime]
 
 
+def get_divisors(n: int, exclude_trivial: bool = False) -> list[int]:
+    """
+    Znajduje wszystkie dzielniki podanej liczby.
+
+    Args:
+        n: Liczba do sprawdzenia
+        exclude_trivial: Jeśli True, wyklucz 1 i samą liczbę n
+
+    Returns:
+        Lista wszystkich dzielników liczby n
+
+    Złożoność:
+        Czas: O(√n)
+    """
+    if n < 1:
+        return []
+    
+    divisors = []
+    sqrt_n = int(math.sqrt(n))
+    
+    for i in range(1, sqrt_n + 1):
+        if n % i == 0:
+            divisors.append(i)
+            if i != n // i:  # Unikaj duplikatów dla liczb kwadratowych
+                divisors.append(n // i)
+    
+    divisors = sorted(divisors)
+    
+    if exclude_trivial:
+        # Usuń 1 i samą liczbę n
+        if len(divisors) > 2:
+            return divisors[1:-1]
+        else:
+            # Dla liczb pierwszych (tylko 1 i n) zwróć pustą listę
+            return []
+    
+    return divisors
+
+
 def is_prime(n: int) -> bool:
     """
     Sprawdza, czy podana liczba jest liczbą pierwszą.
@@ -246,15 +285,16 @@ def get_user_choice() -> Optional[str]:
     """Pobiera wybór trybu od użytkownika.
 
     Returns:
-        '1' dla limitu, '2' dla pierwszych n, '3' dla sprawdzenia pojedynczej liczby, None jeśli nieprawidłowy wybór
+        '1' dla limitu, '2' dla pierwszych n, '3' dla sprawdzenia pojedynczej liczby, '4' dla wyjścia, None jeśli nieprawidłowy wybór
     """
     print("Wybierz tryb działania:")
     print("  1. Znajdź wszystkie liczby pierwsze do podanego limitu")
     print("  2. Znajdź pierwsze n liczb pierwszych")
     print("  3. Sprawdź czy liczba jest pierwsza")
-    choice = input("\nTwój wybór (1/2/3): ").strip()
+    print("  4. Koniec (wyjście z programu)")
+    choice = input("\nTwój wybór (1/2/3/4): ").strip()
     
-    if choice not in ['1', '2', '3']:
+    if choice not in ['1', '2', '3', '4']:
         print("❌ Nieprawidłowy wybór!")
         return None
     
@@ -428,103 +468,136 @@ def main() -> int:
     print("║" + " " * 12 + "(Sito Eratostenesa)" + " " * 27 + "║")
     print("╚" + "═" * 58 + "╝\n")
 
-    # Pobierz wybór trybu
-    choice = get_user_choice()
-    if choice is None:
-        return 1
+    # Pętla główna programu
+    while True:
+        # Pobierz wybór trybu
+        choice = get_user_choice()
+        if choice is None:
+            continue  # Nieprawidłowy wybór, pokaż menu ponownie
+        
+        # Opcja wyjścia
+        if choice == '4':
+            print("\n👋 Do widzenia!")
+            return 0
 
-    print()  # Dodaj pustą linię
+        print()  # Dodaj pustą linię
 
-    if choice == '1':
-        # Tryb: liczby pierwsze do limitu
-        result = get_valid_limit()
-        if result is None:
-            return 1
+        if choice == '1':
+            # Tryb: liczby pierwsze do limitu
+            result = get_valid_limit()
+            if result is None:
+                print()  # Dodaj pustą linię przed powrotem do menu
+                continue
 
-        # Rozpakuj wynik - może być (limit, use_segmented) lub tylko limit
-        if isinstance(result, tuple):
-            limit, use_segmented = result
-        else:
-            limit, use_segmented = result, False
-
-        print(f"\n🔍 Wyszukiwanie liczb pierwszych do {limit:,}...")
-        if use_segmented:
-            print("   Używanie sita segmentowanego (optymalizacja pamięci)")
-
-        # Generuj liczby pierwsze z pomiarem czasu
-        start_time = datetime.now()
-        verbose = limit > 1_000_000
-
-        try:
-            if use_segmented:
-                primes = generate_primes_segmented(limit, verbose=verbose)
+            # Rozpakuj wynik - może być (limit, use_segmented) lub tylko limit
+            if isinstance(result, tuple):
+                limit, use_segmented = result
             else:
-                primes = generate_primes(limit, verbose=verbose)
-        except MemoryError as e:
-            print(f"\n❌ Błąd pamięci: {e}")
-            print("\n💡 Sugestie:")
-            print("   • Spróbuj mniejszego zakresu")
-            print("   • Użyj opcji sita segmentowanego dla dużych zakresów")
-            print("   • Zamknij inne aplikacje, aby zwolnić pamięć")
-            return 1
+                limit, use_segmented = result, False
 
-        end_time = datetime.now()
+            print(f"\n🔍 Wyszukiwanie liczb pierwszych do {limit:,}...")
+            if use_segmented:
+                print("   Używanie sita segmentowanego (optymalizacja pamięci)")
 
-        # Wyświetl wyniki
-        display_timing("Czas generowania", start_time, end_time)
-        analyze_primes(primes, limit=limit)
-
-    elif choice == '2':
-        # Tryb: pierwsze n liczb pierwszych
-        n = get_first_n_count()
-        if n is None:
-            return 1
-
-        print(f"\n🔍 Wyszukiwanie pierwszych {n:,} liczb pierwszych...")
-
-        # Generuj pierwsze n liczb pierwszych z pomiarem czasu
-        start_time = datetime.now()
-        verbose = n > 10_000
-
-        try:
-            primes = first_n_primes(n, verbose=verbose)
-        except MemoryError as e:
-            print(f"\n❌ Błąd pamięci: {e}")
-            print("\n💡 Sugestia: Spróbuj mniejszej liczby n")
-            return 1
-
-        end_time = datetime.now()
-
-        # Wyświetl wyniki
-        display_timing("Czas generowania", start_time, end_time)
-        analyze_primes(primes, first_n=n)
-
-    else:
-        # Tryb: sprawdzanie czy liczba jest pierwsza
-        try:
-            n_str = input("Podaj liczbę do sprawdzenia: ").strip()
-            n = int(n_str)
-
-            print(f"\n🔍 Sprawdzanie czy {n:,} jest liczbą pierwszą...")
-
+            # Generuj liczby pierwsze z pomiarem czasu
             start_time = datetime.now()
-            result = is_prime(n)
+            verbose = limit > 1_000_000
+
+            try:
+                if use_segmented:
+                    primes = generate_primes_segmented(limit, verbose=verbose)
+                else:
+                    primes = generate_primes(limit, verbose=verbose)
+            except MemoryError as e:
+                print(f"\n❌ Błąd pamięci: {e}")
+                print("\n💡 Sugestie:")
+                print("   • Spróbuj mniejszego zakresu")
+                print("   • Użyj opcji sita segmentowanego dla dużych zakresów")
+                print("   • Zamknij inne aplikacje, aby zwolnić pamięć")
+                print()  # Dodaj pustą linię przed powrotem do menu
+                continue
+
             end_time = datetime.now()
 
-            print(f"\n{'='*60}")
-            if result:
-                print(f"✅ Liczba {n:,} JEST liczbą pierwszą")
-            else:
-                print(f"❌ Liczba {n:,} NIE JEST liczbą pierwszą")
-            print(f"{'='*60}")
+            # Wyświetl wyniki
+            display_timing("Czas generowania", start_time, end_time)
+            analyze_primes(primes, limit=limit)
+            print()  # Dodaj pustą linię przed powrotem do menu
 
-            display_timing("Czas sprawdzania", start_time, end_time)
+        elif choice == '2':
+            # Tryb: pierwsze n liczb pierwszych
+            n = get_first_n_count()
+            if n is None:
+                print()  # Dodaj pustą linię przed powrotem do menu
+                continue
 
-        except ValueError:
-            print("❌ Nieprawidłowe dane! Proszę podać poprawną liczbę całkowitą.")
-            return 1
+            print(f"\n🔍 Wyszukiwanie pierwszych {n:,} liczb pierwszych...")
 
-    return 0
+            # Generuj pierwsze n liczb pierwszych z pomiarem czasu
+            start_time = datetime.now()
+            verbose = n > 10_000
+
+            try:
+                primes = first_n_primes(n, verbose=verbose)
+            except MemoryError as e:
+                print(f"\n❌ Błąd pamięci: {e}")
+                print("\n💡 Sugestia: Spróbuj mniejszej liczby n")
+                print()  # Dodaj pustą linię przed powrotem do menu
+                continue
+
+            end_time = datetime.now()
+
+            # Wyświetl wyniki
+            display_timing("Czas generowania", start_time, end_time)
+            analyze_primes(primes, first_n=n)
+            print()  # Dodaj pustą linię przed powrotem do menu
+
+        else:
+            # Tryb: sprawdzanie czy liczba jest pierwsza
+            try:
+                n_str = input("Podaj liczbę do sprawdzenia: ").strip()
+                n = int(n_str)
+
+                print(f"\n🔍 Sprawdzanie czy {n:,} jest liczbą pierwszą...")
+
+                start_time = datetime.now()
+                result = is_prime(n)
+                end_time = datetime.now()
+
+                print(f"\n{'='*60}")
+                if result:
+                    print(f"✅ Liczba {n:,} JEST liczbą pierwszą")
+                else:
+                    print(f"❌ Liczba {n:,} NIE JEST liczbą pierwszą")
+                    
+                    # Znajdź i wyświetl dzielniki (bez 1 i samej liczby)
+                    divisors = get_divisors(n, exclude_trivial=True)
+                    if divisors:
+                        print(f"\n📋 Dzielniki liczby {n:,} (bez 1 i {n:,}):")
+                        
+                        # Wyświetl dzielniki w czytelnym formacie
+                        if len(divisors) <= 20:
+                            print(f"   {', '.join(map(str, divisors))}")
+                        else:
+                            # Dla dużej liczby dzielników, pokaż pierwsze i ostatnie
+                            first_10 = ', '.join(map(str, divisors[:10]))
+                            last_10 = ', '.join(map(str, divisors[-10:]))
+                            print(f"   Pierwsze 10: {first_10}")
+                            print(f"   ...")
+                            print(f"   Ostatnie 10: {last_10}")
+                        
+                        print(f"   Liczba dzielników właściwych: {len(divisors)}")
+                    else:
+                        print(f"\n📋 Brak dzielników właściwych (liczba pierwsza lub błąd)")
+                print(f"{'='*60}")
+
+                display_timing("Czas sprawdzania", start_time, end_time)
+                print()  # Dodaj pustą linię przed powrotem do menu
+
+            except ValueError:
+                print("❌ Nieprawidłowe dane! Proszę podać poprawną liczbę całkowitą.")
+                print()  # Dodaj pustą linię przed powrotem do menu
+                continue
 
 
 if __name__ == "__main__":
