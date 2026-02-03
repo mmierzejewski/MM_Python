@@ -3,15 +3,56 @@ Skrypt rysujący trójkąt w przestrzeni 3D z dowolnymi współrzędnymi wierzch
 """
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import numpy as np
+from typing import List, Tuple
+import os
 
 
-def draw_triangle_3d(A, B, C):
+# Tolerancja dla sprawdzania współliniowości
+COLLINEARITY_TOLERANCE = 1e-10
+
+
+def calculate_axis_ranges(points: np.ndarray, margin_factor: float = 0.1) -> Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float]]:
+    """
+    Oblicza zakresy osi dla wykresu 3D, zawsze zawierając punkt (0,0,0)
+    
+    Args:
+        points: tablica punktów do uwzględnienia
+        margin_factor: współczynnik marginesu (domyślnie 0.1 = 10%)
+    
+    Returns:
+        tuple zawierający (x_range, y_range, z_range)
+    """
+    min_xyz = np.min(points, axis=0)
+    max_xyz = np.max(points, axis=0)
+    
+    # Zawsze obejmij zero na każdej osi
+    min_x, min_y, min_z = np.minimum([0, 0, 0], min_xyz)
+    max_x, max_y, max_z = np.maximum([0, 0, 0], max_xyz)
+    
+    # Dodaj margines
+    margin_x = (max_x - min_x) * margin_factor if max_x != min_x else 1
+    margin_y = (max_y - min_y) * margin_factor if max_y != min_y else 1
+    margin_z = (max_z - min_z) * margin_factor if max_z != min_z else 1
+    
+    return (
+        (min_x - margin_x, max_x + margin_x),
+        (min_y - margin_y, max_y + margin_y),
+        (min_z - margin_z, max_z + margin_z)
+    )
+
+
+def draw_triangle_3d(A: List[float], B: List[float], C: List[float]) -> None:
     """
     Rysuje trójkąt w przestrzeni 3D
     Sprawdza czy punkty tworzą trójkąt (nie są współliniowe i nie są identyczne)
+    
+    Args:
+        A, B, C: listy [x, y, z] reprezentujące współrzędne wierzchołków
+    
+    Example:
+        >>> draw_triangle_3d([0, 0, 0], [1, 0, 0], [0, 1, 0])
     """
     # Konwersja do numpy arrays
     A = np.array(A)
@@ -27,9 +68,12 @@ def draw_triangle_3d(A, B, C):
     AB = B - A
     AC = C - A
     cross = np.cross(AB, AC)
-    if np.allclose(cross, [0, 0, 0]):
+    if np.allclose(cross, [0, 0, 0], atol=COLLINEARITY_TOLERANCE):
         print("Błąd: Punkty są współliniowe. To nie jest trójkąt.")
         return
+    
+    # Obliczenie pola trójkąta
+    area = 0.5 * np.linalg.norm(cross)
 
     # Długości boków
     AB_len = np.linalg.norm(AB)
@@ -45,6 +89,8 @@ def draw_triangle_3d(A, B, C):
     print(f"AB = {AB_len:.2f}")
     print(f"AC = {AC_len:.2f}")
     print(f"BC = {BC_len:.2f}")
+    
+    print(f"\nPole trójkąta: {area:.2f}")
     
     # Utworzenie wykresu 3D
     fig = plt.figure(figsize=(10, 8))
@@ -89,24 +135,12 @@ def draw_triangle_3d(A, B, C):
     ax.set_title('Trójkąt w przestrzeni 3D', 
                 fontsize=14, fontweight='bold')
     
-    # Ustawianie zakresów osi tak, by punkt (0,0,0) był zawsze widoczny w tym samym miejscu
+    # Ustawianie zakresów osi
     all_points = np.array([A, B, C, [0, 0, 0]])
-    min_xyz = np.min(all_points, axis=0)
-    max_xyz = np.max(all_points, axis=0)
-    # Zawsze obejmij zero na każdej osi
-    min_x = min(0, min_xyz[0])
-    min_y = min(0, min_xyz[1])
-    min_z = min(0, min_xyz[2])
-    max_x = max(0, max_xyz[0])
-    max_y = max(0, max_xyz[1])
-    max_z = max(0, max_xyz[2])
-    # Dodaj margines
-    margin_x = (max_x - min_x) * 0.1 if max_x != min_x else 1
-    margin_y = (max_y - min_y) * 0.1 if max_y != min_y else 1
-    margin_z = (max_z - min_z) * 0.1 if max_z != min_z else 1
-    ax.set_xlim([min_x - margin_x, max_x + margin_x])
-    ax.set_ylim([min_y - margin_y, max_y + margin_y])
-    ax.set_zlim([min_z - margin_z, max_z + margin_z])
+    x_range, y_range, z_range = calculate_axis_ranges(all_points)
+    ax.set_xlim(x_range)
+    ax.set_ylim(y_range)
+    ax.set_zlim(z_range)
     
     # Siatka
     ax.grid(True, alpha=0.3)
@@ -115,10 +149,16 @@ def draw_triangle_3d(A, B, C):
     ax.legend()
     
     plt.tight_layout()
+    
+    # Zapisz plik w tym samym katalogu co skrypt
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    output_path = os.path.join(script_dir, 'triangle_3d.png')
+    plt.savefig(output_path)
+    print(f"\nWykres zapisany jako {output_path}")
     plt.show()
 
 
-def get_vertex_coordinates(vertex_name):
+def get_vertex_coordinates(vertex_name: str) -> List[float]:
     """
     Pobiera współrzędne wierzchołka od użytkownika
     

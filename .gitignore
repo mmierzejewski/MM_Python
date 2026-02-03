@@ -47,6 +47,9 @@ Fibonacci/fibonacci_*.txt
 Horse/*.log
 Horse/knights_tour_*.txt
 
+# TRIANGLE exports
+TRIANGLE/*.png
+
 # Logs (global)
 *.log
 

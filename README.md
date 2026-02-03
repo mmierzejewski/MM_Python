@@ -80,6 +80,30 @@ cd PITAGORAS && python Pitagoras.py
 
 ---
 
+### 📐 [3D Triangle Visualizer](TRIANGLE/)
+**Zaawansowany wizualizator trójkątów w przestrzeni 3D** z pełną walidacją geometryczną.
+
+**Features:**
+- ✅ **Walidacja geometryczna** - sprawdzanie identycznych punktów i współliniowości
+- 📏 Obliczanie długości wszystkich boków
+- 📐 **Obliczanie pola powierzchni** - wykorzystanie iloczynu wektorowego
+- 🎨 **Profesjonalna wizualizacja 3D**:
+  - Wypełniony trójkąt z przezroczystością
+  - Oznaczone wierzchołki i boki
+  - Etykiety z długościami boków
+  - Punkt (0,0,0) zawsze widoczny jako odniesienie
+- 💾 **Automatyczny eksport do PNG** w katalogu skryptu
+- 📊 Szczegółowe statystyki (współrzędne, długości, pole)
+- 📈 **Interaktywny wykres** - rotacja, zoom, pan
+- 🔢 **Type hints** - pełne adnotacje typów
+- 🛡️ Pełna obsługa błędów i walidacja inputu
+
+```bash
+cd TRIANGLE && python triangle_3d.py
+```
+
+---
+
 ### 🔢 [Prime Numbers Generator](PNA/)
 **Efektywny generator liczb pierwszych** używający sita Eratostenesa.
 
@@ -227,6 +251,12 @@ MM_Python/
 │
 ├── PNA/                    # Liczby pierwsze (Sito Eratostenesa + pętla menu)
 │   ├── PNA.py
+│   └── README.md
+│
+├── TRIANGLE/               # Wizualizator trójkątów 3D (walidacja + pole)
+│   ├── triangle_3d.py
+│   ├── triangle_3d.png
+│   ├── requirements.txt
 │   └── README.md
 │
 ├── Courses/                # Projekty edukacyjne i kursy
