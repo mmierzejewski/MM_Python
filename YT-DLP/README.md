@@ -7,7 +7,7 @@ Uniwersalny downloader wideo używający yt-dlp obsługujący YouTube, TikTok, V
 - 📥 Pobieranie wideo z ponad 1000 stron internetowych
 - 🍪 **Obsługa autoryzacji cookies** (treści prywatne/tylko dla członków)
 - 🎵 Tryb tylko audio (ekstrakcja MP3)
-- � **Zaawansowany wybór ścieżek audio** z szczegółowymi informacjami technicznymi
+- 🔊 **Zaawansowany wybór ścieżek audio** z szczegółowymi informacjami technicznymi
 - 📋 Wyświetlanie wszystkich dostępnych ścieżek audio (format_id, bitrate, rozmiar, język)
 - 🎯 Automatyczne filtrowanie audiodeskrypcji
 - 📊 Zawsze najlepsza jakość wideo (automatycznie)
