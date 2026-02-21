@@ -176,6 +176,24 @@ def validate_url(url: str) -> bool:
         return False
 
 
+def is_no_formats_error(error_message: str) -> bool:
+    """Sprawdza czy błąd oznacza brak dostępnych formatów w źródle."""
+    msg = (error_message or "").lower()
+    return 'no video formats found' in msg
+
+
+def print_no_formats_guidance(url: str) -> None:
+    """Wyświetla wskazówki dla problemu braku formatów po stronie ekstraktora/serwisu."""
+    print("\n⚠️  Serwis nie zwrócił żadnych obsługiwanych formatów wideo.")
+    print("   To zwykle problem po stronie ekstraktora yt-dlp lub zmian w serwisie, a nie Twojego skryptu.")
+    print(f"   URL: {url}")
+    print("\n   Co możesz zrobić:")
+    print("   1) Potwierdź wersję: yt-dlp -U")
+    print("   2) Jeśli instalacja przez pip: pip install -U yt-dlp")
+    print("   3) Zgłoś problem: https://github.com/yt-dlp/yt-dlp/issues?q=")
+    print("      (dodaj wynik: yt-dlp -vU <URL>)")
+
+
 def get_audio_tracks(url: str, cookie_file: Optional[Path] = None) -> list[dict]:
     """
     Pobiera listę dostępnych ścieżek dźwiękowych z wideo.
@@ -269,7 +287,13 @@ def get_audio_tracks(url: str, cookie_file: Optional[Path] = None) -> list[dict]
             return audio_tracks
 
     except Exception as e:
-        logging.error(f"Błąd podczas pobierania informacji o ścieżkach audio: {e}")
+        error_msg = str(e)
+        if is_no_formats_error(error_msg):
+            logging.warning(
+                f"Brak formatów podczas wykrywania ścieżek audio (najprawdopodobniej problem ekstraktora/serwisu): {error_msg}"
+            )
+        else:
+            logging.error(f"Błąd podczas pobierania informacji o ścieżkach audio: {error_msg}")
         return []
 
 
@@ -391,7 +415,10 @@ def download_video(
                 return True
     except Exception as e:
         error_msg = str(e)
-        print(f"\n❌ Błąd pobierania: {error_msg}")
+        if is_no_formats_error(error_msg):
+            print_no_formats_guidance(url)
+        else:
+            print(f"\n❌ Błąd pobierania: {error_msg}")
         logging.error(f"Pobieranie nieudane dla {url}: {error_msg}")
         return False
     finally:
