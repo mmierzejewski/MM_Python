@@ -1,1 +1,1 @@
-libtorrent>=2.0.9
+aria2p==0.12.1

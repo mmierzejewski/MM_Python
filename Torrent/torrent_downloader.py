@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
-"""Prosty downloader torrentow oparty o libtorrent."""
+"""Prosty downloader torrentow oparty o aria2."""
 
 from __future__ import annotations
 
 import argparse
 import logging
+import os
+import secrets
+import shutil
+import socket
+import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
 try:
-    import libtorrent as lt
+    import aria2p
 except ImportError:  # pragma: no cover - zalezne od srodowiska
-    lt = None
+    aria2p = None
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -155,42 +161,101 @@ def resolve_sources(args: argparse.Namespace) -> list[str]:
     return unique_sources
 
 
-def ensure_libtorrent() -> None:
-    if lt is not None:
+def ensure_aria2() -> None:
+    if aria2p is not None and shutil.which("aria2c"):
         return
 
-    logging.error("Brak biblioteki libtorrent")
+    logging.error("Brak zaleznosci aria2/aria2p")
     print(
-        "Brak biblioteki 'libtorrent'. Zainstaluj zaleznosci: pip install -r requirements.txt",
+        "Brak zaleznosci 'aria2c' lub biblioteki 'aria2p'. Zainstaluj zaleznosci: brew install aria2 && pip install -r requirements.txt",
         file=sys.stderr,
     )
     raise SystemExit(1)
 
 
-def create_session(listen_port: int) -> lt.session:
-    session = lt.session()
-    session.listen_on(listen_port, listen_port + 10)
-    settings = {
-        "alert_mask": lt.alert.category_t.error_notification
-        | lt.alert.category_t.storage_notification
-        | lt.alert.category_t.status_notification,
-        "enable_dht": True,
-        "enable_lsd": True,
-        "enable_upnp": True,
-        "enable_natpmp": True,
+def find_free_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.bind(("127.0.0.1", 0))
+        probe.listen(1)
+        return int(probe.getsockname()[1])
+
+
+class Aria2Runtime:
+    def __init__(self, listen_port: int, output_dir: Path) -> None:
+        self.listen_port = listen_port
+        self.output_dir = output_dir
+        self.rpc_port = find_free_port()
+        self.rpc_secret = secrets.token_hex(16)
+        self.runtime_dir = tempfile.TemporaryDirectory(prefix="torrent-downloader-aria2-")
+        self.client: aria2p.Client | None = None
+        self.api: aria2p.API | None = None
+
+    def start(self) -> aria2p.API:
+        aria2c_path = shutil.which("aria2c")
+        if aria2c_path is None or aria2p is None:
+            ensure_aria2()
+
+        command = [
+            aria2c_path or "aria2c",
+            "--daemon=true",
+            "--enable-rpc=true",
+            "--rpc-listen-all=false",
+            f"--rpc-listen-port={self.rpc_port}",
+            f"--rpc-secret={self.rpc_secret}",
+            f"--dir={self.output_dir}",
+            f"--listen-port={self.listen_port}-{self.listen_port + 10}",
+            f"--dht-listen-port={self.listen_port}-{self.listen_port + 10}",
+            f"--stop-with-process={os.getpid()}",
+            "--max-concurrent-downloads=1",
+            "--summary-interval=0",
+            "--console-log-level=warn",
+            "--bt-save-metadata=true",
+            "--no-conf=true",
+        ]
+        subprocess.run(command, check=True, capture_output=True, text=True)
+
+        self.client = aria2p.Client(host="http://localhost", port=self.rpc_port, secret=self.rpc_secret)
+        self.api = aria2p.API(self.client)
+
+        deadline = time.monotonic() + 10
+        while True:
+            try:
+                self.client.get_version()
+                break
+            except Exception:
+                if time.monotonic() >= deadline:
+                    logging.exception("Nie udalo sie uruchomic aria2 RPC")
+                    print("Nie udalo sie uruchomic aria2 RPC.", file=sys.stderr)
+                    raise SystemExit(1)
+                time.sleep(0.2)
+
+        logging.info("Uruchomiono aria2 RPC na porcie %d", self.rpc_port)
+        return self.api
+
+    def close(self) -> None:
+        if self.client is not None:
+            shutdown = getattr(self.client, "shutdown", None)
+            if shutdown is not None:
+                try:
+                    shutdown()
+                except Exception:
+                    logging.debug("Nie udalo sie zamknac aria2 RPC", exc_info=True)
+        self.runtime_dir.cleanup()
+
+
+def add_download(api: aria2p.API, source: str, output_dir: Path, seed: bool) -> aria2p.Download:
+    options = {
+        "dir": str(output_dir),
+        "bt-save-metadata": "true",
     }
-    session.apply_settings(settings)
-    session.start_dht()
-    logging.info("Utworzono sesje BitTorrent na porcie %d", listen_port)
-    return session
-
-
-def add_torrent(session: lt.session, source: str, output_dir: Path) -> lt.torrent_handle:
-    params = {"save_path": str(output_dir)}
+    if seed:
+        options["seed-ratio"] = "0.0"
+    else:
+        options["seed-time"] = "0"
 
     if source.startswith("magnet:"):
         logging.info("Dodawanie magnet linku")
-        return lt.add_magnet_uri(session, source, params)
+        return api.add_magnet(source, options=options)
 
     torrent_path = Path(source).expanduser().resolve()
     if not torrent_path.is_file():
@@ -199,22 +264,37 @@ def add_torrent(session: lt.session, source: str, output_dir: Path) -> lt.torren
         raise SystemExit(1)
 
     logging.info("Dodawanie pliku torrent: %s", torrent_path)
-    torrent_info = lt.torrent_info(str(torrent_path))
-    params["ti"] = torrent_info
-    return session.add_torrent(params)
+    return api.add_torrent(str(torrent_path), options=options)
 
 
-def wait_for_metadata(handle: lt.torrent_handle, timeout: int) -> None:
+def fail_download(download: aria2p.Download, message: str) -> None:
+    error_message = getattr(download, "error_message", "") or download.status
+    logging.error("%s: %s", message, error_message)
+    print(f"{message}: {error_message}", file=sys.stderr)
+    raise SystemExit(1)
+
+
+def wait_for_metadata(download: aria2p.Download, timeout: int) -> aria2p.Download:
     started = time.monotonic()
-    while not handle.status().has_metadata:
+    current = download
+    while current.is_metadata:
+        current.update()
+        if current.followed_by:
+            current = current.followed_by[0]
+            current.update()
+            logging.info("Pobrano metadane torrentu")
+            print("Metadane pobrane." + " " * 20)
+            return current
+        if current.has_failed or current.is_removed:
+            fail_download(current, "Nie udalo sie pobrac metadanych torrentu")
         if time.monotonic() - started > timeout:
+            current.remove(force=True, files=False)
             logging.error("Przekroczono czas oczekiwania na metadane torrentu")
             print("Przekroczono czas oczekiwania na metadane torrentu.", file=sys.stderr)
             raise SystemExit(1)
         print("Oczekiwanie na metadane...", end="\r", flush=True)
         time.sleep(1)
-    logging.info("Pobrano metadane torrentu")
-    print("Metadane pobrane." + " " * 20)
+    return current
 
 
 def format_size(size_bytes: int) -> str:
@@ -227,14 +307,13 @@ def format_size(size_bytes: int) -> str:
     return f"{size_bytes} B"
 
 
-def print_progress(handle: lt.torrent_handle) -> str:
-    status = handle.status()
-    progress = status.progress * 100
-    download_rate = status.download_rate / 1000
-    upload_rate = status.upload_rate / 1000
-    peers = status.num_peers
-    total_done = format_size(status.total_done)
-    total_wanted = format_size(status.total_wanted)
+def print_progress(download: aria2p.Download) -> str:
+    progress = download.progress
+    download_rate = download.download_speed / 1000
+    upload_rate = download.upload_speed / 1000
+    peers = download.connections
+    total_done = format_size(download.completed_length)
+    total_wanted = format_size(download.total_length)
 
     line = (
         f"{progress:6.2f}% | {total_done}/{total_wanted} | "
@@ -244,44 +323,56 @@ def print_progress(handle: lt.torrent_handle) -> str:
     return line
 
 
-def download(handle: lt.torrent_handle, seed: bool) -> None:
+def download(download_item: aria2p.Download, seed: bool) -> None:
     last_logged_second = -1
-    while not handle.status().is_seeding:
-        line = print_progress(handle)
+    while True:
+        download_item.update()
+        if download_item.has_failed or download_item.is_removed:
+            fail_download(download_item, "Pobieranie nie powiodlo sie")
+
+        if seed and download_item.seeder:
+            logging.info("Tryb seedowania aktywny")
+            print("\nTryb seedowania aktywny. Zatrzymaj program Ctrl+C.")
+            try:
+                while True:
+                    download_item.update()
+                    if download_item.has_failed or download_item.is_removed:
+                        fail_download(download_item, "Seedowanie zostalo przerwane")
+                    line = print_progress(download_item)
+                    elapsed_second = int(time.monotonic())
+                    if elapsed_second != last_logged_second:
+                        logging.info("Seedowanie: %s", line)
+                        last_logged_second = elapsed_second
+                    time.sleep(5)
+            except KeyboardInterrupt:
+                logging.info("Zatrzymano seedowanie przez uzytkownika")
+                print("\nZatrzymano seedowanie.")
+                return
+
+        line = print_progress(download_item)
         elapsed_second = int(time.monotonic())
         if elapsed_second != last_logged_second:
             logging.info("Postep: %s", line)
             last_logged_second = elapsed_second
+        if download_item.is_complete:
+            break
         time.sleep(1)
 
-    final_line = print_progress(handle)
+    final_line = print_progress(download_item)
     logging.info("Pobieranie zakonczone: %s", final_line)
     print("\nPobieranie zakonczone.")
 
-    if not seed:
-        return
 
-    logging.info("Tryb seedowania aktywny")
-    print("Tryb seedowania aktywny. Zatrzymaj program Ctrl+C.")
-    try:
-        while True:
-            print_progress(handle)
-            time.sleep(5)
-    except KeyboardInterrupt:
-        logging.info("Zatrzymano seedowanie przez uzytkownika")
-        print("\nZatrzymano seedowanie.")
-
-
-def run_download(session: lt.session, source: str, output_dir: Path, timeout: int, seed: bool) -> None:
+def run_download(api: aria2p.API, source: str, output_dir: Path, timeout: int, seed: bool) -> None:
     logging.info("Rozpoczecie obslugi zrodla: %s", source)
-    handle = add_torrent(session, source, output_dir)
-    wait_for_metadata(handle, timeout)
+    download_item = add_download(api, source, output_dir, seed)
+    download_item = wait_for_metadata(download_item, timeout)
 
-    name = handle.status().name or "nieznany torrent"
+    name = download_item.name or "nieznany torrent"
     logging.info("Start pobierania: %s", name)
     print(f"Start pobierania: {name}")
     print(f"Katalog docelowy: {output_dir}")
-    download(handle, seed)
+    download(download_item, seed)
 
 
 def main() -> None:
@@ -300,19 +391,20 @@ def main() -> None:
 
     sources = resolve_sources(args)
 
-    ensure_libtorrent()
+    ensure_aria2()
 
     output_dir = Path(args.output).expanduser().resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     logging.info("Katalog docelowy: %s", output_dir)
 
-    session = create_session(args.listen_port)
+    runtime = Aria2Runtime(args.listen_port, output_dir)
+    api = runtime.start()
 
     try:
         for index, source in enumerate(sources, start=1):
             if len(sources) > 1:
                 print(f"\n[{index}/{len(sources)}] Zrodlo: {source}")
-            run_download(session, source, output_dir, args.timeout, args.seed)
+            run_download(api, source, output_dir, args.timeout, args.seed)
     except KeyboardInterrupt:
         logging.info("Przerwano pobieranie przez uzytkownika")
         print("\nPrzerwano pobieranie.")
@@ -320,6 +412,8 @@ def main() -> None:
     except Exception:
         logging.exception("Nieoczekiwany blad podczas pobierania")
         raise
+    finally:
+        runtime.close()
 
 
 if __name__ == "__main__":

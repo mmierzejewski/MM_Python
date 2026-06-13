@@ -4,13 +4,16 @@ Prosty skrypt Python do pobierania torrentow z magnet linku albo pliku `.torrent
 
 ## Wymagania
 
-- Python 3.10+
-- biblioteka `libtorrent`
+- Python 3.14.5
+- `aria2` 1.37+
+- biblioteka `aria2p` 0.12.1
 
 Instalacja:
 
 ```bash
-pip install -r requirements.txt
+brew install aria2
+python3.14 -m venv ~/.venv
+~/.venv/bin/python -m pip install -r requirements.txt
 ```
 
 ## Uzycie
@@ -59,5 +62,7 @@ magnet:?xt=urn:btih:...
 ## Uwagi
 
 Skrypt nie omija zabezpieczen i powinien byc uzywany tylko do pobierania tresci, do ktorych masz prawa.
+
+Skrypt uruchamia lokalnie `aria2c` w trybie RPC i zamyka go po zakonczonej pracy.
 
 Podczas pracy skrypt zapisuje logi do pliku `torrent_downloader.log` w biezacym katalogu, chyba ze podasz inna sciezke przez `--log-file`.
