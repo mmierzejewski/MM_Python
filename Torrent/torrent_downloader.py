@@ -48,6 +48,34 @@ def build_parser() -> argparse.ArgumentParser:
         help="Port nasluchu BitTorrent (domyslnie: 6881)",
     )
     parser.add_argument(
+        "--listen-port-end",
+        type=int,
+        default=6891,
+        help="Koniec zakresu portow BitTorrent i DHT (domyslnie: 6891)",
+    )
+    parser.add_argument(
+        "--rpc-port",
+        type=int,
+        default=0,
+        help="Port RPC aria2 dostepny na interfejsach hosta (domyslnie: losowy wolny port)",
+    )
+    parser.add_argument(
+        "--listen-address",
+        choices=("localhost", "127.0.0.1", "0.0.0.0"),
+        default="0.0.0.0",
+        help="Zakres nasluchu RPC: localhost albo 0.0.0.0 (domyslnie: 0.0.0.0)",
+    )
+    parser.add_argument(
+        "--local-only",
+        action="store_true",
+        help="Skrot dla --listen-address localhost.",
+    )
+    parser.add_argument(
+        "--public-rpc",
+        action="store_true",
+        help="Skrot dla --listen-address 0.0.0.0.",
+    )
+    parser.add_argument(
         "--timeout",
         type=int,
         default=120,
@@ -57,6 +85,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--seed",
         action="store_true",
         help="Po zakonczeniu pobierania pozostaw klient w trybie seedowania.",
+    )
+    parser.add_argument(
+        "--allow-overwrite",
+        action="store_true",
+        help="Pozwala nadpisac istniejacy plik docelowy, gdy aria2 blokuje ponowne pobranie.",
     )
     parser.add_argument(
         "-i",
@@ -169,6 +202,12 @@ def interactive_args(args: argparse.Namespace, full_interactive: bool = True) ->
     if not args.source and not args.batch_file:
         args.source, args.batch_file = collect_interactive_sources()
 
+    if not args.allow_overwrite:
+        args.allow_overwrite = prompt_bool(
+            "Czy nadpisac istniejace pliki docelowe, jesli aria2 zablokuje wznowienie?",
+            default=False,
+        )
+
     if full_interactive and args.listen_port == 6881:
         port = input("Port nasluchu [6881]: ").strip()
         if port:
@@ -231,18 +270,67 @@ def ensure_aria2() -> None:
     raise SystemExit(1)
 
 
-def find_free_port() -> int:
+def find_free_port(bind_host: str) -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-        probe.bind(("127.0.0.1", 0))
+        probe.bind((bind_host, 0))
         probe.listen(1)
         return int(probe.getsockname()[1])
 
 
+def can_bind_tcp_port(bind_host: str, port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        try:
+            probe.bind((bind_host, port))
+        except OSError:
+            return False
+        return True
+
+
+def resolve_rpc_port(requested_port: int, listen_address: str, explicit_port: bool) -> int:
+    bind_host = "127.0.0.1" if listen_address in {"localhost", "127.0.0.1"} else "0.0.0.0"
+
+    if requested_port <= 0:
+        random_port = find_free_port(bind_host)
+        logging.info("Wybrano losowy wolny port RPC: %d", random_port)
+        print(f"Wybrano losowy wolny port RPC: {random_port}", file=sys.stderr)
+        return random_port
+
+    if can_bind_tcp_port(bind_host, requested_port):
+        return requested_port
+
+    if explicit_port:
+        print(
+            f"Port RPC {requested_port} jest juz zajety. Wybierz inny przez --rpc-port.",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
+
+    fallback_port = find_free_port(bind_host)
+    logging.warning(
+        "Domyslny port RPC %d jest zajety; uzywam wolnego portu %d",
+        requested_port,
+        fallback_port,
+    )
+    print(
+        f"Port RPC {requested_port} jest zajety. Uzywam wolnego portu: {fallback_port}",
+        file=sys.stderr,
+    )
+    return fallback_port
+
 class Aria2Runtime:
-    def __init__(self, listen_port: int, output_dir: Path) -> None:
+    def __init__(
+        self,
+        listen_port: int,
+        listen_port_end: int,
+        rpc_port: int,
+        listen_address: str,
+        output_dir: Path,
+    ) -> None:
         self.listen_port = listen_port
+        self.listen_port_end = listen_port_end
+        self.rpc_port = rpc_port
+        self.listen_address = listen_address
         self.output_dir = output_dir
-        self.rpc_port = find_free_port()
         self.rpc_secret = secrets.token_hex(16)
         self.runtime_dir = tempfile.TemporaryDirectory(prefix="torrent-downloader-aria2-")
         self.client: aria2p.Client | None = None
@@ -253,16 +341,18 @@ class Aria2Runtime:
         if aria2c_path is None:
             ensure_aria2()
 
+        rpc_listen_all = self.listen_address == "0.0.0.0"
+
         command = [
             aria2c_path or "aria2c",
             "--daemon=true",
             "--enable-rpc=true",
-            "--rpc-listen-all=false",
+            f"--rpc-listen-all={'true' if rpc_listen_all else 'false'}",
             f"--rpc-listen-port={self.rpc_port}",
             f"--rpc-secret={self.rpc_secret}",
             f"--dir={self.output_dir}",
-            f"--listen-port={self.listen_port}-{self.listen_port + 10}",
-            f"--dht-listen-port={self.listen_port}-{self.listen_port + 10}",
+            f"--listen-port={self.listen_port}-{self.listen_port_end}",
+            f"--dht-listen-port={self.listen_port}-{self.listen_port_end}",
             f"--stop-with-process={os.getpid()}",
             "--max-concurrent-downloads=1",
             "--summary-interval=0",
@@ -283,11 +373,15 @@ class Aria2Runtime:
             except Exception:
                 if time.monotonic() >= deadline:
                     logging.exception("Nie udalo sie uruchomic aria2 RPC")
-                    print("Nie udalo sie uruchomic aria2 RPC.", file=sys.stderr)
+                    print(
+                        f"Nie udalo sie uruchomic aria2 RPC na porcie {self.rpc_port}.",
+                        file=sys.stderr,
+                    )
                     raise SystemExit(1)
                 time.sleep(0.2)
 
         logging.info("Uruchomiono aria2 RPC na porcie %d", self.rpc_port)
+        print(f"RPC aria2 nasluchuje na {self.listen_address}:{self.rpc_port}")
         return self.api
 
     def close(self) -> None:
@@ -301,7 +395,13 @@ class Aria2Runtime:
         self.runtime_dir.cleanup()
 
 
-def add_download(api: aria2p.API, source: str, output_dir: Path, seed: bool) -> aria2p.Download:
+def add_download(
+    api: aria2p.API,
+    source: str,
+    output_dir: Path,
+    seed: bool,
+    allow_overwrite: bool,
+) -> aria2p.Download:
     options = {
         "dir": str(output_dir),
         "bt-save-metadata": "true",
@@ -310,6 +410,8 @@ def add_download(api: aria2p.API, source: str, output_dir: Path, seed: bool) -> 
         options["seed-ratio"] = "0.0"
     else:
         options["seed-time"] = "0"
+    if allow_overwrite:
+        options["allow-overwrite"] = "true"
 
     if source.startswith("magnet:"):
         logging.info("Dodawanie magnet linku")
@@ -327,6 +429,11 @@ def add_download(api: aria2p.API, source: str, output_dir: Path, seed: bool) -> 
 
 def fail_download(download: aria2p.Download, message: str) -> None:
     error_message = getattr(download, "error_message", "") or download.status
+    if "control file(*.aria2) does not exist" in error_message:
+        error_message = (
+            error_message
+            + " Uzyj --allow-overwrite albo usun istniejacy plik przed ponownym pobraniem."
+        )
     logging.error("%s: %s", message, error_message)
     print(f"{message}: {error_message}", file=sys.stderr)
     raise SystemExit(1)
@@ -421,9 +528,16 @@ def download(download_item: aria2p.Download, seed: bool) -> None:
     print("\nPobieranie zakonczone.")
 
 
-def run_download(api: aria2p.API, source: str, output_dir: Path, timeout: int, seed: bool) -> None:
+def run_download(
+    api: aria2p.API,
+    source: str,
+    output_dir: Path,
+    timeout: int,
+    seed: bool,
+    allow_overwrite: bool,
+) -> None:
     logging.info("Rozpoczecie obslugi zrodla: %s", source)
-    download_item = add_download(api, source, output_dir, seed)
+    download_item = add_download(api, source, output_dir, seed, allow_overwrite)
     download_item = wait_for_metadata(download_item, timeout)
 
     name = download_item.name or "nieznany torrent"
@@ -436,6 +550,24 @@ def run_download(api: aria2p.API, source: str, output_dir: Path, timeout: int, s
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
+    explicit_rpc_port = any(
+        argument == "--rpc-port" or argument.startswith("--rpc-port=")
+        for argument in sys.argv[1:]
+    )
+
+    if args.local_only and args.public_rpc:
+        print("Nie mozna uzyc jednoczesnie --local-only i --public-rpc.", file=sys.stderr)
+        raise SystemExit(2)
+
+    if args.local_only:
+        args.listen_address = "localhost"
+    if args.public_rpc:
+        args.listen_address = "0.0.0.0"
+
+    if args.listen_port_end < args.listen_port:
+        print("--listen-port-end musi byc wiekszy lub rowny --listen-port.", file=sys.stderr)
+        raise SystemExit(2)
+
     log_path = setup_logging(args.log_file)
     logging.info("Plik logu: %s", log_path)
 
@@ -453,18 +585,26 @@ def main() -> None:
 
     ensure_aria2()
 
+    args.rpc_port = resolve_rpc_port(args.rpc_port, args.listen_address, explicit_rpc_port)
+
     output_dir = Path(args.output).expanduser().resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     logging.info("Katalog docelowy: %s", output_dir)
 
-    runtime = Aria2Runtime(args.listen_port, output_dir)
+    runtime = Aria2Runtime(
+        args.listen_port,
+        args.listen_port_end,
+        args.rpc_port,
+        args.listen_address,
+        output_dir,
+    )
     api = runtime.start()
 
     try:
         for index, source in enumerate(sources, start=1):
             if len(sources) > 1:
                 print(f"\n[{index}/{len(sources)}] Zrodlo: {source}")
-            run_download(api, source, output_dir, args.timeout, args.seed)
+            run_download(api, source, output_dir, args.timeout, args.seed, args.allow_overwrite)
     except KeyboardInterrupt:
         logging.info("Przerwano pobieranie przez uzytkownika")
         print("\nPrzerwano pobieranie.")
