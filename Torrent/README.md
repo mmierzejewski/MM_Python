@@ -27,13 +27,13 @@ python torrent_downloader.py "magnet:?xt=urn:btih:..."
 Plik `.torrent`:
 
 ```bash
-python torrent_downloader.py /sciezka/do/pliku.torrent -o ./pobrane
+python torrent_downloader.py /sciezka/do/pliku.torrent
 ```
 
 Plik tekstowy z wieloma wpisami:
 
 ```bash
-python torrent_downloader.py --batch-file lista.txt -o ./pobrane
+python torrent_downloader.py --batch-file lista.txt
 ```
 
 Tryb interaktywny:
@@ -42,12 +42,21 @@ Tryb interaktywny:
 python torrent_downloader.py --interactive
 ```
 
+Uruchomienie bez argumentow:
+
+```bash
+python torrent_downloader.py
+```
+
+Skrypt zapyta wtedy o katalog docelowy oraz o magnet link lub sciezke do pliku `.torrent`, podobnie jak `YT-DLP` pyta o katalog i adresy URL.
+Domyslnie pyta tylko o te dwa elementy.
+
 Dodatkowe opcje:
 
 - `--listen-port 6881` - port nasluchu klienta BitTorrent
 - `--timeout 120` - maksymalny czas oczekiwania na metadane
 - `--seed` - pozostawia klient w trybie seedowania po zakonczeniu pobierania
-- `--interactive` - pyta o zrodlo i podstawowe opcje w terminalu
+- `--interactive` - wymusza pytania o zrodlo oraz dodatkowe opcje w terminalu
 - `--batch-file lista.txt` - czyta wiele zrodel z pliku tekstowego, po jednym na linie
 - `--log-file ./torrent.log` - zapisuje logi do wskazanego pliku
 

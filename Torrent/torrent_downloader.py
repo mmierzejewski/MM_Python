@@ -17,8 +17,13 @@ from pathlib import Path
 
 try:
     import aria2p
-except ImportError:  # pragma: no cover - zalezne od srodowiska
-    aria2p = None
+except ImportError as e:  # pragma: no cover - zalezne od srodowiska
+    print(f"Brak wymaganego pakietu: {e.name}", file=sys.stderr)
+    print("\nZainstaluj zaleznosci:", file=sys.stderr)
+    print("   pip install -r requirements.txt", file=sys.stderr)
+    print("   lub", file=sys.stderr)
+    print("   pip install aria2p", file=sys.stderr)
+    sys.exit(1)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -33,8 +38,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-o",
         "--output",
-        default="downloads",
-        help="Katalog docelowy dla pobieranych danych (domyslnie: downloads)",
+        default=".",
+        help="Katalog docelowy dla pobieranych danych (domyslnie: biezacy katalog)",
     )
     parser.add_argument(
         "--listen-port",
@@ -95,33 +100,86 @@ def prompt_bool(message: str, default: bool = False) -> bool:
     return answer in {"t", "tak", "y", "yes"}
 
 
-def interactive_args(args: argparse.Namespace) -> argparse.Namespace:
+def get_output_directory(default_output: str = ".") -> str:
+    current_dir = Path.cwd().resolve()
+    default_path = (current_dir / default_output).resolve()
+
+    print(f"Katalog wyjsciowy [domyslnie: {default_path}]:")
+    try:
+        user_input = input("   (wcisnij Enter, aby uzyc domyslnego katalogu): ").strip()
+    except EOFError:
+        print()
+        return str(default_path)
+
+    if not user_input:
+        return str(default_path)
+
+    output_path = Path(user_input).expanduser().resolve()
+    if not output_path.exists():
+        print(f"Katalog nie istnieje: {output_path}")
+        if not prompt_bool("Utworzyc katalog?", default=False):
+            print(f"Uzywam domyslnego katalogu: {default_path}")
+            return str(default_path)
+
+    return str(output_path)
+
+
+def collect_interactive_sources() -> tuple[str | None, str | None]:
+    print("Podaj magnet linki albo sciezki do plikow .torrent.")
+    print("Wprowadzaj po jednym wpisie w linii; pusta linia konczy.")
+
+    entries: list[str] = []
+    entry_count = 0
+
+    while True:
+        entry_count += 1
+        try:
+            source = input(f"   Zrodlo #{entry_count}: ").strip()
+        except EOFError:
+            print()
+            if entries:
+                break
+            print("   Wprowadz przynajmniej jedno zrodlo")
+            raise SystemExit(2)
+        if not source:
+            if entries:
+                break
+            print("   Wprowadz przynajmniej jedno zrodlo")
+            entry_count -= 1
+            continue
+        entries.append(source)
+        if len(entries) == 1:
+            print("   (wcisnij Enter, aby zakonczyc lub podaj kolejne zrodlo)")
+
+    if len(entries) == 1:
+        return entries[0], None
+
+    batch_file = Path(tempfile.NamedTemporaryFile(prefix="torrent-batch-", suffix=".txt", delete=False).name)
+    batch_file.write_text("\n".join(entries) + "\n", encoding="utf-8")
+    return None, str(batch_file)
+
+
+def interactive_args(args: argparse.Namespace, full_interactive: bool = True) -> argparse.Namespace:
     print("Tryb interaktywny torrent downloader")
     logging.info("Uruchomiono tryb interaktywny")
 
+    if args.output == ".":
+        args.output = get_output_directory(args.output)
+
     if not args.source and not args.batch_file:
-        source = input("Podaj magnet link, plik .torrent albo sciezke do listy: ").strip()
-        if source.endswith(".txt") and Path(source).expanduser().exists():
-            args.batch_file = source
-        else:
-            args.source = source
+        args.source, args.batch_file = collect_interactive_sources()
 
-    if args.output == "downloads":
-        output = input("Katalog docelowy [downloads]: ").strip()
-        if output:
-            args.output = output
-
-    if args.listen_port == 6881:
+    if full_interactive and args.listen_port == 6881:
         port = input("Port nasluchu [6881]: ").strip()
         if port:
             args.listen_port = int(port)
 
-    if args.timeout == 120:
+    if full_interactive and args.timeout == 120:
         timeout = input("Timeout metadanych w sekundach [120]: ").strip()
         if timeout:
             args.timeout = int(timeout)
 
-    if not args.seed:
+    if full_interactive and not args.seed:
         args.seed = prompt_bool("Czy pozostawic seedowanie po pobraniu?", default=False)
 
     return args
@@ -162,12 +220,12 @@ def resolve_sources(args: argparse.Namespace) -> list[str]:
 
 
 def ensure_aria2() -> None:
-    if aria2p is not None and shutil.which("aria2c"):
+    if shutil.which("aria2c"):
         return
 
-    logging.error("Brak zaleznosci aria2/aria2p")
+    logging.error("Brak programu aria2c")
     print(
-        "Brak zaleznosci 'aria2c' lub biblioteki 'aria2p'. Zainstaluj zaleznosci: brew install aria2 && pip install -r requirements.txt",
+        "Brak programu 'aria2c'. Zainstaluj zaleznosci: brew install aria2",
         file=sys.stderr,
     )
     raise SystemExit(1)
@@ -192,7 +250,7 @@ class Aria2Runtime:
 
     def start(self) -> aria2p.API:
         aria2c_path = shutil.which("aria2c")
-        if aria2c_path is None or aria2p is None:
+        if aria2c_path is None:
             ensure_aria2()
 
         command = [
@@ -381,9 +439,11 @@ def main() -> None:
     log_path = setup_logging(args.log_file)
     logging.info("Plik logu: %s", log_path)
 
-    if args.interactive:
+    auto_interactive = not args.source and not args.batch_file
+
+    if args.interactive or auto_interactive:
         try:
-            args = interactive_args(args)
+            args = interactive_args(args, full_interactive=args.interactive)
         except ValueError as error:
             logging.exception("Bledna wartosc w trybie interaktywnym")
             print(f"Bledna wartosc w trybie interaktywnym: {error}", file=sys.stderr)
