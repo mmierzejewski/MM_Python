@@ -576,6 +576,10 @@ def main() -> None:
     if args.interactive or auto_interactive:
         try:
             args = interactive_args(args, full_interactive=args.interactive)
+        except KeyboardInterrupt:
+            logging.info("Przerwano tryb interaktywny przez uzytkownika")
+            print("\nPrzerwano.")
+            raise SystemExit(130)
         except ValueError as error:
             logging.exception("Bledna wartosc w trybie interaktywnym")
             print(f"Bledna wartosc w trybie interaktywnym: {error}", file=sys.stderr)
