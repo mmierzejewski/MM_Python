@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Kalkulator BMI (Body Mass Index) - Advanced Version
+BMI (Body Mass Index) Calculator - Advanced Version
 
-Oblicza wskaźnik masy ciała i podaje rekomendacje zdrowotne.
-Uwzględnia płeć, oferuje wielokrotne obliczenia i eksport wyników.
+Calculates the body mass index and provides health recommendations.
+Takes gender into account, offers multiple calculations and result export.
 """
 
 import logging
@@ -14,7 +14,7 @@ from typing import Optional
 from enum import Enum
 
 
-# Konfiguracja loggingu
+# Logging configuration
 log_file = Path.cwd() / 'bmi_calculator.log'
 logging.basicConfig(
     level=logging.INFO,
@@ -26,65 +26,65 @@ logging.basicConfig(
 
 
 class Gender(Enum):
-    """Płeć użytkownika."""
-    MALE = "mężczyzna"
-    FEMALE = "kobieta"
-    OTHER = "inna"
+    """User's gender."""
+    MALE = "male"
+    FEMALE = "female"
+    OTHER = "other"
 
 
-# Kategorie BMI według WHO
+# BMI categories according to WHO
 BMI_CATEGORIES = {
     'starvation': {
         'range': (0, 16),
-        'name': 'wygłodzenie',
+        'name': 'starvation',
         'emoji': '🚨',
         'severity': 'critical'
     },
     'severe_underweight': {
         'range': (16, 17),
-        'name': 'wychudzenie',
+        'name': 'severe underweight',
         'emoji': '⚠️',
         'severity': 'high'
     },
     'underweight': {
         'range': (17, 18.5),
-        'name': 'niedowaga',
+        'name': 'underweight',
         'emoji': '⚠️',
         'severity': 'medium'
     },
     'normal': {
         'range': (18.5, 25),
-        'name': 'waga prawidłowa',
+        'name': 'normal weight',
         'emoji': '✅',
         'severity': 'none'
     },
     'overweight': {
         'range': (25, 30),
-        'name': 'nadwaga',
+        'name': 'overweight',
         'emoji': '⚠️',
         'severity': 'medium'
     },
     'obesity_1': {
         'range': (30, 35),
-        'name': 'I stopień otyłości',
+        'name': 'obesity class I',
         'emoji': '🚨',
         'severity': 'high'
     },
     'obesity_2': {
         'range': (35, 40),
-        'name': 'II stopień otyłości',
+        'name': 'obesity class II',
         'emoji': '🚨',
         'severity': 'critical'
     },
     'obesity_3': {
         'range': (40, float('inf')),
-        'name': 'otyłość skrajna',
+        'name': 'extreme obesity',
         'emoji': '🔴',
         'severity': 'critical'
     }
 }
 
-# Zakresy prawidłowe (różne dla kobiet i mężczyzn)
+# Healthy ranges (different for women and men)
 HEALTHY_BMI_RANGE = {
     Gender.MALE: (20, 25),
     Gender.FEMALE: (19, 24),
@@ -93,22 +93,22 @@ HEALTHY_BMI_RANGE = {
 
 
 def oblicz_bmi(waga: float, wzrost: float) -> float:
-    """Oblicza BMI na podstawie wagi (kg) i wzrostu (cm)."""
+    """Calculates BMI based on weight (kg) and height (cm)."""
     return waga / ((wzrost / 100) ** 2)
 
 
 def klasyfikuj_bmi(bmi: float, gender: Gender = Gender.OTHER) -> tuple[str, str, tuple[float, float], str]:
     """
-    Zwraca kategorię BMI, opis i zakres prawidłowy.
+    Returns the BMI category, description and the healthy range.
     
     Args:
-        bmi: Wartość BMI
-        gender: Płeć użytkownika
+        bmi: BMI value
+        gender: User's gender
 
     Returns:
-        (kategoria, kolor_emoji, (min_bmi, max_bmi), severity)
+        (category, emoji_color, (min_bmi, max_bmi), severity)
     """
-    # Znajdź odpowiednią kategorię
+    # Find the matching category
     for category_data in BMI_CATEGORIES.values():
         min_val, max_val = category_data['range']
         if min_val <= bmi < max_val:
@@ -120,40 +120,40 @@ def klasyfikuj_bmi(bmi: float, gender: Gender = Gender.OTHER) -> tuple[str, str,
                 category_data['severity']
             )
     
-    # Fallback (nie powinno się zdarzyć)
+    # Fallback (should not happen)
     healthy_range = HEALTHY_BMI_RANGE[gender]
-    return ("nieznana kategoria", "❓", healthy_range, "unknown")
+    return ("unknown category", "❓", healthy_range, "unknown")
 
 
 def oblicz_procentowa_roznice(bmi: float, cel: float) -> float:
-    """Oblicza różnicę procentową między BMI a celem."""
+    """Calculates the percentage difference between BMI and the target."""
     return round(((bmi / cel) - 1) * 100, 2)
 
 
 def oblicz_docelowa_wage(wzrost_cm: float, cel_bmi: float) -> float:
     """
-    Oblicza docelową wagę dla określonego BMI.
+    Calculates the target weight for a given BMI.
     
     Args:
-        wzrost_cm: Wzrost w centymetrach
-        cel_bmi: Docelowe BMI
+        wzrost_cm: Height in centimeters
+        cel_bmi: Target BMI
     
     Returns:
-        Docelowa waga w kilogramach
+        Target weight in kilograms
     """
     wzrost_m = wzrost_cm / 100
     return cel_bmi * (wzrost_m ** 2)
 
 
 def pobierz_plec() -> Gender:
-    """Pobiera płeć użytkownika."""
-    print("\n👤 Płeć (wpływa na zakres prawidłowy):")
-    print("   1. Mężczyzna")
-    print("   2. Kobieta")
-    print("   3. Inna / Wolę nie podawać")
+    """Gets the user's gender."""
+    print("\n👤 Gender (affects the healthy range):")
+    print("   1. Male")
+    print("   2. Female")
+    print("   3. Other / Prefer not to say")
     
     while True:
-        wybor = input("   Wybór [3]: ").strip() or "3"
+        wybor = input("   Choice [3]: ").strip() or "3"
         if wybor == "1":
             return Gender.MALE
         elif wybor == "2":
@@ -161,22 +161,22 @@ def pobierz_plec() -> Gender:
         elif wybor == "3":
             return Gender.OTHER
         else:
-            print("❌ Niepoprawny wybór! Podaj 1, 2 lub 3.")
+            print("❌ Invalid choice! Enter 1, 2 or 3.")
 
 
 def pobierz_float(prompt: str, min_val: float = 0) -> float:
-    """Pobiera liczbę zmiennoprzecinkową z walidacją."""
+    """Gets a floating-point number with validation."""
     while True:
         try:
             wartosc = float(input(prompt))
             if wartosc <= min_val:
-                print(f"❌ Wartość musi być większa niż {min_val}!")
+                print(f"❌ The value must be greater than {min_val}!")
                 continue
             return wartosc
         except ValueError:
-            print("❌ Niepoprawna wartość! Podaj liczbę.")
+            print("❌ Invalid value! Enter a number.")
         except (KeyboardInterrupt, EOFError):
-            print("\n\n👋 Przerwano")
+            print("\n\n👋 Interrupted")
             raise
 
 
@@ -190,16 +190,16 @@ def eksportuj_wynik(
     rekomendacje: str
 ) -> None:
     """
-    Eksportuje wynik do pliku tekstowego.
+    Exports the result to a text file.
     
     Args:
-        imie: Imię użytkownika
-        waga: Waga w kg
-        wzrost: Wzrost w cm
-        bmi: Obliczone BMI
-        kategoria: Kategoria BMI
-        gender: Płeć
-        rekomendacje: Tekst rekomendacji
+        imie: User's name
+        waga: Weight in kg
+        wzrost: Height in cm
+        bmi: Calculated BMI
+        kategoria: BMI category
+        gender: Gender
+        rekomendacje: Recommendations text
     """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"bmi_wynik_{timestamp}.txt"
@@ -207,27 +207,27 @@ def eksportuj_wynik(
     try:
         with open(filename, 'w', encoding='utf-8') as f:
             f.write("="*50 + "\n")
-            f.write("📊 WYNIK KALKULACJI BMI\n")
+            f.write("📊 BMI CALCULATION RESULT\n")
             f.write("="*50 + "\n\n")
-            f.write(f"Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"Imię: {imie}\n")
-            f.write(f"Płeć: {gender.value}\n")
-            f.write(f"Waga: {waga} kg\n")
-            f.write(f"Wzrost: {wzrost} cm\n\n")
+            f.write(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"Name: {imie}\n")
+            f.write(f"Gender: {gender.value}\n")
+            f.write(f"Weight: {waga} kg\n")
+            f.write(f"Height: {wzrost} cm\n\n")
             f.write(f"BMI: {bmi:.2f}\n")
-            f.write(f"Kategoria: {kategoria}\n\n")
-            f.write("REKOMENDACJE:\n")
+            f.write(f"Category: {kategoria}\n\n")
+            f.write("RECOMMENDATIONS:\n")
             f.write(rekomendacje + "\n\n")
             f.write("="*50 + "\n")
-            f.write("ℹ️  Pamiętaj: BMI to tylko orientacyjny wskaźnik.\n")
-            f.write("   Skonsultuj się z lekarzem w sprawach zdrowia!\n")
+            f.write("ℹ️  Remember: BMI is only an approximate indicator.\n")
+            f.write("   Consult a doctor about health matters!\n")
             f.write("="*50 + "\n")
         
-        print(f"\n💾 Wynik zapisany do pliku: {filename}")
-        logging.info(f"Wynik wyeksportowany do {filename}")
+        print(f"\n💾 Result saved to file: {filename}")
+        logging.info(f"Result exported to {filename}")
     except IOError as e:
-        print(f"\n❌ Błąd zapisu pliku: {e}")
-        logging.error(f"Błąd eksportu: {e}")
+        print(f"\n❌ File write error: {e}")
+        logging.error(f"Export error: {e}")
 
 
 def oblicz_bmi_session(
@@ -237,25 +237,25 @@ def oblicz_bmi_session(
     gender: Gender
 ) -> tuple[float, str, str, str]:
     """
-    Wykonuje sesję obliczania BMI.
+    Performs a BMI calculation session.
     
     Returns:
         (bmi, kategoria, emoji, rekomendacje_text)
     """
-    # Oblicz BMI
+    # Calculate BMI
     bmi = oblicz_bmi(waga, wzrost)
     kategoria, emoji, (min_bmi, max_bmi), severity = klasyfikuj_bmi(bmi, gender)
     
-    logging.info(f"Obliczono BMI: {bmi:.2f} dla {imie} (płeć: {gender.value})")
+    logging.info(f"Calculated BMI: {bmi:.2f} for {imie} (gender: {gender.value})")
     
-    # Wyświetl wynik
+    # Display the result
     print("\n" + "=" * 50)
-    print(f"{emoji}  Twoje BMI: {bmi:.2f}")
-    print(f"   Kategoria: {kategoria}")
-    print(f"   Zakres prawidłowy: {min_bmi} - {max_bmi}")
+    print(f"{emoji}  Your BMI: {bmi:.2f}")
+    print(f"   Category: {kategoria}")
+    print(f"   Healthy range: {min_bmi} - {max_bmi}")
     print("=" * 50)
     
-    # Generuj rekomendacje
+    # Generate recommendations
     rekomendacje_lines = []
     
     if bmi < min_bmi:
@@ -263,16 +263,16 @@ def oblicz_bmi_session(
         docelowa_waga = oblicz_docelowa_wage(wzrost, min_bmi)
         roznica_wagi = docelowa_waga - waga
         
-        print(f"\n💡 {imie}, masz niedowagę.")
-        print(f"   Twoje BMI jest o {abs(roznica):.2f}% poniżej normy.")
-        print(f"   Docelowa waga (BMI {min_bmi}): {docelowa_waga:.2f} kg")
-        print(f"   Należy zwiększyć wagę o ~{roznica_wagi:.2f} kg.")
+        print(f"\n💡 {imie}, you are underweight.")
+        print(f"   Your BMI is {abs(roznica):.2f}% below the normal range.")
+        print(f"   Target weight (BMI {min_bmi}): {docelowa_waga:.2f} kg")
+        print(f"   You should gain ~{roznica_wagi:.2f} kg.")
         
         rekomendacje_lines = [
-            f"{imie}, masz niedowagę.",
-            f"Twoje BMI jest o {abs(roznica):.2f}% poniżej normy.",
-            f"Docelowa waga (BMI {min_bmi}): {docelowa_waga:.2f} kg",
-            f"Należy zwiększyć wagę o ~{roznica_wagi:.2f} kg."
+            f"{imie}, you are underweight.",
+            f"Your BMI is {abs(roznica):.2f}% below the normal range.",
+            f"Target weight (BMI {min_bmi}): {docelowa_waga:.2f} kg",
+            f"You should gain ~{roznica_wagi:.2f} kg."
         ]
         
     elif bmi > max_bmi:
@@ -280,27 +280,27 @@ def oblicz_bmi_session(
         docelowa_waga = oblicz_docelowa_wage(wzrost, max_bmi)
         roznica_wagi = waga - docelowa_waga
         
-        print(f"\n💡 {imie}, masz nadwagę.")
-        print(f"   Twoje BMI jest o {roznica:.2f}% powyżej normy.")
-        print(f"   Docelowa waga (BMI {max_bmi}): {docelowa_waga:.2f} kg")
-        print(f"   Należy zmniejszyć wagę o ~{roznica_wagi:.2f} kg.")
+        print(f"\n💡 {imie}, you are overweight.")
+        print(f"   Your BMI is {roznica:.2f}% above the normal range.")
+        print(f"   Target weight (BMI {max_bmi}): {docelowa_waga:.2f} kg")
+        print(f"   You should lose ~{roznica_wagi:.2f} kg.")
         
         rekomendacje_lines = [
-            f"{imie}, masz nadwagę.",
-            f"Twoje BMI jest o {roznica:.2f}% powyżej normy.",
-            f"Docelowa waga (BMI {max_bmi}): {docelowa_waga:.2f} kg",
-            f"Należy zmniejszyć wagę o ~{roznica_wagi:.2f} kg."
+            f"{imie}, you are overweight.",
+            f"Your BMI is {roznica:.2f}% above the normal range.",
+            f"Target weight (BMI {max_bmi}): {docelowa_waga:.2f} kg",
+            f"You should lose ~{roznica_wagi:.2f} kg."
         ]
         
     else:
-        print(f"\n🎉 Gratulacje, {imie}! Twoja waga jest prawidłowa!")
-        print(f"   Jesteś w zdrowym zakresie {min_bmi} - {max_bmi}.")
-        print(f"   Utrzymuj zdrowy styl życia! 💪")
+        print(f"\n🎉 Congratulations, {imie}! Your weight is normal!")
+        print(f"   You are in the healthy range {min_bmi} - {max_bmi}.")
+        print(f"   Keep up a healthy lifestyle! 💪")
         
         rekomendacje_lines = [
-            f"Gratulacje, {imie}! Twoja waga jest prawidłowa!",
-            f"Jesteś w zdrowym zakresie {min_bmi} - {max_bmi}.",
-            "Utrzymuj zdrowy styl życia!"
+            f"Congratulations, {imie}! Your weight is normal!",
+            f"You are in the healthy range {min_bmi} - {max_bmi}.",
+            "Keep up a healthy lifestyle!"
         ]
     
     rekomendacje_text = "\n".join(rekomendacje_lines)
@@ -309,61 +309,61 @@ def oblicz_bmi_session(
 
 
 def main() -> None:
-    """Główna funkcja programu."""
+    """Main program function."""
     print("=" * 50)
-    print("📊 KALKULATOR BMI - ADVANCED".center(50))
+    print("📊 BMI CALCULATOR - ADVANCED".center(50))
     print("=" * 50)
     
-    logging.info("Uruchomiono kalkulator BMI")
+    logging.info("BMI calculator started")
     
     try:
         while True:
-            # Pobierz dane
-            imie = input("\n👤 Jak masz na imię? ").strip()
+            # Get data
+            imie = input("\n👤 What's your name? ").strip()
             if not imie:
-                imie = "Przyjacielu"
+                imie = "Friend"
             
-            print(f"\n🤝 Miło mi Cię poznać, {imie}!")
+            print(f"\n🤝 Nice to meet you, {imie}!")
             
-            # Pobierz płeć
+            # Get gender
             gender = pobierz_plec()
             
             print()
-            waga = pobierz_float("⚖️  Podaj swoją wagę (kg): ", min_val=0)
-            wzrost = pobierz_float("📏 Podaj swój wzrost (cm): ", min_val=0)
+            waga = pobierz_float("⚖️  Enter your weight (kg): ", min_val=0)
+            wzrost = pobierz_float("📏 Enter your height (cm): ", min_val=0)
             
-            # Oblicz BMI i wyświetl wyniki
+            # Calculate BMI and display the results
             bmi, kategoria, emoji, rekomendacje = oblicz_bmi_session(
                 imie, waga, wzrost, gender
             )
             
             print("\n" + "=" * 50)
-            print("ℹ️  Pamiętaj: BMI to tylko orientacyjny wskaźnik.")
-            print("   Skonsultuj się z lekarzem w sprawach zdrowia!")
+            print("ℹ️  Remember: BMI is only an approximate indicator.")
+            print("   Consult a doctor about health matters!")
             print("=" * 50)
             
-            # Opcja eksportu
-            eksport = input("\n💾 Zapisać wynik do pliku? (T/N) [N]: ").strip().upper()
-            if eksport == 'T':
+            # Export option
+            eksport = input("\n💾 Save the result to a file? (Y/N) [N]: ").strip().upper()
+            if eksport == 'Y':
                 eksportuj_wynik(imie, waga, wzrost, bmi, kategoria, gender, rekomendacje)
             
-            # Pytanie o kolejne obliczenie
+            # Ask about another calculation
             print("\n" + "-" * 50)
-            ponownie = input("🔄 Obliczyć ponownie? (T/N) [N]: ").strip().upper()
-            if ponownie != 'T':
-                print("\n👋 Dziękuję za skorzystanie z kalkulatora BMI!")
-                print("   Dbaj o zdrowie! 💚\n")
-                logging.info("Zakończono działanie kalkulatora")
+            ponownie = input("🔄 Calculate again? (Y/N) [N]: ").strip().upper()
+            if ponownie != 'Y':
+                print("\n👋 Thank you for using the BMI calculator!")
+                print("   Take care of your health! 💚\n")
+                logging.info("Calculator stopped")
                 break
             
             print("\n" + "=" * 50)
     
     except (KeyboardInterrupt, EOFError):
-        print("\n\n👋 Przerwano przez użytkownika")
-        logging.info("Przerwano przez użytkownika")
+        print("\n\n👋 Interrupted by the user")
+        logging.info("Interrupted by the user")
     except Exception as e:
-        print(f"\n❌ Nieoczekiwany błąd: {e}")
-        logging.error(f"Nieoczekiwany błąd: {e}", exc_info=True)
+        print(f"\n❌ Unexpected error: {e}")
+        logging.error(f"Unexpected error: {e}", exc_info=True)
 
 
 if __name__ == "__main__":
@@ -372,6 +372,6 @@ if __name__ == "__main__":
     except SystemExit:
         pass
     except Exception as e:
-        print(f"\n❌ Krytyczny błąd: {e}")
-        logging.critical(f"Krytyczny błąd: {e}", exc_info=True)
+        print(f"\n❌ Critical error: {e}")
+        logging.critical(f"Critical error: {e}", exc_info=True)
         exit(1)

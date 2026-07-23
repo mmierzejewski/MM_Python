@@ -1,272 +1,333 @@
-# 🎬 Uniwersalny Downloader Wideo
+# 🎬 Universal Video Downloader
 
-Uniwersalny downloader wideo używający yt-dlp obsługujący YouTube, TikTok, Vimeo, Facebook, Instagram, Twitter i ponad 1000 innych stron.
+Universal video downloader using yt-dlp, supporting YouTube, TikTok, Vimeo, Facebook, Instagram, Twitter and over 1000 other sites.
 
-## ✨ Funkcje
+## ✨ Features
 
-- 📥 Pobieranie wideo z ponad 1000 stron internetowych
-- 🍪 **Obsługa autoryzacji cookies** (treści prywatne/tylko dla członków)
-- 🎵 Tryb tylko audio (ekstrakcja MP3)
-- 🔊 **Zaawansowany wybór ścieżek audio** z szczegółowymi informacjami technicznymi
-- 📋 Wyświetlanie wszystkich dostępnych ścieżek audio (format_id, bitrate, rozmiar, język)
-- 🎯 Automatyczne filtrowanie audiodeskrypcji
-- 📊 Zawsze najlepsza jakość wideo (automatycznie)
-- 📦 Pobieranie wsadowe z indywidualnym wyborem audio dla każdego URL
-- 📈 Pasek postępu w czasie rzeczywistym
-- 🔄 Automatyczna konwersja formatów
-- 📝 Logowanie do pliku
-- ✅ Walidacja danych wejściowych
-- 🛡️ Obsługa błędów
+- 📥 Download videos from over 1000 websites
+- 🍪 **Cookie authorization support** (private/members-only content)
+- 🎵 Audio-only mode (MP3 extraction)
+- 🔊 **Advanced audio track selection** with detailed technical information
+- 📋 Display all available audio tracks (format_id, bitrate, size, language)
+- 🎯 Automatic audio description filtering
+- 📊 Always the best video quality (automatic)
+- 📦 Batch download with individual audio selection for each URL
+- 📈 Real-time progress bar
+- 🔄 Automatic format conversion
+- 📝 Logging to file
+- ✅ Input validation
+- 🛡️ Error handling
 
-## 📋 Wymagania
+## 📋 Requirements
 
 - Python 3.8+
-- ffmpeg (wymagany do konwersji formatów)
+- ffmpeg (required for format conversion)
 
-## 🚀 Instalacja
+## 🚀 Installation
 
-### 1. Instalacja zależności Python
+### 1. Install Python dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Lub ręcznie:
+Or manually:
+
 ```bash
 pip install yt-dlp tqdm
 ```
 
-### 2. Instalacja ffmpeg
+### 2. Install ffmpeg
 
 **macOS:**
+
 ```bash
 brew install ffmpeg
 ```
 
 **Ubuntu/Debian:**
+
 ```bash
 sudo apt update
 sudo apt install ffmpeg
 ```
 
 **Windows:**
+
 ```bash
 choco install ffmpeg
 ```
 
-Lub pobierz z: https://ffmpeg.org/download.html
+Or download from: <https://ffmpeg.org/download.html>
 
-## 💻 Użycie
+## 💻 Usage
 
-### Podstawowe użycie
+### Basic usage
 
 ```bash
 python yt-dlp.py
 ```
 
-### Interaktywne pytania
+### Interactive prompts
 
-1. **Plik cookie (opcjonalny):** Automatycznie wykrywany lub podaj własną ścieżkę
-2. **Wprowadź URL(e):** Wklej adresy URL wideo (jeden w linii, pusta linia kończy)
-3. **Wybór ścieżki audio:** Dla każdego URL program wykryje i wyświetli dostępne ścieżki audio z parametrami:
-   - Format ID (np. f6-a1-x3, f7-a2-x3)
-   - Rozszerzenie (m4a, m3u8)
-   - Rozmiar pliku
+1. **Cookie file (optional):** Automatically detected, or provide your own path
+2. **Enter URL(s):** Paste video URLs (one per line, empty line to finish)
+3. **Audio track selection:** For each URL, the program will detect and display the available audio tracks with their parameters:
+   - Format ID (e.g. f6-a1-x3, f7-a2-x3)
+   - Extension (m4a, m3u8)
+   - File size
    - Bitrate (kbps)
-   - Język
-   - Typ (DASH audio, HLS, itp.)
-   - Oznaczenie audiodeskrypcji (jeśli występuje)
-4. **Katalog wyjściowy:** Wybierz gdzie zapisać pliki
+   - Language
+   - Type (DASH audio, HLS, etc.)
+   - Audio description marker (if present)
+4. **Output directory:** Choose where to save the files
 
-**Uwaga:** Jakość wideo jest zawsze ustawiona na NAJLEPSZĄ - nie ma możliwości wyboru niższej jakości.
+**Note:** Video quality is always set to the BEST - there is no option to choose a lower quality.
 
-### Pobieranie pojedynczego wideo
+### Downloading a single video
 
 ```bash
 python yt-dlp.py
-# Wprowadź URL: https://www.youtube.com/watch?v=example
-# Naciśnij Enter (zakończ)
-# Wybierz jakość: 1
-# Naciśnij Enter (bieżący katalog)
+
+# Enter URL: https://www.youtube.com/watch?v=example
+
+# Press Enter (finish)
+
+# Choose quality: 1
+
+# Press Enter (current directory)
+
 ```
 
-### Pobieranie wsadowe
+### Batch download
 
 ```bash
 python yt-dlp.py
-# Wprowadź wiele URL-i:
+
+# Enter multiple URLs
+
 # URL: https://www.youtube.com/watch?v=video1
+
 # URL: https://www.youtube.com/watch?v=video2
+
 # URL: https://www.youtube.com/watch?v=video3
-# URL: [naciśnij Enter]
-# Wybierz jakość: 2
+
+# URL: [press Enter]
+
+# Choose quality: 2
+
 ```
-### Wybór konkretnej ścieżki audio
+
+### Selecting a specific audio track
 
 ```bash
 python yt-dlp.py
-# Wprowadź URL: https://vod.tvp.pl/seriale/...
+
+# Enter URL: https://vod.tvp.pl/seriale/...
+
 # 
-# 🔊 Dostępne ścieżki dźwiękowe:
-#    1. f7-a2-x3            m4a   ~42.07MiB  132kbps [pl] Polski (DASH) DASH audio
-#    2. f6-a1-x3            m4a   ~41.76MiB  131kbps [pl] Polski (DASH) DASH audio
-#    3. audio0-Polski       m3u8      ?MiB    ?kbps [pl] Polski HLS
+
+# 🔊 Available audio tracks
+
+# 1. f7-a2-x3            m4a   ~42.07MiB  132kbps [pl] Polish (DASH) DASH audio
+
+# 2. f6-a1-x3            m4a   ~41.76MiB  131kbps [pl] Polish (DASH) DASH audio
+
+# 3. audio0-Polski       m3u8      ?MiB    ?kbps [pl] Polish HLS
+
 #
-#    Wybór [1-3]: 1
-#    ✅ Wybrano: f7-a2-x3 - Polski (DASH) (m4a, 132kbps)
+
+# Choice [1-3]: 1
+
+# ✅ Selected: f7-a2-x3 - Polish (DASH) (m4a, 132kbps)
+
 ```
 
-**Funkcje wyboru audio:**
-- Automatyczne wykrywanie wszystkich dostępnych ścieżek audio
-- Szczegółowe parametry techniczne (format_id, bitrate, rozmiar)
-- Filtrowanie audiodeskrypcji (nie są wyświetlane automatycznie)
-- Indywidualny wybór dla każdego URL w trybie wsadowym
-- Sortowanie według bitrate (najlepsze na górze)
+**Audio selection features:**
 
-### Pobieranie wsadowe z różnymi ścieżkami audio
+- Automatic detection of all available audio tracks
+- Detailed technical parameters (format_id, bitrate, size)
+- Audio description filtering (not displayed automatically)
+- Individual selection for each URL in batch mode
+- Sorted by bitrate (best at the top)
+
+### Batch download with different audio tracks
 
 ```bash
 python yt-dlp.py
+
 # URL #1: https://vod.tvp.pl/video1
-# [wybierz ścieżkę audio dla video1]
+
+# [select audio track for video1]
+
 # URL #2: https://vod.tvp.pl/video2
-# [wybierz ścieżkę audio dla video2]
-# URL #3: [Enter - zakończ]
-# Katalog wyjściowy: ./pobrane
+
+# [select audio track for video2]
+
+# URL #3: [Enter - finish]
+
+# Output directory: ./downloaded
+
 ```
 
-### Używanie cookies do treści prywatnych/z ograniczeniami
+### Using cookies for private/restricted content
 
-#### Do czego służą cookies?
-- Prywatne filmy
-- Treści z ograniczeniem wiekowym
-- Treści tylko dla członków (członkostwa YouTube, Patreon, itp.)
-- Filmy z ograniczeniami kanału
-- Treści zablokowane regionalnie (z VPN)
+#### What are cookies used for?
 
-#### Jak wyeksportować cookies:
+- Private videos
+- Age-restricted content
+- Members-only content (YouTube memberships, Patreon, etc.)
+- Channel-restricted videos
+- Regionally blocked content (with VPN)
 
-**Metoda 1: Rozszerzenie przeglądarki (Zalecane)**
-1. Zainstaluj rozszerzenie:
+#### How to export cookies
+
+##### Method 1: Browser extension (Recommended)
+
+1. Install the extension:
    - Chrome/Edge: [Get cookies.txt](https://chrome.google.com/webstore/detail/get-cookiestxt/bgaddhkoddajcdgocldbbfleckgcbcid)
    - Firefox: [cookies.txt](https://addons.mozilla.org/firefox/addon/cookies-txt/)
-2. Przejdź na stronę (np. YouTube)
-3. Zaloguj się na swoje konto
-4. Kliknij ikonę rozszerzenia → Eksportuj cookies
-5. Zapisz jako `cookies.txt`
+2. Go to the site (e.g. YouTube)
+3. Log in to your account
+4. Click the extension icon → Export cookies
+5. Save as `cookies.txt`
 
-**Metoda 2: Wbudowana funkcja yt-dlp**
+##### Method 2: Built-in yt-dlp feature
+
 ```bash
 yt-dlp --cookies-from-browser chrome
 ```
 
-#### Lokalizacje pliku cookie (auto-wykrywane):
-- Bieżący katalog: `./cookies.txt`
-- Katalog skryptu: `/ścieżka/do/skryptu/cookies.txt`
-- Katalog domowy: `~/cookies.txt`
-- Katalog roboczy: `~/WORK/cookies.txt`
-- Pobrane: `~/Downloads/cookies.txt`
+#### Cookie file locations (auto-detected)
 
-#### Przykład z cookies:
+- Current directory: `./cookies.txt`
+- Script directory: `/path/to/script/cookies.txt`
+- Home directory: `~/cookies.txt`
+- Working directory: `~/WORK/cookies.txt`
+- Downloads: `~/Downloads/cookies.txt`
+
+#### Example with cookies
 
 ```bash
-# Umieść cookies.txt w jednej z auto-wykrywanych lokalizacji
+
+# Place cookies.txt in one of the auto-detected locations
+
 python yt-dlp.py
-# Znaleziono plik cookie: cookies.txt
-# Użyć tego pliku cookie? tak
-# Wprowadź URL: https://www.youtube.com/watch?v=private_video
+
+# Found cookie file: cookies.txt
+
+# Use this cookie file? yes
+
+# Enter URL: https://www.youtube.com/watch?v=private_video
+
 ```
 
-## 📊 Obsługiwane Strony
+## 📊 Supported Sites
 
-YouTube, TikTok, Vimeo, Facebook, Instagram, Twitter, Twitch, Dailymotion, Reddit i ponad 1000 innych!
+YouTube, TikTok, Vimeo, Facebook, Instagram, Twitter, Twitch, Dailymotion, Reddit and over 1000 others!
 
-Pełna lista: https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md
+Full list: <https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md>
 
-## 📝 Logowanie
+## 📝 Logging
 
-Wszystkie pobierania są logowane do `yt-dlp-downloader.log` w bieżącym katalogu.
+All downloads are logged to `yt-dlp-downloader.log` in the current directory.
 
-Włącz tryb debugowania:
+Enable debug mode:
+
 ```bash
 DEBUG=1 python yt-dlp.py
 ```
 
-## 🔧 Jakość i Ścieżki Audio
+## 🔧 Quality and Audio Tracks
 
-### Jakość wideo
-Skrypt **zawsze używa najlepszej dostępnej jakości wideo** (bestvideo+bestaudio). Nie ma możliwości wyboru niższej jakości - to zapewnia maksymalną jakość pobieranych filmów.
+### Video quality
 
-### Ścieżki audio
-Dla każdego URL skrypt:
-1. **Wykrywa** wszystkie dostępne ścieżki audio
-2. **Wyświetla** szczegóły techniczne:
-   - `format_id` - identyfikator formatu (np. f6-a1-x3)
-   - `ext` - rozszerzenie (m4a, m3u8)
-   - `rozmiar` - wielkość pliku (jeśli dostępna)
-   - `bitrate` - jakość audio w kbps
-   - `język` - kod języka [pl], [en], itp.
-   - `typ` - technologia (DASH audio, HLS, itp.)
-3. **Filtruje** audiodeskrypcję (nie wyświetla tych ścieżek)
-4. **Sortuje** według bitrate (najlepsza jakość na górze)
+The script **always uses the best available video quality** (bestvideo+bestaudio). There is no option to choose a lower quality - this ensures the maximum quality of downloaded videos.
 
-Użytkownik wybiera konkretną ścieżkę audio dla każdego wideo.
+### Audio tracks
 
-### Przykład wyświetlania ścieżek
+For each URL the script:
 
+1. **Detects** all available audio tracks
+2. **Displays** technical details:
+   - `format_id` - format identifier (e.g. f6-a1-x3)
+   - `ext` - extension (m4a, m3u8)
+   - `size` - file size (if available)
+   - `bitrate` - audio quality in kbps
+   - `language` - language code [pl], [en], etc.
+   - `type` - technology (DASH audio, HLS, etc.)
+3. **Filters** audio description (does not display these tracks)
+4. **Sorts** by bitrate (best quality at the top)
+
+The user selects a specific audio track for each video.
+
+### Example of track display
+
+```text
+🔊 Available audio tracks:
+   1. f7-a2-x3            m4a   ~42.07MiB   132kbps [pl] Polish (DASH) DASH audio
+   2. f6-a1-x3            m4a   ~41.76MiB   131kbps [pl] Polish (DASH) DASH audio
+   3. audio0-Polski       m3u8      ?MiB     ?kbps [pl] Polish HLS
 ```
-🔊 Dostępne ścieżki dźwiękowe:
-   1. f7-a2-x3            m4a   ~42.07MiB   132kbps [pl] Polski (DASH) DASH audio
-   2. f6-a1-x3            m4a   ~41.76MiB   131kbps [pl] Polski (DASH) DASH audio
-   3. audio0-Polski       m3u8      ?MiB     ?kbps [pl] Polski HLS
-```
 
-## 🛠️ Rozwiązywanie Problemów
+## 🛠️ Troubleshooting
 
 ### "ffmpeg not found"
-Zainstaluj ffmpeg korzystając z powyższych instrukcji.
+
+Install ffmpeg using the instructions above.
 
 ### "Import error: yt_dlp"
+
 ```bash
 pip install yt-dlp tqdm
 ```
 
-### "Download error: HTTP Error 403" lub "Private video"
-Film wymaga uwierzytelnienia. Rozwiązania:
-1. Wyeksportuj cookies z przeglądarki (zobacz sekcję "Używanie cookies")
-2. Umieść `cookies.txt` w katalogu skryptu
-3. Uruchom skrypt i potwierdź użycie cookies
-4. Upewnij się, że jesteś zalogowany na stronie podczas eksportu cookies
+### "Download error: HTTP Error 403" or "Private video"
 
-### Plik cookie nie działa
-- Sprawdź czy plik jest w formacie Netscape (zaczyna się od `# Netscape HTTP Cookie File`)
-- Upewnij się, że cookies są świeże (niewygasałe)
-- Wyeksportuj cookies ponownie po zalogowaniu
-- Sprawdź kodowanie pliku (powinno być UTF-8)
-- Upewnij się, że nie ma dodatkowych spacji lub błędów formatowania
+The video requires authentication. Solutions:
+
+1. Export cookies from your browser (see the "Using cookies" section)
+2. Place `cookies.txt` in the script directory
+3. Run the script and confirm using cookies
+4. Make sure you are logged in on the site while exporting cookies
+
+### The cookie file doesn't work
+
+- Check that the file is in Netscape format (starts with `# Netscape HTTP Cookie File`)
+- Make sure the cookies are fresh (not expired)
+- Export the cookies again after logging in
+- Check the file encoding (should be UTF-8)
+- Make sure there are no extra spaces or formatting errors
 
 ### "Invalid cookie file format"
-Plik cookie musi być w formacie Netscape. Użyj rozszerzeń przeglądarki wymienionych powyżej lub:
+
+The cookie file must be in Netscape format. Use the browser extensions mentioned above, or:
+
 ```bash
-# Eksport z przeglądarki używając yt-dlp
+
+# Export from browser using yt-dlp
+
 yt-dlp --cookies-from-browser firefox --cookies cookies.txt "https://youtube.com"
 ```
 
-### Długie nazwy plików
-Nazwy plików są automatycznie skracane do 180 znaków dla kompatybilności.
+### Long filenames
 
-### Ścieżka audio nie pobiera się poprawnie
-Jeśli wybrana ścieżka audio (np. f6-a1-x3) pobiera niewłaściwe audio:
-1. Sprawdź wszystkie dostępne ścieżki - czasem format_id może być mylący
-2. Spróbuj innej ścieżki z listy (najlepiej z najwyższym bitrate)
-3. Niektóre strony mogą wymagać cookies dla pełnego dostępu do ścieżek audio
-4. Format DASH (m4a) zwykle jest bardziej niezawodny niż HLS (m3u8)
+Filenames are automatically shortened to 180 characters for compatibility.
 
-## 📄 Licencja
+### Audio track doesn't download correctly
 
-Wolne do użycia i modyfikacji.
+If the selected audio track (e.g. f6-a1-x3) downloads the wrong audio:
 
-## 🤝 Podziękowania
+1. Check all available tracks - sometimes the format_id can be misleading
+2. Try a different track from the list (preferably the one with the highest bitrate)
+3. Some sites may require cookies for full access to audio tracks
+4. DASH format (m4a) is usually more reliable than HLS (m3u8)
 
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) - Najlepszy downloader wideo
-- [tqdm](https://github.com/tqdm/tqdm) - Biblioteka paska postępu
+## 📄 License
+
+Free to use and modify.
+
+## 🤝 Acknowledgements
+
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) - The best video downloader
+- [tqdm](https://github.com/tqdm/tqdm) - Progress bar library

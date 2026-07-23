@@ -1,19 +1,21 @@
 # MM Python
 
-Kolekcja zaawansowanych skryptów Python z pełną dokumentacją i profesjonalną organizacją.
+A collection of advanced Python scripts with full documentation and professional organization.
 
-## 📚 Projekty
+## 📚 Projects
 
-###  [BMI Calculator](BMI/)
-**Zaawansowany kalkulator BMI** z rekomendacjami zdrowotnymi.
+### [BMI Calculator](BMI/)
+
+**Advanced BMI calculator** with health recommendations.
 
 **Features:**
-- 👥 Uwzględnienie płci (różne normy dla M/K)
-- 🎯 Dokładne obliczenia docelowej wagi
-- 💾 Eksport wyników do pliku
-- 📝 Logging sesji
-- 🔄 Wielokrotne obliczenia
-- 🛡️ Pełna obsługa błędów
+
+- 👥 Gender-aware calculation (different norms for M/F)
+- 🎯 Accurate target weight calculation
+- 💾 Export results to file
+- 📝 Session logging
+- 🔄 Multiple calculations
+- 🛡️ Full error handling
 
 ```bash
 cd BMI && python BMI.py
@@ -22,19 +24,21 @@ cd BMI && python BMI.py
 ---
 
 ### 🔢 [Fibonacci Calculator](Fibonacci/)
-**Zaawansowane narzędzia do ciągu Fibonacciego** z wieloma algorytmami.
+
+**Advanced tools for the Fibonacci sequence** with multiple algorithms.
 
 **Features:**
-- ⚡ Algorytm macierzowy O(log n) dla dużych liczb
-- 📊 7 różnych trybów obliczeniowych
-- 🔄 **Pętla menu** - ciągły tryb pracy bez ponownego uruchamiania ⭐ NOWOŚĆ!
-- 🚪 Opcja "Koniec" - eleganckie wyjście z programu
-- 🎯 Test przynależności do ciągu
-- 📈 Analiza zbieżności do złotego podziału φ
-- 🔢 Obsługa bardzo dużych liczb
-- 🎨 Interaktywne menu (8 opcji)
-- 📋 **Opcja wyświetlania wszystkich n liczb** (10 na linię) lub tylko pierwszych/ostatnich 10
-- 💾 Eksport ciągów do pliku z timestampem
+
+- ⚡ O(log n) matrix algorithm for large numbers
+- 📊 7 different calculation modes
+- 🔄 **Menu loop** - continuous operation without restarting the program ⭐ NEW!
+- 🚪 "Exit" option - clean program exit
+- 🎯 Sequence membership test
+- 📈 Convergence analysis toward the golden ratio φ
+- 🔢 Support for very large numbers
+- 🎨 Interactive menu (8 options)
+- 📋 **Option to display all n numbers** (10 per line) or just the first/last 10
+- 💾 Export sequences to file with timestamp
 
 ```bash
 cd Fibonacci && python FibonacciUtils.py
@@ -43,18 +47,20 @@ cd Fibonacci && python FibonacciUtils.py
 ---
 
 ### 🐴 [Knight's Tour Problem](Horse/)
-**Solver problemu trasy skoczka szachowego** z algorytmem Warnsdorffa.
+
+**Knight's tour solver** using the Warnsdorff heuristic.
 
 **Features:**
-- ♟️ Heurystyka Warnsdorffa (inteligentna optymalizacja)
-- 🔄 Backtracking z timeout protection
-- 🔄 **Pętla menu** - ciągły tryb pracy bez ponownego uruchamiania ⭐ NOWOŚĆ!
-- 🚪 Opcja "Koniec" - eleganckie wyjście z programu
-- 📊 Szczegółowe statystyki (czas, backtracki, głębokość)
-- 💾 Eksport rozwiązań do pliku
-- 📝 Logging wszystkich operacji
-- 🎯 Wizualizacja planszy z Unicode
-- ⏱️ Progress tracking dla dużych plansz
+
+- ♟️ Warnsdorff heuristic (smart optimization)
+- 🔄 Backtracking with timeout protection
+- 🔄 **Menu loop** - continuous operation without restarting the program ⭐ NEW!
+- 🚪 "Exit" option - clean program exit
+- 📊 Detailed statistics (time, backtracks, depth)
+- 💾 Export solutions to file
+- 📝 Logging of all operations
+- 🎯 Board visualization with Unicode
+- ⏱️ Progress tracking for large boards
 
 ```bash
 cd Horse && python Horse.py
@@ -63,16 +69,18 @@ cd Horse && python Horse.py
 ---
 
 ### 🔺 [Pythagorean Triples Generator](PITAGORAS/)
-**Generator prymitywnych trójek pitagorejskich** z analizą liczb pierwszych.
+
+**Generator of primitive Pythagorean triples** with prime number analysis.
 
 **Features:**
-- ✅ Tylko trójki prymitywne (eliminacja duplikatów 3,4,5 i 6,8,10)
-- 🔄 **Pętla menu** - ciągły tryb pracy bez ponownego uruchamiania ⭐ NOWOŚĆ!
-- 🚪 Opcja "Koniec" - eleganckie wyjście z programu
-- 📊 Wymiary, obwód, powierzchnia
-- 🔢 Detekcja liczb pierwszych
-- 📈 Szczegółowe statystyki
-- ⚡ Szybki algorytm Euklidesa
+
+- ✅ Primitive triples only (eliminates duplicates like 3,4,5 and 6,8,10)
+- 🔄 **Menu loop** - continuous operation without restarting the program ⭐ NEW!
+- 🚪 "Exit" option - clean program exit
+- 📊 Dimensions, perimeter, area
+- 🔢 Prime number detection
+- 📈 Detailed statistics
+- ⚡ Fast Euclid's algorithm
 
 ```bash
 cd PITAGORAS && python Pitagoras.py
@@ -81,22 +89,24 @@ cd PITAGORAS && python Pitagoras.py
 ---
 
 ### 📐 [3D Triangle Visualizer](TRIANGLE/)
-**Zaawansowany wizualizator trójkątów w przestrzeni 3D** z pełną walidacją geometryczną.
+
+**Advanced 3D triangle visualizer** with full geometric validation.
 
 **Features:**
-- ✅ **Walidacja geometryczna** - sprawdzanie identycznych punktów i współliniowości
-- 📏 Obliczanie długości wszystkich boków
-- 📐 **Obliczanie pola powierzchni** - wykorzystanie iloczynu wektorowego
-- 🎨 **Profesjonalna wizualizacja 3D**:
-  - Wypełniony trójkąt z przezroczystością
-  - Oznaczone wierzchołki i boki
-  - Etykiety z długościami boków
-  - Punkt (0,0,0) zawsze widoczny jako odniesienie
-- 💾 **Automatyczny eksport do PNG** w katalogu skryptu
-- 📊 Szczegółowe statystyki (współrzędne, długości, pole)
-- 📈 **Interaktywny wykres** - rotacja, zoom, pan
-- 🔢 **Type hints** - pełne adnotacje typów
-- 🛡️ Pełna obsługa błędów i walidacja inputu
+
+- ✅ **Geometric validation** - checks for identical points and collinearity
+- 📏 Calculates the length of all sides
+- 📐 **Surface area calculation** - uses the cross product
+- 🎨 **Professional 3D visualization**:
+  - Filled triangle with transparency
+  - Marked vertices and edges
+  - Labels with side lengths
+  - Point (0,0,0) always visible as reference
+- 💾 **Automatic PNG export** in the script directory
+- 📊 Detailed statistics (coordinates, lengths, area)
+- 📈 **Interactive plot** - rotate, zoom, pan
+- 🔢 **Type hints** - full type annotations
+- 🛡️ Full error handling and input validation
 
 ```bash
 cd TRIANGLE && python triangle_3d.py
@@ -105,23 +115,25 @@ cd TRIANGLE && python triangle_3d.py
 ---
 
 ### 🔢 [Prime Numbers Generator](PNA/)
-**Efektywny generator liczb pierwszych** używający sita Eratostenesa.
+
+**Efficient prime number generator** using the Sieve of Eratosthenes.
 
 **Features:**
-- 🎯 **Cztery tryby**: 
-  - Liczby pierwsze do limitu
-  - Pierwsze n liczb pierwszych
-  - **Sprawdzanie pojedynczej liczby** ⭐ NOWOŚĆ!
-  - **Koniec** - wyjście z programu
-- ⚡ Optymalizacja pamięci (sito segmentowane)
-- 🧮 Automatyczne szacowanie limitu dla pierwszych n liczb
-- ✅ Szybki test pierwszości O(√n)
-- 🔢 **Wyświetlanie dzielników właściwych** (bez 1 i samej liczby) dla liczb niepierzwszych ⭐ NOWOŚĆ!
-- 🔄 **Pętla menu** - ciągły tryb pracy bez ponownego uruchamiania ⭐ NOWOŚĆ!
-- 📊 Szczegółowe statystyki dla wszystkich trybów
-- 💾 Zapis do pliku
-- 📈 Progress bar dla dużych zakresów
-- ⏱️ Pomiar wydajności (μs, ms, s)
+
+- 🎯 **Four modes**:
+  - Primes up to a limit
+  - First n prime numbers
+  - **Single number check** ⭐ NEW!
+  - **Exit** - quit the program
+- ⚡ Memory optimization (segmented sieve)
+- 🧮 Automatic limit estimation for the first n primes
+- ✅ Fast primality test O(√n)
+- 🔢 **Displays proper divisors** (excluding 1 and the number itself) for non-prime numbers ⭐ NEW!
+- 🔄 **Menu loop** - continuous operation without restarting the program ⭐ NEW!
+- 📊 Detailed statistics for all modes
+- 💾 Save to file
+- 📈 Progress bar for large ranges
+- ⏱️ Performance measurement (μs, ms, s)
 
 ```bash
 cd PNA && python PNA.py
@@ -130,15 +142,17 @@ cd PNA && python PNA.py
 ---
 
 ### 🚴 [Bike Service Proxy](Courses/BIKE/)
-**Proxy do serwisu rowerowego rowermevo.pl** z monitoringiem lokalizacji i baterii.
+
+**Proxy for the rowermevo.pl bike rental service** with location and battery monitoring.
 
 **Features:**
-- 📍 Pobieranie lokalizacji rowerów w czasie rzeczywistym
-- 🔋 Monitoring poziomu baterii
-- 🗺️ Dane z API rowermevo.pl
-- 💾 Zapis do CSV
-- 🌐 Integracja z requests
-- 📊 Analiza danych stacji rowerowych
+
+- 📍 Real-time bike location retrieval
+- 🔋 Battery level monitoring
+- 🗺️ Data from the rowermevo.pl API
+- 💾 CSV export
+- 🌐 Integration with requests
+- 📊 Bike station data analysis
 
 ```bash
 cd Courses/BIKE && python bike_service_proxy.py
@@ -147,14 +161,16 @@ cd Courses/BIKE && python bike_service_proxy.py
 ---
 
 ### 📚 [Python Course](Courses/python-course-master/)
-**Kompleksowy kurs Python** z interaktywnymi notebookami Jupyter i Docker.
+
+**Comprehensive Python course** with interactive Jupyter notebooks and Docker.
 
 **Features:**
-- 🐳 Środowisko Docker (łatwa konfiguracja)
-- 📓 Jupyter Notebooks (interaktywna nauka)
-- 📖 Materiały szkoleniowe
-- 🎯 Przykłady praktyczne
-- 💻 Gotowe środowisko deweloperskie
+
+- 🐳 Docker environment (easy setup)
+- 📓 Jupyter Notebooks (interactive learning)
+- 📖 Training materials
+- 🎯 Practical examples
+- 💻 Ready-to-use development environment
 
 ```bash
 cd Courses/python-course-master && docker-compose up
@@ -163,29 +179,32 @@ cd Courses/python-course-master && docker-compose up
 ---
 
 ### 🎬 [Video Downloader (YT-DLP)](YT-DLP/)
-**Uniwersalny downloader wideo** obsługujący 1000+ stron z zaawansowanym wyborem ścieżek audio.
+
+**Universal video downloader** supporting 1000+ sites with advanced audio track selection.
 
 **Features:**
-- 🍪 Obsługa cookies (prywatne treści/tylko dla członków)
-- 🎬 Zawsze najlepsza jakość wideo (automatycznie)
-- 🔊 **Zaawansowany wybór ścieżek audio** - szczegółowe parametry techniczne:
-  - Format ID (f6-a1-x3, f7-a2-x3)
-  - Bitrate (kbps), rozmiar pliku, język
-  - Typ ścieżki (DASH, HLS)
-  - Automatyczne filtrowanie audiodeskrypcji
-- 📦 Batch download z indywidualnym wyborem audio dla każdego URL
-- 📈 Real-time progress bar z tqdm
-- 🔄 Automatyczna konwersja formatów (ffmpeg)
-- 📝 Logowanie wszystkich operacji do pliku
-- ✅ Pełna walidacja URL i plików cookie
-- 🛡️ Kompleksowa obsługa błędów
 
-**Przykład wyboru audio:**
-```
-🔊 Dostępne ścieżki dźwiękowe:
-   1. f7-a2-x3   m4a   ~42.07MiB   132kbps [pl] Polski (DASH)
-   2. f6-a1-x3   m4a   ~41.76MiB   131kbps [pl] Polski (DASH)
-   Wybór [1-2]: 1
+- 🍪 Cookie support (private/members-only content)
+- 🎬 Always the best video quality (automatic)
+- 🔊 **Advanced audio track selection** - detailed technical parameters:
+  - Format ID (f6-a1-x3, f7-a2-x3)
+  - Bitrate (kbps), file size, language
+  - Track type (DASH, HLS)
+  - Automatic audio-description filtering
+- 📦 Batch download with individual audio selection per URL
+- 📈 Real-time progress bar with tqdm
+- 🔄 Automatic format conversion (ffmpeg)
+- 📝 Logging of all operations to a file
+- ✅ Full URL and cookie file validation
+- 🛡️ Comprehensive error handling
+
+**Audio selection example:**
+
+```text
+🔊 Available audio tracks:
+   1. f7-a2-x3   m4a   ~42.07MiB   132kbps [pl] Polish (DASH)
+   2. f6-a1-x3   m4a   ~41.76MiB   131kbps [pl] Polish (DASH)
+   Choice [1-2]: 1
 ```
 
 ```bash
@@ -194,114 +213,119 @@ cd YT-DLP && python yt-dlp.py
 
 ---
 
-## 🛠️ Wymagania
+## 🛠️ Requirements
 
 - Python 3.10+
-- Standardowa biblioteka (większość projektów)
-- Specyficzne zależności w `requirements.txt` w każdym projekcie
-- **ffmpeg** (wymagany dla YT-DLP - konwersja formatów wideo)
-- **Docker** (opcjonalnie dla python-course-master)
+- Standard library (most projects)
+- Specific dependencies in `requirements.txt` for each project
+- **ffmpeg** (required for YT-DLP - video format conversion)
+- **Docker** (optional for python-course-master)
 
-## 📖 Dokumentacja
+## 📖 Documentation
 
-Każdy projekt zawiera własny `README.md` z:
-- Szczegółowym opisem funkcji
-- Przykładami użycia
-- Instrukcjami instalacji
-- Rozwiązywaniem problemów
+Each project has its own `README.md` with:
+
+- A detailed description of its features
+- Usage examples
+- Installation instructions
+- Troubleshooting
 
 ## 🚀 Quick Start
 
 ```bash
-# Klonowanie repozytorium
+
+# Clone the repository
+
 git clone https://github.com/mmierzejewski/MM_Python.git
 cd MM_Python
 
-# Wybierz projekt i uruchom (przykład - Generator liczb pierwszych)
+# Pick a project and run it (example - prime number generator)
+
 cd PNA
 python PNA.py
 
-# Przykład - Fibonacci
+# Example - Fibonacci
+
 cd Fibonacci
 python FibonacciUtils.py
 ```
 
-## 📁 Struktura
+## 📁 Structure
 
-```
+```text
 MM_Python/
-├── .gitignore              # Ignorowane pliki (logi, eksporty, venv)
-├── README.md               # Dokumentacja główna
+├── .gitignore              # Ignored files (logs, exports, venv)
+├── README.md               # Main documentation
 │
-├── BMI/                    # Kalkulator BMI z rekomendacjami
+├── BMI/                    # BMI calculator with recommendations
 │   ├── BMI.py
 │   └── README.md
 │
-├── Fibonacci/              # Kalkulator Fibonacciego (8 opcji + pętla menu)
+├── Fibonacci/              # Fibonacci calculator (8 options + menu loop)
 │   ├── FibonacciUtils.py
 │   └── README.md
 │
-├── Horse/                  # Knight's Tour Problem (Warnsdorff + pętla menu)
+├── Horse/                  # Knight's Tour Problem (Warnsdorff + menu loop)
 │   ├── Horse.py
 │   └── README.md
 │
-├── PITAGORAS/              # Generator trójek pitagorejskich (pętla menu)
+├── PITAGORAS/              # Pythagorean triples generator (menu loop)
 │   ├── Pitagoras.py
 │   └── README.md
 │
-├── PNA/                    # Liczby pierwsze (Sito Eratostenesa + pętla menu)
+├── PNA/                    # Prime numbers (Sieve of Eratosthenes + menu loop)
 │   ├── PNA.py
 │   └── README.md
 │
-├── TRIANGLE/               # Wizualizator trójkątów 3D (walidacja + pole)
+├── TRIANGLE/               # 3D triangle visualizer (validation + area)
 │   ├── triangle_3d.py
 │   ├── triangle_3d.png
 │   ├── requirements.txt
 │   └── README.md
 │
-├── Courses/                # Projekty edukacyjne i kursy
-│   ├── BIKE/              # Proxy do rowermevo.pl (lokalizacje rowerów)
+├── Courses/                # Educational projects and courses
+│   ├── BIKE/              # Proxy for rowermevo.pl (bike locations)
 │   │   ├── bike_service_proxy.py
 │   │   ├── locations.csv
 │   │   └── requirements.txt
 │   │
-│   └── python-course-master/  # Kurs Python (Docker + Jupyter)
+│   └── python-course-master/  # Python course (Docker + Jupyter)
 │       ├── Dockerfile
 │       ├── docker-compose.yml
 │       ├── requirements.txt
 │       ├── README.md
-│       ├── part_1/        # Podstawy Python
-│       ├── part_2/        # Zaawansowane tematy
-│       └── workshops/     # Zadania praktyczne
+│       ├── part_1/        # Python basics
+│       ├── part_2/        # Advanced topics
+│       └── workshops/     # Practical exercises
 │
-└── YT-DLP/                 # Universal video downloader (wybór ścieżek audio)
+└── YT-DLP/                 # Universal video downloader (audio track selection)
     ├── yt-dlp.py
     ├── cookies.txt.example
     ├── README.md
     └── requirements.txt
 ```
 
-## 🎯 Wspólne Cechy Głównych Projektów
+## 🎯 Common Features of the Main Projects
 
-Wszystkie główne skrypty (PNA, Fibonacci, Horse, PITAGORAS) zostały zunifikowane i oferują:
+All the main scripts (PNA, Fibonacci, Horse, PITAGORAS) have been unified and offer:
 
-- 🔄 **Pętla menu** - działają w trybie ciągłym bez konieczności ponownego uruchamiania
-- 🚪 **Opcja "Koniec"** - eleganckie wyjście z programu
-- 🎨 **Interaktywny interface** - przyjazne menu z numerowanymi opcjami
-- 📊 **Szczegółowe statystyki** - pełna analiza wyników
-- 💾 **Eksport do pliku** - możliwość zapisywania wyników
-- ⏱️ **Pomiar wydajności** - dokładne mierzenie czasu operacji
-- 🛡️ **Obsługa błędów** - walidacja inputu i łapanie wyjątków
+- 🔄 **Menu loop** - run in continuous mode without needing to restart
+- 🚪 **"Exit" option** - clean program exit
+- 🎨 **Interactive interface** - friendly menu with numbered options
+- 📊 **Detailed statistics** - full analysis of results
+- 💾 **Export to file** - ability to save results
+- ⏱️ **Performance measurement** - precise timing of operations
+- 🛡️ **Error handling** - input validation and exception catching
 
-## 🤝 Kontakt
+## 🤝 Contact
 
 - GitHub: [@mmierzejewski](https://github.com/mmierzejewski)
 - Repository: [MM_Python](https://github.com/mmierzejewski/MM_Python)
 
-## 📄 Licencja
+## 📄 License
 
 Free to use and modify.
 
 ---
 
-**💡 Tip:** Każdy skrypt zawiera pełną walidację inputu, error handling i przyjazny interfejs użytkownika z emoji!
+**💡 Tip:** Every script includes full input validation, error handling, and a friendly emoji-based user interface!

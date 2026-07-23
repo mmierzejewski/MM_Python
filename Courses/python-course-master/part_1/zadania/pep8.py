@@ -4,7 +4,7 @@ __author__ = "Andrzej Krawczyk - Pep8 test"
 
 from sys import path, path_hooks
 
-class punkt(object):
+class Point(object):
 
     def __init__(self, x, z, SomeData):
         self.x = x
@@ -22,7 +22,7 @@ def SomeDataProcessor(a, b, y = 10, c=20, e=[1,2,3,4]):
         if result % 2 == 0:
                     print("oh!")
 
-def fOo(m, y, d="Ala ma kota", h='7 krasnali'):
+def fOo(m, y, d="Ann has a cat", h='7 dwarfs'):
     return (
         d + h
         )
@@ -42,8 +42,8 @@ list_of_people = [
     "Janusz"
     ]
 
-zdanieDoTestow = "To jest bardzo dluga linijka kodu zawierajaca po prostu jakis tekst o jakiejs dlugosci i chyba jest dosyc mocno za dluga"
-Drugie_Zdanie = 'to jest kolejna dluga linijka tekstu do testow'
+test_sentence = "This is a very long line of code containing just some text of a certain length and I think it's quite a bit too long"
+second_sentence = 'this is another long line of text for testing'
 
 with open('/path/to/some/file/you/want/to/read') as file_1, \
      open('/path/to/some/file/being/written', 'w') as file_2:
@@ -56,4 +56,4 @@ income = (gross_wages +
           student_loan_interest)
 
 
-wynik1 = "{} {} {}".format(zdanieDoTestow, 2, 3)
+result1 = "{} {} {}".format(test_sentence, 2, 3)

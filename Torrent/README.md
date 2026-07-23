@@ -1,14 +1,14 @@
 # Torrent Downloader
 
-Prosty skrypt Python do pobierania torrentow z magnet linku albo pliku `.torrent`.
+A simple Python script for downloading torrents from a magnet link or a `.torrent` file.
 
-## Wymagania
+## Requirements
 
 - Python 3.14.5
 - `aria2` 1.37+
-- biblioteka `aria2p` 0.12.1
+- `aria2p` library 0.12.1
 
-Instalacja:
+Installation:
 
 ```bash
 brew install aria2
@@ -16,7 +16,7 @@ python3.14 -m venv ~/.venv
 ~/.venv/bin/python -m pip install -r requirements.txt
 ```
 
-## Uzycie
+## Usage
 
 Magnet link:
 
@@ -24,68 +24,70 @@ Magnet link:
 python torrent_downloader.py "magnet:?xt=urn:btih:..."
 ```
 
-Plik `.torrent`:
+`.torrent` file:
 
 ```bash
-python torrent_downloader.py /sciezka/do/pliku.torrent
+python torrent_downloader.py /path/to/file.torrent
 ```
 
-Plik tekstowy z wieloma wpisami:
+Text file with multiple entries:
 
 ```bash
-python torrent_downloader.py --batch-file lista.txt
+python torrent_downloader.py --batch-file list.txt
 ```
 
-Tryb interaktywny:
+Interactive mode:
 
 ```bash
 python torrent_downloader.py --interactive
 ```
 
-Uruchomienie bez argumentow:
+Run without arguments:
 
 ```bash
 python torrent_downloader.py
 ```
 
-Skrypt zapyta wtedy o katalog docelowy oraz o magnet link lub sciezke do pliku `.torrent`, podobnie jak `YT-DLP` pyta o katalog i adresy URL.
-Domyslnie pyta tylko o te dwa elementy.
+The script will then ask for the destination directory and for a magnet link or path to a `.torrent` file, similar to how `YT-DLP` asks for a directory and URLs.
+By default it only asks for these two items.
 
-Dodatkowe opcje:
+Additional options:
 
-- `--listen-port 6881` - port nasluchu klienta BitTorrent
-- `--listen-port-end 6891` - koniec zakresu portow BitTorrent i DHT
-- `--rpc-port 0` - port RPC aria2 dostepny na interfejsach hosta; domyslnie losowy wolny port
-- `--listen-address 0.0.0.0` - zakres nasluchu RPC: `0.0.0.0` albo `localhost`
-- `--local-only` - skrot dla `--listen-address localhost`
-- `--public-rpc` - skrot dla `--listen-address 0.0.0.0`
-- `--timeout 120` - maksymalny czas oczekiwania na metadane
-- `--seed` - pozostawia klient w trybie seedowania po zakonczeniu pobierania
-- `--allow-overwrite` - pozwala nadpisac istniejacy plik docelowy, gdy brak pliku `*.aria2`
-- `--interactive` - wymusza pytania o zrodlo oraz dodatkowe opcje w terminalu
-- `--batch-file lista.txt` - czyta wiele zrodel z pliku tekstowego, po jednym na linie
-- `--log-file ./torrent.log` - zapisuje logi do wskazanego pliku
+- `--listen-port 6881` - BitTorrent client listen port
+- `--listen-port-end 6891` - end of the BitTorrent and DHT port range
+- `--rpc-port 0` - aria2 RPC port exposed on host interfaces; defaults to a random free port
+- `--listen-address 0.0.0.0` - RPC listen scope: `0.0.0.0` or `localhost`
+- `--local-only` - shortcut for `--listen-address localhost`
+- `--public-rpc` - shortcut for `--listen-address 0.0.0.0`
+- `--timeout 120` - maximum time to wait for metadata
+- `--seed` - keeps the client in seeding mode after the download finishes
+- `--allow-overwrite` - allows overwriting an existing destination file when there's no `*.aria2` file
+- `--interactive` - forces prompts for the source and additional options in the terminal
+- `--batch-file list.txt` - reads multiple sources from a text file, one per line
+- `--log-file ./torrent.log` - writes logs to the specified file
 
-Przyklad pliku `lista.txt`:
+Example `list.txt` file:
 
 ```text
-# komentarze sa ignorowane
+
+# comments are ignored
+
 magnet:?xt=urn:btih:...
-/sciezka/do/archiwum.torrent
+/path/to/archive.torrent
 ```
 
-## Uwagi
+## Notes
 
-Skrypt nie omija zabezpieczen i powinien byc uzywany tylko do pobierania tresci, do ktorych masz prawa.
+The script does not bypass any protections and should only be used to download content you have the rights to.
 
-Skrypt uruchamia `aria2c` w trybie RPC na porcie hosta i zamyka go po zakonczonej pracy.
-RPC jest chronione losowym `rpc-secret`, ale port pozostaje wystawiony na interfejsach hosta.
-Porty BitTorrent i DHT domyslnie uzywaja zakresu `6881-6891`, ktory mozna zmienic przez `--listen-port` i `--listen-port-end`.
-Jesli chcesz ograniczyc RPC tylko do tej maszyny, uzyj `--local-only`.
-Jesli chcesz jawnie wystawic RPC na interfejsach hosta, uzyj `--public-rpc`.
-Flag `--local-only` i `--public-rpc` nie mozna laczyc w jednym uruchomieniu.
-Opcja `--listen-address` steruje tylko ekspozycja RPC: `localhost` ogranicza RPC do tej maszyny, a `0.0.0.0` wystawia RPC na interfejsach hosta. `aria2c` nie udostepnia rownowaznej opcji dla IPv4 BitTorrent bind do konkretnego adresu.
-Jesli nie podasz `--rpc-port`, skrypt automatycznie wybiera losowy wolny port RPC na hoście. Jawnie podany `--rpc-port` powoduje twardy blad przy konflikcie.
-W trybie interaktywnym skrypt pyta tez, czy ma nadpisac istniejace pliki docelowe.
+The script runs `aria2c` in RPC mode on a host port and shuts it down once the work is finished.
+RPC is protected with a random `rpc-secret`, but the port remains exposed on host interfaces.
+BitTorrent and DHT ports use the `6881-6891` range by default, which can be changed via `--listen-port` and `--listen-port-end`.
+If you want to restrict RPC to this machine only, use `--local-only`.
+If you want to explicitly expose RPC on host interfaces, use `--public-rpc`.
+The `--local-only` and `--public-rpc` flags cannot be combined in a single run.
+The `--listen-address` option only controls RPC exposure: `localhost` restricts RPC to this machine, while `0.0.0.0` exposes RPC on host interfaces. `aria2c` does not offer an equivalent option for binding IPv4 BitTorrent to a specific address.
+If you don't provide `--rpc-port`, the script automatically picks a random free RPC port on the host. An explicitly provided `--rpc-port` causes a hard failure on conflict.
+In interactive mode, the script also asks whether it should overwrite existing destination files.
 
-Podczas pracy skrypt zapisuje logi do pliku `torrent_downloader.log` w biezacym katalogu, chyba ze podasz inna sciezke przez `--log-file`.
+While running, the script writes logs to the `torrent_downloader.log` file in the current directory, unless you provide a different path via `--log-file`.

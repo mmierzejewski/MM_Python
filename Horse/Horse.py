@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Knight's Tour Problem - Znajdowanie trasy skoczka szachowego.
+Knight's Tour Problem - finding the route of a chess knight.
 
-Problem polega na znalezieniu sekwencji ruchów skoczka, która odwiedza 
-każde pole szachownicy dokładnie raz.
+The problem is to find a sequence of knight moves that visits
+every square of the chessboard exactly once.
 """
 
 from typing import List, Tuple, Optional
@@ -16,7 +16,7 @@ import time
 import signal
 
 
-# Konfiguracja loggingu
+# Logging configuration
 log_file = Path(__file__).parent / 'knights_tour.log'
 logging.basicConfig(
     level=logging.INFO,
@@ -29,7 +29,7 @@ logging.basicConfig(
 # Type aliases
 Board = List[List[int]]
 
-# Stałe
+# Constants
 UNVISITED = -1
 START_POSITION = 1
 KNIGHT_MOVES = [
@@ -40,7 +40,7 @@ KNIGHT_MOVES = [
 
 @dataclass
 class SolutionStats:
-    """Statystyki rozwiązania."""
+    """Solution statistics."""
     time_elapsed: float = 0.0
     backtracks: int = 0
     max_depth: int = 0
@@ -50,31 +50,31 @@ class SolutionStats:
 
 @dataclass
 class BoardState:
-    """Stan planszy do śledzenia najlepszego rozwiązania."""
+    """Board state used to track the best solution found."""
     board: Board
     moves_count: int
 
 
 class KnightsTour:
-    """Rozwiązuje problem trasy skoczka szachowego."""
+    """Solves the chess knight's tour problem."""
 
     def __init__(self, height: int, width: int, verbose: bool = False):
         """
-        Inicjalizuje solver dla podanego rozmiaru planszy.
+        Initializes the solver for the given board size.
 
         Args:
-            height: Wysokość planszy
-            width: Szerokość planszy
-            verbose: Czy wyświetlać szczegółowe logi
+            height: Board height
+            width: Board width
+            verbose: Whether to display detailed logs
 
         Raises:
-            ValueError: Jeśli wymiary są nieprawidłowe
+            ValueError: If the dimensions are invalid
         """
         if not isinstance(height, int) or not isinstance(width, int):
-            raise ValueError("Wymiary planszy muszą być liczbami całkowitymi")
+            raise ValueError("Board dimensions must be integers")
 
         if height < 3 or width < 3:
-            raise ValueError("Wymiary planszy muszą być >= 3x3")
+            raise ValueError("Board dimensions must be >= 3x3")
 
         self.height = height
         self.width = width
@@ -86,30 +86,30 @@ class KnightsTour:
         )
         self.stats = SolutionStats()
         self.start_time = 0.0
-        self.timeout_limit = 300  # 5 minut domyślnie
+        self.timeout_limit = 300  # 5 minutes by default
         
-        logging.info(f"Utworzono solver dla planszy {height}x{width}")
+        logging.info(f"Created solver for a {height}x{width} board")
         self.stats = SolutionStats()
         self.start_time = 0.0
-        self.timeout_limit = 300  # 5 minut domyślnie
+        self.timeout_limit = 300  # 5 minutes by default
         
-        logging.info(f"Utworzono solver dla planszy {height}x{width}")
+        logging.info(f"Created solver for a {height}x{width} board")
 
     def is_safe(self, x: int, y: int) -> bool:
-        """Sprawdza czy pozycja jest bezpieczna dla skoczka."""
+        """Checks whether a position is safe for the knight."""
         return (0 <= x < self.height and
                 0 <= y < self.width and
                 self.board[x][y] == UNVISITED)
 
     def count_onward_moves(self, x: int, y: int) -> int:
         """
-        Liczy liczbę możliwych ruchów z danej pozycji (heurystyka Warnsdorffa).
+        Counts the number of possible moves from a given position (Warnsdorff's heuristic).
 
         Args:
-            x, y: Współrzędne pozycji
+            x, y: Position coordinates
 
         Returns:
-            Liczba możliwych ruchów
+            Number of possible moves
         """
         count = 0
         for dx, dy in KNIGHT_MOVES:
@@ -119,13 +119,13 @@ class KnightsTour:
 
     def get_possible_moves(self, x: int, y: int) -> List[Tuple[int, int, int]]:
         """
-        Zwraca możliwe ruchy posortowane według heurystyki Warnsdorffa.
+        Returns possible moves sorted according to Warnsdorff's heuristic.
 
         Args:
-            x, y: Aktualna pozycja
+            x, y: Current position
 
         Returns:
-            Lista krotek (degree, next_x, next_y)
+            List of tuples (degree, next_x, next_y)
         """
         possible_moves = []
         for dx, dy in KNIGHT_MOVES:
@@ -134,10 +134,10 @@ class KnightsTour:
                 degree = self.count_onward_moves(next_x, next_y)
                 possible_moves.append((degree, next_x, next_y))
 
-        return sorted(possible_moves)  # Sortuj według degree (Warnsdorff)
+        return sorted(possible_moves)  # Sort by degree (Warnsdorff)
 
     def update_best_state(self, move_num: int) -> None:
-        """Aktualizuje najlepsze znalezione rozwiązanie."""
+        """Updates the best solution found so far."""
         if move_num > self.best_state.moves_count:
             self.best_state.moves_count = move_num
             for r in range(self.height):
@@ -145,42 +145,42 @@ class KnightsTour:
 
             if self.verbose:
                 progress = (move_num / (self.height * self.width)) * 100
-                print(f"Postęp: {move_num}/{self.height * self.width} ({progress:.1f}%)")
+                print(f"Progress: {move_num}/{self.height * self.width} ({progress:.1f}%)")
 
     def solve_recursive(self, x: int, y: int, move_num: int, depth: int = 0) -> bool:
         """
-        Rekurencyjna funkcja rozwiązująca problem z backtrackingiem.
+        Recursive function that solves the problem using backtracking.
 
         Args:
-            x, y: Aktualna pozycja
-            move_num: Numer aktualnego ruchu
-            depth: Głębokość rekurencji (dla statystyk)
+            x, y: Current position
+            move_num: Number of the current move
+            depth: Recursion depth (for statistics)
 
         Returns:
-            True jeśli znaleziono kompletne rozwiązanie
+            True if a complete solution was found
         """
-        # Sprawdź timeout
+        # Check timeout
         if time.time() - self.start_time > self.timeout_limit:
             self.stats.timeout_occurred = True
-            logging.warning(f"Przekroczono limit czasu ({self.timeout_limit}s)")
-            raise TimeoutError(f"Przekroczono limit czasu {self.timeout_limit}s")
+            logging.warning(f"Time limit exceeded ({self.timeout_limit}s)")
+            raise TimeoutError(f"Time limit of {self.timeout_limit}s exceeded")
         
-        # Aktualizuj statystyki
+        # Update statistics
         self.stats.max_depth = max(self.stats.max_depth, depth)
         self.stats.total_attempts += 1
         
-        # Czy odwiedziliśmy wszystkie pola?
+        # Have we visited all squares?
         if move_num == self.height * self.width + 1:
-            logging.info("Znaleziono kompletne rozwiązanie!")
+            logging.info("Complete solution found!")
             return True
 
-        # Pobierz możliwe ruchy (posortowane według Warnsdorffa)
+        # Get possible moves (sorted according to Warnsdorff)
         for _, next_x, next_y in self.get_possible_moves(x, y):
-            # Wykonaj ruch
+            # Make the move
             self.board[next_x][next_y] = move_num
             self.update_best_state(move_num)
 
-            # Rekurencja
+            # Recurse
             if self.solve_recursive(next_x, next_y, move_num + 1, depth + 1):
                 return True
 
@@ -192,45 +192,45 @@ class KnightsTour:
 
     def solve(self, start_x: int = 0, start_y: int = 0, timeout: int = 300) -> bool:
         """
-        Rozwiązuje problem trasy skoczka.
+        Solves the knight's tour problem.
 
         Args:
-            start_x, start_y: Pozycja startowa skoczka
-            timeout: Limit czasu w sekundach (domyślnie 300s = 5min)
+            start_x, start_y: Starting position of the knight
+            timeout: Time limit in seconds (default 300s = 5min)
 
         Returns:
-            True jeśli znaleziono kompletne rozwiązanie
+            True if a complete solution was found
         """
         if not (0 <= start_x < self.height and 0 <= start_y < self.width):
-            raise ValueError("Pozycja startowa poza planszą")
+            raise ValueError("Starting position is outside the board")
 
         self.timeout_limit = timeout
         self.start_time = time.time()
         
-        # Ustaw pozycję startową
+        # Set the starting position
         self.board[start_x][start_y] = START_POSITION
         self.update_best_state(START_POSITION)
 
-        print(f"Rozwiązywanie dla planszy {self.height}x{self.width}...")
-        logging.info(f"Start rozwiązywania: plansza {self.height}x{self.width}, start=({start_x},{start_y}), timeout={timeout}s")
+        print(f"Solving for a {self.height}x{self.width} board...")
+        logging.info(f"Starting to solve: board {self.height}x{self.width}, start=({start_x},{start_y}), timeout={timeout}s")
 
-        # Rozpocznij rozwiązywanie
+        # Start solving
         try:
             solution_found = self.solve_recursive(start_x, start_y, START_POSITION + 1, depth=0)
         except TimeoutError:
             solution_found = False
         
         self.stats.time_elapsed = time.time() - self.start_time
-        logging.info(f"Zakończono po {self.stats.time_elapsed:.2f}s")
+        logging.info(f"Finished after {self.stats.time_elapsed:.2f}s")
 
         return solution_found
 
     def print_board(self, board: Optional[List[List[int]]] = None) -> None:
-        """Wyświetla planszę."""
+        """Displays the board."""
         if board is None:
             board = self.best_state.board
 
-        print(f"\nPlansza {self.height}x{self.width}:")
+        print(f"\nBoard {self.height}x{self.width}:")
         print("┌" + "─" * (self.width * 3 + 1) + "┐")
 
         for row in board:
@@ -239,150 +239,150 @@ class KnightsTour:
         print("└" + "─" * (self.width * 3 + 1) + "┘")
 
     def print_result(self) -> None:
-        """Wyświetla wynik rozwiązania."""
+        """Displays the solution result."""
         total_cells = self.height * self.width
 
         if self.best_state.moves_count == total_cells:
-            print("\n✓ Znaleziono kompletne rozwiązanie!")
-            logging.info("Znaleziono kompletne rozwiązanie")
+            print("\n✓ Complete solution found!")
+            logging.info("Complete solution found")
         else:
             coverage = (self.best_state.moves_count / total_cells) * 100
-            print(f"\n✗ Nie znaleziono kompletnego rozwiązania.")
-            print(f"  Najlepszy wynik: {self.best_state.moves_count}/{total_cells} "
-                  f"({coverage:.1f}% planszy)")
-            logging.info(f"Częściowe rozwiązanie: {self.best_state.moves_count}/{total_cells} ({coverage:.1f}%)")
+            print(f"\n✗ No complete solution found.")
+            print(f"  Best result: {self.best_state.moves_count}/{total_cells} "
+                  f"({coverage:.1f}% of the board)")
+            logging.info(f"Partial solution: {self.best_state.moves_count}/{total_cells} ({coverage:.1f}%)")
         
         if self.stats.timeout_occurred:
-            print(f"  ⏱️  Przerwano po {self.stats.time_elapsed:.2f}s (timeout)")
+            print(f"  ⏱️  Stopped after {self.stats.time_elapsed:.2f}s (timeout)")
 
         self.print_board()
         self.print_stats()
     
     def print_stats(self) -> None:
-        """Wyświetla statystyki rozwiązania."""
-        print(f"\n📊 Statystyki:")
-        print(f"  Czas wykonania: {self.stats.time_elapsed:.2f}s")
-        print(f"  Liczba prób: {self.stats.total_attempts:,}")
-        print(f"  Backtracki: {self.stats.backtracks:,}")
-        print(f"  Maksymalna głębokość: {self.stats.max_depth}")
+        """Displays solution statistics."""
+        print(f"\n📊 Statistics:")
+        print(f"  Execution time: {self.stats.time_elapsed:.2f}s")
+        print(f"  Number of attempts: {self.stats.total_attempts:,}")
+        print(f"  Backtracks: {self.stats.backtracks:,}")
+        print(f"  Maximum depth: {self.stats.max_depth}")
         
         if self.stats.total_attempts > 0:
             success_rate = (1 - self.stats.backtracks / self.stats.total_attempts) * 100
-            print(f"  Skuteczność: {success_rate:.1f}%")
+            print(f"  Success rate: {success_rate:.1f}%")
     
     def export_solution(self, filename: Optional[str] = None) -> None:
-        """Eksportuje rozwiązanie do pliku.
+        """Exports the solution to a file.
         
         Args:
-            filename: Nazwa pliku (opcjonalna, domyślnie z timestampem)
+            filename: File name (optional, defaults to a timestamped name)
         """
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            # Zapisz w katalogu gdzie jest skrypt (Horse/)
+            # Save in the directory where the script is located (Horse/)
             script_dir = Path(__file__).parent
             filename = script_dir / f"knights_tour_{self.height}x{self.width}_{timestamp}.txt"
         
         try:
             with open(filename, 'w', encoding='utf-8') as f:
                 f.write(f"Knight's Tour Solution\n")
-                f.write(f"Wygenerowano: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write(f"Plansza: {self.height}x{self.width}\n")
+                f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"Board: {self.height}x{self.width}\n")
                 f.write(f"="*60 + "\n\n")
                 
-                # Plansza
+                # Board
                 total_cells = self.height * self.width
                 if self.best_state.moves_count == total_cells:
-                    f.write("✓ KOMPLETNE ROZWIĄZANIE\n\n")
+                    f.write("✓ COMPLETE SOLUTION\n\n")
                 else:
                     coverage = (self.best_state.moves_count / total_cells) * 100
-                    f.write(f"✗ Częściowe rozwiązanie: {self.best_state.moves_count}/{total_cells} ({coverage:.1f}%)\n\n")
+                    f.write(f"✗ Partial solution: {self.best_state.moves_count}/{total_cells} ({coverage:.1f}%)\n\n")
                 
-                # Wizualizacja planszy
+                # Board visualization
                 for row in self.best_state.board:
                     f.write(' '.join(str(cell).rjust(3) for cell in row) + '\n')
                 
-                # Statystyki
+                # Statistics
                 f.write("\n" + "="*60 + "\n")
-                f.write("STATYSTYKI:\n")
-                f.write(f"Czas wykonania: {self.stats.time_elapsed:.2f}s\n")
-                f.write(f"Liczba prób: {self.stats.total_attempts:,}\n")
-                f.write(f"Backtracki: {self.stats.backtracks:,}\n")
-                f.write(f"Maksymalna głębokość rekurencji: {self.stats.max_depth}\n")
+                f.write("STATISTICS:\n")
+                f.write(f"Execution time: {self.stats.time_elapsed:.2f}s\n")
+                f.write(f"Number of attempts: {self.stats.total_attempts:,}\n")
+                f.write(f"Backtracks: {self.stats.backtracks:,}\n")
+                f.write(f"Maximum recursion depth: {self.stats.max_depth}\n")
                 if self.stats.timeout_occurred:
-                    f.write(f"Status: TIMEOUT po {self.timeout_limit}s\n")
+                    f.write(f"Status: TIMEOUT after {self.timeout_limit}s\n")
             
-            print(f"\n✅ Eksportowano do: {filename}")
-            logging.info(f"Wyeksportowano rozwiązanie do {filename}")
+            print(f"\n✅ Exported to: {filename}")
+            logging.info(f"Exported solution to {filename}")
         except IOError as e:
-            print(f"\n❌ Błąd zapisu pliku: {e}")
-            logging.error(f"Błąd eksportu: {e}")
+            print(f"\n❌ File write error: {e}")
+            logging.error(f"Export error: {e}")
 
 
 def get_user_choice() -> Optional[str]:
-    """Pobiera wybór użytkownika: rozwiązanie problemu lub wyjście.
+    """Gets the user's choice: solve the problem or exit.
     
     Returns:
-        '1' dla rozwiązania, '2' dla wyjścia, None jeśli nieprawidłowy wybór
+        '1' to solve, '2' to exit, None if the choice is invalid
     """
-    print("\nWybierz opcję:")
-    print("  1. Rozwiąż problem trasy skoczka")
-    print("  2. Koniec (wyjście z programu)")
-    choice = input("\nTwój wybór (1/2): ").strip()
+    print("\nChoose an option:")
+    print("  1. Solve the knight's tour problem")
+    print("  2. Quit (exit the program)")
+    choice = input("\nYour choice (1/2): ").strip()
     
     if choice not in ['1', '2']:
-        print("❌ Nieprawidłowy wybór!")
+        print("❌ Invalid choice!")
         return None
     
     return choice
 
 
 def get_board_dimensions():
-    """Pobiera i waliduje wymiary planszy od użytkownika."""
+    """Gets and validates the board dimensions from the user."""
     while True:
         try:
-            height = int(input("Podaj wysokość planszy (min 3, zalecane max 8): ").strip())
-            width = int(input("Podaj szerokość planszy (min 3, zalecane max 8): ").strip())
+            height = int(input("Enter board height (min 3, recommended max 8): ").strip())
+            width = int(input("Enter board width (min 3, recommended max 8): ").strip())
 
             if height < 3 or width < 3:
-                print("⚠️  Wymiary planszy muszą być >= 3. Spróbuj ponownie.\n")
+                print("⚠️  Board dimensions must be >= 3. Please try again.\n")
                 continue
 
             if height > 10 or width > 10:
-                print(f"⚠️  Duża plansza {height}x{width} może zająć bardzo dużo czasu!")
-                confirm = input("   Kontynuować? (T/N) [N]: ").strip().upper() or "N"
-                if confirm != "T":
+                print(f"⚠️  A large board {height}x{width} may take a very long time!")
+                confirm = input("   Continue? (Y/N) [N]: ").strip().upper() or "N"
+                if confirm != "Y":
                     continue
 
             return height, width
 
         except ValueError:
-            print("❌ Proszę podać liczby całkowite!\n")
+            print("❌ Please enter integers!\n")
         except (KeyboardInterrupt, EOFError):
-            print("\n👋 Anulowano.")
+            print("\n👋 Cancelled.")
             return None
 
 
 def main():
-    """Główna funkcja programu."""
-    print("=== Problem Trasy Skoczka Szachowego ===")
-    logging.info("Uruchomiono program Knight's Tour")
+    """Main program function."""
+    print("=== Knight's Tour Problem ===")
+    logging.info("Started the Knight's Tour program")
 
-    # Pętla główna programu
+    # Main program loop
     while True:
         choice = get_user_choice()
         if choice is None:
-            continue  # Nieprawidłowy wybór, pokaż menu ponownie
+            continue  # Invalid choice, show the menu again
         
-        # Opcja wyjścia
+        # Exit option
         if choice == '2':
-            print("\n👋 Do widzenia!")
-            logging.info("Zakończono program przez użytkownika")
+            print("\n👋 Goodbye!")
+            logging.info("Program terminated by the user")
             return
 
-        # Rozwiązywanie problemu
+        # Solving the problem
         dimensions = get_board_dimensions()
         if dimensions is None:
-            print()  # Dodaj pustą linię przed powrotem do menu
+            print()  # Add an empty line before returning to the menu
             continue
         
         height, width = dimensions
@@ -393,32 +393,32 @@ def main():
             solver.solve(start_x=0, start_y=0, timeout=300)
             solver.print_result()
             
-            # Opcja eksportu
-            eksport = input("\nEksportować rozwiązanie do pliku? (T/N) [T]: ").strip().upper() or "T"
-            if eksport == "T":
-                custom_name = input("Nazwa pliku (Enter = auto): ").strip()
+            # Export option
+            export = input("\nExport the solution to a file? (Y/N) [Y]: ").strip().upper() or "Y"
+            if export == "Y":
+                custom_name = input("File name (Enter = auto): ").strip()
                 solver.export_solution(custom_name if custom_name else None)
             
         except ValueError as e:
-            print(f"❌ Błąd: {e}")
+            print(f"❌ Error: {e}")
             logging.error(f"ValueError: {e}")
         except TimeoutError as e:
             print(f"⏱️  {e}")
             logging.error(f"TimeoutError: {e}")
         except Exception as e:
-            print(f"❌ Nieoczekiwany błąd: {e}")
-            logging.error(f"Nieoczekiwany błąd: {e}", exc_info=True)
+            print(f"❌ Unexpected error: {e}")
+            logging.error(f"Unexpected error: {e}", exc_info=True)
         
         print(f"{'='*50}\n")
-        # Program wraca do menu głównego
+        # The program returns to the main menu
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n\n👋 Przerwano przez użytkownika.")
-        logging.info("Przerwano przez użytkownika (KeyboardInterrupt)")
+        print("\n\n👋 Interrupted by the user.")
+        logging.info("Interrupted by the user (KeyboardInterrupt)")
     except Exception as e:
-        print(f"\n❌ Krytyczny błąd: {e}")
-        logging.critical(f"Krytyczny błąd: {e}", exc_info=True)
+        print(f"\n❌ Critical error: {e}")
+        logging.critical(f"Critical error: {e}", exc_info=True)

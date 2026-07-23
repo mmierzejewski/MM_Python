@@ -1,147 +1,163 @@
 # 🔢 Fibonacci Calculator
 
-Zaawansowane narzędzia do generowania i analizy ciągu Fibonacciego z wieloma algorytmami i trybami pracy.
+Advanced utilities for generating and analyzing the Fibonacci sequence with multiple algorithms and modes of operation.
 
-## 📐 Ciąg Fibonacciego
+## 📐 Fibonacci Sequence
 
-Ciąg Fibonacciego to sekwencja liczb gdzie każda liczba jest sumą dwóch poprzednich:
+The Fibonacci sequence is a sequence of numbers where each number is the sum of the two preceding ones:
 
-```
+```text
 F(0) = 0
 F(1) = 1
 F(n) = F(n-1) + F(n-2)
 ```
 
-**Przykład:** 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144...
+**Example:** 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144...
 
 ## ✨ Features
 
-### 🔧 Funkcje obliczeniowe:
-- 📊 **Generowanie do wartości** - wszystkie liczby Fibonacciego ≤ max_value
-- 🎯 **N-ta liczba** - pobierz konkretną liczbę z ciągu (0-indexed)
-- 📋 **Pierwsze N liczb** - generuj listę pierwszych n elementów
-- ⚡ **Algorytm szybki O(log n)** - metoda macierzowa z memoizacją dla dużych n
-- ✅ **Sprawdzanie przynależności** - czy liczba należy do ciągu
-- 📈 **Analiza szczegółowa** - stosunek do złotego podziału φ
-- 💾 **Eksport do pliku** - zapisz ciąg z pełnymi statystykami
-- 📝 **Logging** - rejestracja wszystkich operacji do `fibonacci.log`
+### 🔧 Computational functions
 
-### 🎨 Interface:
-- 🖥️ Interaktywne menu z 8 opcjami
-- 🔄 **Pętla menu** - ciągły tryb pracy bez ponownego uruchamiania
-- 🚪 Opcja "Koniec" - eleganckie wyjście z programu
-- 📊 Szczegółowe statystyki
-- 🛡️ Pełna walidacja inputu
-- 🔢 Formatowanie dużych liczb
-- 📉 Analiza zbieżności do złotego podziału
-- 🗂️ Eksport wyników do pliku tekstowego
+- 📊 **Generate up to a value** - all Fibonacci numbers ≤ max_value
+- 🎯 **Nth number** - retrieve a specific number from the sequence (0-indexed)
+- 📋 **First N numbers** - generate a list of the first n elements
+- ⚡ **Fast O(log n) algorithm** - matrix method with memoization for large n
+- ✅ **Membership check** - whether a number belongs to the sequence
+- 📈 **Detailed analysis** - ratio to the golden ratio φ
+- 💾 **Export to file** - save the sequence with full statistics
+- 📝 **Logging** - records all operations to `fibonacci.log`
 
-## 💻 Użycie
+### 🎨 Interface
 
-### Uruchomienie programu
+- 🖥️ Interactive menu with 8 options
+- 🔄 **Menu loop** - continuous mode of operation without restarting
+- 🚪 "Quit" option - graceful exit from the program
+- 📊 Detailed statistics
+- 🛡️ Full input validation
+- 🔢 Large number formatting
+- 📉 Convergence analysis to the golden ratio
+- 🗂️ Export results to a text file
+
+## 💻 Usage
+
+### Running the program
 
 ```bash
 cd Fibonacci
 python3 FibonacciUtils.py
 ```
 
-### Pliki generowane
-- `fibonacci.log` - log wszystkich operacji
-- `fibonacci_sequence_*.txt` - wyeksportowane ciągi (opcjonalnie)
+### Generated files
 
-### Menu opcji
+- `fibonacci.log` - log of all operations
+- `fibonacci_sequence_*.txt` - exported sequences (optional)
 
-```
-🔢 KALKULATOR CIĄGU FIBONACCIEGO
-📌 Wszystkie funkcje używają indeksowania 0-based
+### Menu options
+
+```text
+🔢 FIBONACCI SEQUENCE CALCULATOR
+📌 All functions use 0-based indexing
    (F(0)=0, F(1)=1, F(2)=1, F(3)=2...)
 
-Wybierz opcję:
-1. Generuj liczby Fibonacciego do wartości
-2. Pobierz n-tą liczbę Fibonacciego (0-indexed)
-3. Generuj pierwsze n liczb Fibonacciego
-4. Szybkie obliczanie (algorytm O(log n))
-5. Sprawdź, czy liczba jest liczbą Fibonacciego
-6. Szczegółowe informacje o F(n)
-7. Eksportuj ostatni ciąg do pliku
-8. Koniec (wyjście z programu)
+Choose an option:
+1. Generate Fibonacci numbers up to a value
+2. Get the nth Fibonacci number (0-indexed)
+3. Generate the first n Fibonacci numbers
+4. Fast calculation (O(log n) algorithm)
+5. Check whether a number is a Fibonacci number
+6. Detailed information about F(n)
+7. Export the last sequence to a file
+8. Quit (exit the program)
 ```
 
-## 📚 Przykłady użycia
+## 📚 Usage Examples
 
-### 1. Generowanie do wartości
+### 1. Generate up to a value
 
 ```python
 from FibonacciUtils import generate_fibonacci_upto
 
-# Wszystkie liczby Fibonacciego ≤ 100
+# All Fibonacci numbers ≤ 100
+
 result = generate_fibonacci_upto(100)
+
 # [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89]
+
 ```
 
-**Interaktywnie:**
-```
-Wybór: 1
-Podaj wartość maksymalną: 100
-✅ Liczby Fibonacciego ≤ 100:
+**Interactively:**
+
+```text
+Choice: 1
+Enter the maximum value: 100
+✅ Fibonacci numbers ≤ 100:
    [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89]
-   Znaleziono: 12 liczb
+   Found: 12 numbers
 ```
 
-### 2. N-ta liczba Fibonacciego
+### 2. Nth Fibonacci number
 
 ```python
 from FibonacciUtils import get_nth_fibonacci
 
-# 6-ta liczba (0-indexed: F(0)=0, F(1)=1, F(2)=1...)
+# 6th number (0-indexed: F(0)=0, F(1)=1, F(2)=1...)
+
 result = get_nth_fibonacci(6)  # 8
 
 # Backwards compatibility (1-indexed)
+
 result = get_nth_fibonacci(7, zero_indexed=False)  # 8
 ```
 
-**Interaktywnie:**
-```
-Wybór: 2
-Podaj pozycję n (0-indexed, np. F(0)=0, F(6)=8): 6
+**Interactively:**
+
+```text
+Choice: 2
+Enter position n (0-indexed, e.g. F(0)=0, F(6)=8): 6
 ✅ F(6) = 8
 ```
 
-### 3. Pierwsze N liczb
+### 3. First N numbers
 
 ```python
 from FibonacciUtils import generate_first_n_fibonacci
 
-# Pierwsze 10 liczb
+# First 10 numbers
+
 result = generate_first_n_fibonacci(10)
+
 # [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
+
 ```
 
-**Interaktywnie:**
-```
-Wybór: 3
-Ile liczb wygenerować: 10
-✅ Pierwsze 10 liczby: [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
+**Interactively:**
+
+```text
+Choice: 3
+How many numbers to generate: 10
+✅ First 10 numbers: [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
 ```
 
-### 4. Szybki algorytm (duże liczby)
+### 4. Fast algorithm (large numbers)
 
 ```python
 from FibonacciUtils import fibonacci_fast
 
-# F(100) metodą macierzową O(log n)
+# F(100) using the matrix method O(log n)
+
 result = fibonacci_fast(100)  # 354,224,848,179,261,915,075
 ```
 
-**Interaktywnie:**
-```
-Wybór: 4
-Podaj n (0-indexed, dla dużych n): 100
+**Interactively:**
+
+```text
+Choice: 4
+Enter n (0-indexed, for large n): 100
 ✅ F(100) = 354,224,848,179,261,915,075
-   Liczba cyfr: 21
+   Number of digits: 21
 ```
 
-### 5. Sprawdzanie przynależności
+### 5. Membership check
 
 ```python
 from FibonacciUtils import is_fibonacci
@@ -151,70 +167,74 @@ is_fibonacci(22)   # False
 is_fibonacci(89)   # True
 ```
 
-**Algorytm:** Liczba n jest liczbą Fibonacciego ⟺ 5n² + 4 lub 5n² - 4 jest kwadratem doskonałym
+**Algorithm:** A number n is a Fibonacci number ⟺ 5n² + 4 or 5n² - 4 is a perfect square
 
-**Interaktywnie:**
-```
-Wybór: 5
-Podaj liczbę do sprawdzenia: 89
-✅ 89 JEST liczbą Fibonacciego!
+**Interactively:**
+
+```text
+Choice: 5
+Enter the number to check: 89
+✅ 89 IS a Fibonacci number!
 ```
 
-### 6. Szczegółowa analiza
+### 6. Detailed analysis
 
 ```python
 from FibonacciUtils import print_fibonacci_info
 
-print_fibonacci_info(20)  # 0-indexed (domyślnie)
+print_fibonacci_info(20)  # 0-indexed (default)
 ```
 
 **Output:**
-```
+
+```text
 ============================================================
-📊 INFORMACJE O F(20)
+📊 INFORMATION ABOUT F(20)
 ============================================================
-Wartość: 6,765
-Liczba cyfr: 4
-Ciąg do F(20): [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]...
-Stosunek F(20)/F(19): 1.6180339985
-Złoty podział φ: 1.6180339887
-Różnica: 9.8324e-09
+Value: 6,765
+Number of digits: 4
+Sequence up to F(20): [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]...
+Ratio F(20)/F(19): 1.6180339985
+Golden ratio φ: 1.6180339887
+Difference: 9.8324e-09
 ============================================================
 ```
 
-### 7. Eksport ciągu do pliku
+### 7. Export the sequence to a file
 
 ```python
 from FibonacciUtils import export_fibonacci_sequence, generate_first_n_fibonacci
 
 sequence = generate_first_n_fibonacci(15)
-export_fibonacci_sequence(sequence, "moj_fibonacci.txt")
+export_fibonacci_sequence(sequence, "my_fibonacci.txt")
 ```
 
-**Zawartość pliku:**
-```
-Ciąg Fibonacciego
-Wygenerowano: 2025-12-12 22:00:19
-Liczba elementów: 15
+**File contents:**
+
+```text
+Fibonacci sequence
+Generated: 2025-12-12 22:00:19
+Number of elements: 15
 ============================================================
 
 F(0)-F(9): 0, 1, 1, 2, 3, 5, 8, 13, 21, 34
 F(10)-F(14): 55, 89, 144, 233, 377
 
 ============================================================
-STATYSTYKI:
-Najmniejsza: 0
-Największa: 377
-Suma: 986
-Ostatni stosunek: 1.6180257511
-Złoty podział φ: 1.6180339887
+STATISTICS:
+Smallest: 0
+Largest: 377
+Sum: 986
+Last ratio: 1.6180257511
+Golden ratio φ: 1.6180339887
 ```
 
-## 🔬 Algorytmy
+## 🔬 Algorithms
 
-### 1. Algorytm iteracyjny (standardowy)
-**Złożoność:** O(n)  
-**Użycie:** `generate_first_n_fibonacci()`, `get_nth_fibonacci()`
+### 1. Iterative algorithm (standard)
+
+**Complexity:** O(n)  
+**Used by:** `generate_first_n_fibonacci()`, `get_nth_fibonacci()`
 
 ```python
 def fibonacci_iterative(n):
@@ -225,192 +245,212 @@ def fibonacci_iterative(n):
     return b
 ```
 
-### 2. Algorytm macierzowy (szybki)
-**Złożoność:** O(log n)  
-**Użycie:** `fibonacci_fast()`
+### 2. Matrix algorithm (fast)
 
-Wykorzystuje wzór macierzowy:
-```
+**Complexity:** O(log n)  
+**Used by:** `fibonacci_fast()`
+
+Uses the matrix formula:
+
+```text
 | F(n+1)  F(n)  |   | 1  1 |^n
 | F(n)    F(n-1)|= | 1  0 |
 ```
 
-### 3. Test przynależności
-**Złożoność:** O(1)  
-**Użycie:** `is_fibonacci()`
+### 3. Membership test
 
-Wykorzystuje własność:
-- n ∈ Fibonacci ⟺ (5n² + 4 jest kwadratem) ∨ (5n² - 4 jest kwadratem)
+**Complexity:** O(1)  
+**Used by:** `is_fibonacci()`
 
-## 📊 Analiza kodu
+Uses the property:
 
-### ✅ **Mocne strony:**
+- n ∈ Fibonacci ⟺ (5n² + 4 is a perfect square) ∨ (5n² - 4 is a perfect square)
 
-1. **Kompletność funkcjonalna**
-   - 6 różnych funkcji do pracy z ciągiem
-   - Algorytmy o różnej złożoności
-   - Test przynależności matematyczny
+## 📊 Code Analysis
 
-2. **Dobra struktura**
-   - Czytelny podział na funkcje
+### ✅ **Strengths:**
+
+1. **Functional completeness**
+   - 6 different functions for working with the sequence
+   - Algorithms of varying complexity
+   - Mathematical membership test
+
+2. **Good structure**
+   - Clear separation into functions
    - Type hints
-   - Docstringi z przykładami
+   - Docstrings with examples
    - Custom exception `FibonacciError`
 
 3. **User Experience**
-   - Interaktywne menu
-   - Formatowanie liczb (przecinki)
-   - Analiza złotego podziału φ
-   - Obsługa błędów
+   - Interactive menu
+   - Number formatting (thousand separators)
+   - Golden ratio φ analysis
+   - Error handling
 
-4. **Dokumentacja**
-   - Docstringi z examples
-   - Złożoność algorytmów
-   - Wzory matematyczne
+4. **Documentation**
+   - Docstrings with examples
+   - Algorithm complexity
+   - Mathematical formulas
 
-5. **Algorytmy zaawansowane**
-   - Metoda macierzowa O(log n)
-   - Szybkie potęgowanie
-   - Test kwadratowy dla przynależności
+5. **Advanced algorithms**
+   - Matrix method O(log n)
+   - Fast exponentiation
+   - Square test for membership
 
-### ✅ **Wprowadzone ulepszenia:**
+### ✅ **Improvements introduced:**
 
-1. **✔️ Ujednolicone indeksowanie**
-   - Wszystkie funkcje używają teraz 0-indexed (F(0)=0, F(1)=1...)
-   - Backwards compatibility z parametrem `zero_indexed=False`
-   - Wyraźna informacja w menu i dokumentacji
+1. **✔️ Unified indexing**
+   - All functions now use 0-indexed (F(0)=0, F(1)=1...)
+   - Backwards compatibility via the `zero_indexed=False` parameter
+   - Clear information in the menu and documentation
 
-2. **✔️ Shebang i encoding**
+2. **✔️ Shebang and encoding**
+
    ```python
    #!/usr/bin/env python3
    # -*- coding: utf-8 -*-
    ```
 
-3. **✔️ Pełny logging**
-   - Wszystkie operacje logowane do `fibonacci.log`
-   - Historia obliczeń z timestampami
-   - 3 poziomy logowania (INFO, WARNING, ERROR, CRITICAL)
+3. **✔️ Full logging**
+   - All operations logged to `fibonacci.log`
+   - Calculation history with timestamps
+   - 3 logging levels (INFO, WARNING, ERROR, CRITICAL)
 
-4. **✔️ Stała dla złotego podziału**
+4. **✔️ Golden ratio constant**
+
    ```python
    GOLDEN_RATIO = (1 + 5 ** 0.5) / 2  # φ ≈ 1.618033988749...
    ```
 
-5. **✔️ Memoizacja**
-   - `@lru_cache(maxsize=1024)` dla `fibonacci_fast()`
-   - Dramatyczna poprawa wydajności dla powtarzających się wywołań
+5. **✔️ Memoization**
+   - `@lru_cache(maxsize=1024)` for `fibonacci_fast()`
+   - Dramatic performance improvement for repeated calls
 
-6. **✔️ Eksport do pliku**
-   - Nowa funkcja `export_fibonacci_sequence()`
-   - Pełne statystyki (min, max, suma, stosunek)
-   - Opcja 7 w menu
+6. **✔️ Export to file**
+   - New `export_fibonacci_sequence()` function
+   - Full statistics (min, max, sum, ratio)
+   - Option 7 in the menu
 
-### 📊 **Ocena po poprawkach:** 10/10
+### 📊 **Rating after improvements:** 10/10
 
-Profesjonalny kod z wszystkimi najlepszymi praktykami:
-- Spójne indeksowanie z backwards compatibility
-- Pełne logowanie i monitoring
-- Optymalizacje wydajnościowe (memoizacja)
-- Eksport i persystencja danych
-- Dokumentacja zaktualizowana
+Professional code with all the best practices:
 
-## 🎓 Matematyka
+- Consistent indexing with backwards compatibility
+- Full logging and monitoring
+- Performance optimizations (memoization)
+- Data export and persistence
+- Updated documentation
 
-### Złoty podział (φ)
+## 🎓 Mathematics
 
-```
+### Golden ratio (φ)
+
+```text
 φ = (1 + √5) / 2 ≈ 1.618033988749...
 ```
 
-Stosunek kolejnych liczb Fibonacciego zbiega do φ:
-```
+The ratio of consecutive Fibonacci numbers converges to φ:
+
+```text
 lim(n→∞) F(n+1)/F(n) = φ
 ```
 
-### Wzór Bineta
+### Binet's formula
 
-Bezpośredni wzór na n-tą liczbę:
-```
+Direct formula for the nth number:
+
+```text
 F(n) = (φⁿ - ψⁿ) / √5
 
-gdzie:
+where:
 φ = (1 + √5) / 2
 ψ = (1 - √5) / 2
 ```
 
-### Test przynależności
+### Membership test
 
-Liczba n jest w ciągu Fibonacciego ⟺
-```
-5n² + 4 = k²  ∨  5n² - 4 = k²  (dla pewnego k ∈ ℕ)
+A number n is in the Fibonacci sequence ⟺
+
+```text
+5n² + 4 = k²  ∨  5n² - 4 = k²  (for some k ∈ ℕ)
 ```
 
 ## 🔧 API Reference
 
-### Stałe
+### Constants
 
 #### `GOLDEN_RATIO`
-Złoty podział φ ≈ 1.618033988749...
 
-### Funkcje
+Golden ratio φ ≈ 1.618033988749...
+
+### Functions
 
 #### `generate_fibonacci_upto(max_value: int) -> List[int]`
-Generuje liczby Fibonacciego ≤ max_value.
+
+Generates Fibonacci numbers ≤ max_value.
 
 #### `get_nth_fibonacci(n: int, zero_indexed: bool = True) -> int`
-Zwraca n-tą liczbę.
-- `zero_indexed=True` (domyślnie): F(0)=0, F(1)=1, F(6)=8...
+
+Returns the nth number.
+
+- `zero_indexed=True` (default): F(0)=0, F(1)=1, F(6)=8...
 - `zero_indexed=False`: F(1)=0, F(2)=1, F(7)=8... (backwards compatibility)
 
 #### `generate_first_n_fibonacci(n: int) -> List[int]`
-Generuje pierwsze n liczb Fibonacciego (0-indexed).
+
+Generates the first n Fibonacci numbers (0-indexed).
 
 #### `@lru_cache fibonacci_fast(n: int) -> int`
-Szybkie obliczanie metodą macierzową O(log n) z memoizacją (0-indexed).
+
+Fast calculation using the matrix method O(log n) with memoization (0-indexed).
 
 #### `is_fibonacci(num: int) -> bool`
-Sprawdza czy liczba należy do ciągu.
+
+Checks whether a number belongs to the sequence.
 
 #### `print_fibonacci_info(n: int, zero_indexed: bool = True) -> None`
-Wyświetla szczegółowe informacje o F(n).
+
+Displays detailed information about F(n).
 
 #### `export_fibonacci_sequence(sequence: List[int], filename: Optional[str] = None) -> None`
-Eksportuje ciąg do pliku tekstowego z pełnymi statystykami.
 
-### Wyjątki
+Exports the sequence to a text file with full statistics.
+
+### Exceptions
 
 #### `FibonacciError`
-Rzucany przy nieprawidłowych argumentach (ujemne n, itp.).
+
+Raised for invalid arguments (negative n, etc.).
 
 ## 🚀 Performance
 
-| Operacja | Złożoność | Uwagi |
-|----------|-----------|-------|
-| generate_fibonacci_upto(N) | O(log N) | Liczba iteracji ≈ log_φ(N) |
-| get_nth_fibonacci(n) | O(n) | Iteracyjny |
-| generate_first_n_fibonacci(n) | O(n) | Buduje listę |
-| fibonacci_fast(n) | O(log n) | Macierzowy + memoizacja, najszybszy |
-| is_fibonacci(num) | O(1) | Test kwadratowy |
-| export_fibonacci_sequence(seq) | O(n) | Zapis do pliku |
+| Operation | Complexity | Notes |
+| --- | --- | --- |
+| generate_fibonacci_upto(N) | O(log N) | Number of iterations ≈ log_φ(N) |
+| get_nth_fibonacci(n) | O(n) | Iterative |
+| generate_first_n_fibonacci(n) | O(n) | Builds a list |
+| fibonacci_fast(n) | O(log n) | Matrix + memoization, fastest |
+| is_fibonacci(num) | O(1) | Square test |
+| export_fibonacci_sequence(seq) | O(n) | Writes to file |
 
-## 📖 Zastosowania ciągu Fibonacciego
+## 📖 Applications of the Fibonacci Sequence
 
-- 🌻 **Natura:** Układ liści, płatków, spirale muszli
-- 🎨 **Sztuka:** Proporcje w architekturze i malarstwie
-- 📊 **Finanse:** Poziomy Fibonacciego w analizie technicznej
-- 💻 **Algorytmy:** Fibonacci heap, wyszukiwanie Fibonacciego
-- 🎲 **Kombinatoryka:** Zliczanie permutacji
+- 🌻 **Nature:** Arrangement of leaves, petals, shell spirals
+- 🎨 **Art:** Proportions in architecture and painting
+- 📊 **Finance:** Fibonacci levels in technical analysis
+- 💻 **Algorithms:** Fibonacci heap, Fibonacci search
+- 🎲 **Combinatorics:** Counting permutations
 
-## 🔗 Powiązane
+## 🔗 Related
 
-- [Złoty podział - Wikipedia](https://pl.wikipedia.org/wiki/Z%C5%82oty_podzia%C5%82)
+- [Golden ratio - Wikipedia](https://en.wikipedia.org/wiki/Golden_ratio)
 - [Fibonacci number - Wikipedia](https://en.wikipedia.org/wiki/Fibonacci_number)
 - [Binet's formula](https://en.wikipedia.org/wiki/Fibonacci_number#Binet's_formula)
 
-## 📄 Licencja
+## 📄 License
 
 Free to use and modify.
 
 ---
 
-**💡 Fun fact:** W naturze spirale Fibonacciego występują w słonecznikach (34 i 55 spirali), ananasach (8, 13, 21) i galaktykach!
+**💡 Fun fact:** In nature, Fibonacci spirals occur in sunflowers (34 and 55 spirals), pineapples (8, 13, 21), and galaxies!

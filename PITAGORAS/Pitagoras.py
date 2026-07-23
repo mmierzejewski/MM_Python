@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Generator Trójek Pitagorejskich z Analizą Liczb Pierwszych
+Pythagorean Triple Generator with Prime Number Analysis
 
-Generuje unikalne (prymitywne) trójki pitagorejskie ze szczegółową analizą:
-- Wymiary (a, b, c)
-- Obwód (a + b + c)
-- Powierzchnia (a × b / 2)
-- Detekcja liczb pierwszych
+Generates unique (primitive) Pythagorean triples with detailed analysis:
+- Dimensions (a, b, c)
+- Perimeter (a + b + c)
+- Area (a × b / 2)
+- Prime number detection
 """
 
 import math
@@ -16,14 +16,14 @@ from datetime import datetime
 
 
 class PythagoreanTriple:
-    """Reprezentuje trójkę pitagorejską z obliczonymi właściwościami."""
+    """Represents a Pythagorean triple with computed properties."""
     
     def __init__(self, a: int, b: int, c: int):
         """
-        Inicjalizuje trójkę pitagorejską.
+        Initializes a Pythagorean triple.
         
         Args:
-            a, b, c: Boki trójkąta gdzie a² + b² = c²
+            a, b, c: Sides of the triangle where a² + b² = c²
         """
         self.a = a
         self.b = b
@@ -31,19 +31,19 @@ class PythagoreanTriple:
     
     @property
     def perimeter(self) -> int:
-        """Oblicza obwód."""
+        """Calculates the perimeter."""
         return self.a + self.b + self.c
     
     @property
     def area(self) -> float:
-        """Oblicza powierzchnię używając wzoru: (a × b) / 2."""
+        """Calculates the area using the formula: (a × b) / 2."""
         return (self.a * self.b) / 2
     
     def __repr__(self) -> str:
         return f"PythagoreanTriple({self.a}, {self.b}, {self.c})"
     
     def __eq__(self, other) -> bool:
-        """Dwie trójki są równe, jeśli mają te same boki."""
+        """Two triples are equal if they have the same sides."""
         if not isinstance(other, PythagoreanTriple):
             return False
         return (self.a, self.b, self.c) == (other.a, other.b, other.c)
@@ -54,15 +54,15 @@ class PythagoreanTriple:
 
 def sieve_of_eratosthenes(limit: int) -> Set[int]:
     """
-    Generuje wszystkie liczby pierwsze do limitu używając Sita Eratostenesa.
+    Generates all prime numbers up to the limit using the Sieve of Eratosthenes.
     
     Args:
-        limit: Górna granica (włącznie)
+        limit: Upper bound (inclusive)
     
     Returns:
-        Zbiór liczb pierwszych dla wyszukiwania O(1)
+        Set of prime numbers for O(1) lookup
     
-    Złożoność: O(n log log n)
+    Complexity: O(n log log n)
     """
     if limit < 2:
         return set()
@@ -80,19 +80,19 @@ def sieve_of_eratosthenes(limit: int) -> Set[int]:
 
 def generate_primitive_triples(count: int) -> List[PythagoreanTriple]:
     """
-    Generuje prymitywne (unikalne) trójki pitagorejskie używając wzoru Euklidesa.
+    Generates primitive (unique) Pythagorean triples using Euclid's formula.
     
-    Trójki prymitywne mają gcd(a, b, c) = 1, co eliminuje duplikaty
-    takie jak (3,4,5) i (6,8,10).
+    Primitive triples have gcd(a, b, c) = 1, which eliminates duplicates
+    such as (3,4,5) and (6,8,10).
     
     Args:
-        count: Liczba trójek prymitywnych do wygenerowania
+        count: Number of primitive triples to generate
     
     Returns:
-        Lista obiektów PythagoreanTriple posortowana według obwodu
+        List of PythagoreanTriple objects sorted by perimeter
     
-    Algorytm:
-        Dla liczb względnie pierwszych m > n > 0 o różnej parzystości:
+    Algorithm:
+        For coprime numbers m > n > 0 of different parity:
         a = m² - n²
         b = 2mn
         c = m² + n²
@@ -100,39 +100,39 @@ def generate_primitive_triples(count: int) -> List[PythagoreanTriple]:
     triples = []
     m = 2
     
-    # Kontynuuj, dopóki nie będzie wystarczająco trójek
+    # Continue until there are enough triples
     while len(triples) < count:
         for n in range(1, m):
-            # Sprawdź warunki dla trójki prymitywnej
-            if (m - n) % 2 == 0:  # m i n muszą mieć różną parzystość
+            # Check the conditions for a primitive triple
+            if (m - n) % 2 == 0:  # m and n must have different parity
                 continue
-            if math.gcd(m, n) != 1:  # m i n muszą być względnie pierwsze
+            if math.gcd(m, n) != 1:  # m and n must be coprime
                 continue
             
-            # Wzór Euklidesa dla trójki prymitywnej
+            # Euclid's formula for a primitive triple
             a = m * m - n * n
             b = 2 * m * n
             c = m * m + n * n
             
-            # Upewnij się, że a < b dla spójności
+            # Ensure a < b for consistency
             if a > b:
                 a, b = b, a
             
             triple = PythagoreanTriple(a, b, c)
             triples.append(triple)
             
-            # Sprawdź, czy mamy wystarczająco
+            # Check if we have enough
             if len(triples) >= count:
                 break
         
         m += 1
         
-        # Limit bezpieczeństwa, aby zapobiec nieskończonej pętli
+        # Safety limit to prevent an infinite loop
         if m > 10000:
-            print(f"⚠️  Ostrzeżenie: Osiągnięto limit wyszukiwania. Znaleziono tylko {len(triples)} trójek.")
+            print(f"⚠️  Warning: Search limit reached. Only {len(triples)} triples found.")
             break
     
-    # Sortuj według obwodu (najmniejszy najpierw)
+    # Sort by perimeter (smallest first)
     triples.sort(key=lambda t: (t.perimeter, t.a, t.b))
     
     return triples[:count]
@@ -140,72 +140,72 @@ def generate_primitive_triples(count: int) -> List[PythagoreanTriple]:
 
 def analyze_primes_in_triple(triple: PythagoreanTriple, primes: Set[int]) -> List[int]:
     """
-    Znajduje, które liczby w trójce są pierwsze.
+    Finds which numbers in the triple are prime.
     
     Args:
-        triple: Obiekt PythagoreanTriple
-        primes: Zbiór liczb pierwszych
+        triple: PythagoreanTriple object
+        primes: Set of prime numbers
     
     Returns:
-        Lista liczb pierwszych znalezionych w trójce
+        List of prime numbers found in the triple
     """
     return [num for num in (triple.a, triple.b, triple.c) if num in primes]
 
 
 def get_user_choice() -> str:
-    """Pobiera wybór użytkownika: generowanie trójek lub wyjście.
+    """Gets the user's choice: generate triples or exit.
     
     Returns:
-        '1' dla generowania, '2' dla wyjścia, None jeśli nieprawidłowy wybór
+        '1' for generation, '2' for exit, None if the choice is invalid
     """
-    print("\nWybierz opcję:")
-    print("  1. Generuj trójki pitagorejskie")
-    print("  2. Koniec (wyjście z programu)")
-    choice = input("\nTwój wybór (1/2): ").strip()
+    print("\nChoose an option:")
+    print("  1. Generate Pythagorean triples")
+    print("  2. Exit (quit the program)")
+    choice = input("\nYour choice (1/2): ").strip()
     
     if choice not in ['1', '2']:
-        print("❌ Nieprawidłowy wybór!")
+        print("❌ Invalid choice!")
         return None
     
     return choice
 
 
 def get_valid_count() -> int:
-    """Pobiera i waliduje liczbę trójek od użytkownika."""
+    """Gets and validates the number of triples from the user."""
     while True:
         try:
-            count_str = input("Podaj liczbę trójek pitagorejskich do wygenerowania (1-1000): ").strip()
+            count_str = input("Enter the number of Pythagorean triples to generate (1-1000): ").strip()
             count = int(count_str)
             
             if count < 1:
-                print("❌ Liczba musi wynosić co najmniej 1")
+                print("❌ The number must be at least 1")
                 continue
             
             if count > 1000:
-                print(f"⚠️  Duża liczba ({count:,}) może zająć trochę czasu!")
-                confirm = input("   Kontynuować? (T/N): ").strip().upper()
-                if confirm != 'T':
+                print(f"⚠️  A large number ({count:,}) may take some time!")
+                confirm = input("   Continue? (Y/N): ").strip().upper()
+                if confirm != 'Y':
                     continue
             
             return count
         
         except ValueError:
-            print("❌ Proszę podać poprawną liczbę całkowitą")
+            print("❌ Please enter a valid integer")
         except (KeyboardInterrupt, EOFError):
-            print("\n👋 Anulowano")
+            print("\n👋 Cancelled")
             return None
 
 
 def display_triples(triples: List[PythagoreanTriple], primes: Set[int]) -> None:
     """
-    Wyświetla trójki w sformatowanej tabeli.
+    Displays the triples in a formatted table.
     
     Args:
-        triples: Lista obiektów PythagoreanTriple
-        primes: Zbiór liczb pierwszych do detekcji
+        triples: List of PythagoreanTriple objects
+        primes: Set of prime numbers for detection
     """
     print(f"\n{'='*90}")
-    print(f"{'#':<4} {'a':>5} {'b':>5} {'c':>5} {'Obwód':>10} {'Powierzchnia':>15} {'L. pierwsze':<30}")
+    print(f"{'#':<4} {'a':>5} {'b':>5} {'c':>5} {'Perimeter':>10} {'Area':>15} {'Primes':<30}")
     print(f"{'='*90}")
     
     for idx, triple in enumerate(triples, 1):
@@ -220,19 +220,19 @@ def display_triples(triples: List[PythagoreanTriple], primes: Set[int]) -> None:
 
 def display_statistics(triples: List[PythagoreanTriple], primes: Set[int]) -> None:
     """
-    Wyświetla analizę statystyczną trójek.
+    Displays statistical analysis of the triples.
     
     Args:
-        triples: Lista obiektów PythagoreanTriple
-        primes: Zbiór liczb pierwszych
+        triples: List of PythagoreanTriple objects
+        primes: Set of prime numbers
     """
     if not triples:
         return
     
-    # Policz trójki z liczbami pierwszymi
+    # Count triples with prime numbers
     triples_with_primes = sum(1 for t in triples if analyze_primes_in_triple(t, primes))
     
-    # Znajdź ekstrema
+    # Find extremes
     min_perimeter = min(t.perimeter for t in triples)
     max_perimeter = max(t.perimeter for t in triples)
     min_area = min(t.area for t in triples)
@@ -240,38 +240,38 @@ def display_statistics(triples: List[PythagoreanTriple], primes: Set[int]) -> No
     avg_perimeter = sum(t.perimeter for t in triples) / len(triples)
     avg_area = sum(t.area for t in triples) / len(triples)
     
-    # Największa wartość
+    # Largest value
     max_value = max(max(t.a, t.b, t.c) for t in triples)
     
     print(f"\n{'='*90}")
-    print("STATYSTYKI:")
+    print("STATISTICS:")
     print(f"{'='*90}")
-    print(f"Trójki prymitywne łącznie:         {len(triples)}")
-    print(f"Trójki zawierające liczby pierwsze: {triples_with_primes} ({triples_with_primes/len(triples)*100:.1f}%)")
-    print(f"Liczby pierwsze do {max_value}:             {len([p for p in primes if p <= max_value])}")
-    print(f"\nObwód:")
-    print(f"  Najmniejszy:                     {min_perimeter}")
-    print(f"  Największy:                      {max_perimeter}")
-    print(f"  Średni:                          {avg_perimeter:.1f}")
-    print(f"\nPowierzchnia:")
-    print(f"  Najmniejsza:                     {min_area:.1f}")
-    print(f"  Największa:                      {max_area:.1f}")
-    print(f"  Średnia:                         {avg_area:.1f}")
+    print(f"Total primitive triples:           {len(triples)}")
+    print(f"Triples containing prime numbers:  {triples_with_primes} ({triples_with_primes/len(triples)*100:.1f}%)")
+    print(f"Primes up to {max_value}:             {len([p for p in primes if p <= max_value])}")
+    print(f"\nPerimeter:")
+    print(f"  Smallest:                        {min_perimeter}")
+    print(f"  Largest:                         {max_perimeter}")
+    print(f"  Average:                         {avg_perimeter:.1f}")
+    print(f"\nArea:")
+    print(f"  Smallest:                        {min_area:.1f}")
+    print(f"  Largest:                         {max_area:.1f}")
+    print(f"  Average:                         {avg_area:.1f}")
     print(f"{'='*90}")
 
 
 def verify_no_duplicates(triples: List[PythagoreanTriple]) -> None:
     """
-    Weryfikuje, że nie ma wielokrotności (np. 3,4,5 i 6,8,10).
+    Verifies that there are no multiples (e.g. 3,4,5 and 6,8,10).
     
     Args:
-        triples: Lista obiektów PythagoreanTriple
+        triples: List of PythagoreanTriple objects
     """
     print(f"\n{'='*90}")
-    print("WERYFIKACJA DUPLIKATÓW:")
+    print("DUPLICATE VERIFICATION:")
     print(f"{'='*90}")
     
-    # Sprawdź GCD > 1 (wskazuje na nieprymitywność)
+    # Check GCD > 1 (indicates non-primitive)
     non_primitive = []
     for triple in triples:
         gcd = math.gcd(math.gcd(triple.a, triple.b), triple.c)
@@ -279,98 +279,98 @@ def verify_no_duplicates(triples: List[PythagoreanTriple]) -> None:
             non_primitive.append((triple, gcd))
     
     if non_primitive:
-        print("⚠️  Znaleziono trójki nieprymitywne (wielokrotności):")
+        print("⚠️  Non-primitive triples found (multiples):")
         for triple, gcd in non_primitive:
-            print(f"   ({triple.a}, {triple.b}, {triple.c}) - NWD = {gcd}")
+            print(f"   ({triple.a}, {triple.b}, {triple.c}) - GCD = {gcd}")
     else:
-        print("✅ Wszystkie trójki są prymitywne (brak wielokrotności jak 3,4,5 i 6,8,10)")
+        print("✅ All triples are primitive (no multiples such as 3,4,5 and 6,8,10)")
     
-    # Sprawdź dokładne duplikaty
+    # Check for exact duplicates
     unique_triples = len(set(triples))
     if unique_triples < len(triples):
-        print(f"⚠️  Znaleziono {len(triples) - unique_triples} dokładnych duplikatów")
+        print(f"⚠️  Found {len(triples) - unique_triples} exact duplicates")
     else:
-        print("✅ Nie znaleziono dokładnych duplikatów")
+        print("✅ No exact duplicates found")
     
     print(f"{'='*90}")
 
 
 def main():
-    """Funkcja główna."""
+    """Main function."""
     print("╔" + "═" * 88 + "╗")
-    print("║" + " " * 16 + "GENERATOR TRÓJEK PITAGOREJSKICH" + " " * 41 + "║")
-    print("║" + " " * 25 + "(Tylko prymitywne)" + " " * 46 + "║")
+    print("║" + " " * 16 + "PYTHAGOREAN TRIPLE GENERATOR" + " " * 44 + "║")
+    print("║" + " " * 25 + "(Primitive only)" + " " * 47 + "║")
     print("╚" + "═" * 88 + "╝")
     
-    # Pętla główna programu
+    # Main program loop
     while True:
         choice = get_user_choice()
         if choice is None:
-            continue  # Nieprawidłowy wybór, pokaż menu ponownie
+            continue  # Invalid choice, show the menu again
         
-        # Opcja wyjścia
+        # Exit option
         if choice == '2':
-            print("\n👋 Do widzenia!")
+            print("\n👋 Goodbye!")
             return
         
-        # Pobierz dane wejściowe
+        # Get input data
         count = get_valid_count()
         if count is None:
-            print()  # Dodaj pustą linię przed powrotem do menu
+            print()  # Add a blank line before returning to the menu
             continue
         
-        print(f"\n🔍 Generowanie {count} prymitywnych trójek pitagorejskich...")
-        print("   (Eliminacja wielokrotności takich jak 3,4,5 i 6,8,10)\n")
+        print(f"\n🔍 Generating {count} primitive Pythagorean triples...")
+        print("   (Eliminating multiples such as 3,4,5 and 6,8,10)\n")
         
-        # Rozpocznij pomiar czasu
+        # Start timing
         start_time = datetime.now()
         
-        # Generuj trójki prymitywne
+        # Generate primitive triples
         triples = generate_primitive_triples(count)
         
         if not triples:
-            print("❌ Nie udało się wygenerować trójek pitagorejskich")
-            print()  # Dodaj pustą linię przed powrotem do menu
+            print("❌ Failed to generate Pythagorean triples")
+            print()  # Add a blank line before returning to the menu
             continue
         
-        print(f"✅ Wygenerowano {len(triples)} trójek prymitywnych")
+        print(f"✅ Generated {len(triples)} primitive triples")
         
-        # Generuj liczby pierwsze do analizy
+        # Generate primes for analysis
         max_value = max(max(t.a, t.b, t.c) for t in triples)
-        print(f"🔢 Wyszukiwanie liczb pierwszych do {max_value}...")
+        print(f"🔢 Searching for primes up to {max_value}...")
         primes = sieve_of_eratosthenes(max_value)
         
         end_time = datetime.now()
         elapsed = end_time - start_time
         
-        # Wyświetl wyniki
+        # Display results
         display_triples(triples, primes)
         
-        # Weryfikuj brak duplikatów
+        # Verify no duplicates
         verify_no_duplicates(triples)
         
-        # Wyświetl statystyki
+        # Display statistics
         display_statistics(triples, primes)
         
-        # Informacje o czasie
-        print(f"\n⏱️  Czas generowania: {elapsed.total_seconds():.3f}s")
-        print(f"   Średnio na trójkę: {elapsed.total_seconds() / len(triples):.6f}s\n")
+        # Timing information
+        print(f"\n⏱️  Generation time: {elapsed.total_seconds():.3f}s")
+        print(f"   Average per triple: {elapsed.total_seconds() / len(triples):.6f}s\n")
         
-        # Pokaż pierwsze przykłady z pełnym wzorem
-        print("\n💡 Przykładowa weryfikacja (pierwsze 3 trójki):")
+        # Show the first examples with the full formula
+        print("\n💡 Sample verification (first 3 triples):")
         for i, triple in enumerate(triples[:3], 1):
             print(f"   {i}. {triple.a}² + {triple.b}² = {triple.a**2} + {triple.b**2} = "
                   f"{triple.a**2 + triple.b**2} = {triple.c**2} = {triple.c}²  ✓")
         
-        print()  # Dodaj pustą linię przed powrotem do menu
+        print()  # Add a blank line before returning to the menu
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n\n👋 Anulowano przez użytkownika")
+        print("\n\n👋 Cancelled by user")
         exit(130)
     except Exception as e:
-        print(f"\n❌ Nieoczekiwany błąd: {e}")
+        print(f"\n❌ Unexpected error: {e}")
         exit(1)

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FibonacciUtils - Narzędzia do generowania i analizy ciągu Fibonacciego.
+FibonacciUtils - Utilities for generating and analyzing the Fibonacci sequence.
 
-Ciąg Fibonacciego: F(0)=0, F(1)=1, F(n)=F(n-1)+F(n-2)
+Fibonacci sequence: F(0)=0, F(1)=1, F(n)=F(n-1)+F(n-2)
 
-Wszystkie funkcje używają spójnego indeksowania 0-based:
+All functions use consistent 0-based indexing:
 F(0)=0, F(1)=1, F(2)=1, F(3)=2, F(4)=3, F(5)=5...
 """
 
@@ -16,7 +16,7 @@ from pathlib import Path
 import logging
 import sys
 
-# Konfiguracja loggingu
+# Logging configuration
 log_file = Path.cwd() / 'fibonacci.log'
 logging.basicConfig(
     level=logging.INFO,
@@ -26,34 +26,34 @@ logging.basicConfig(
     ]
 )
 
-# Stałe matematyczne
+# Mathematical constants
 GOLDEN_RATIO = (1 + 5 ** 0.5) / 2  # φ ≈ 1.618033988749...
 
 
 class FibonacciError(Exception):
-    """Wyjątek dla błędów związanych z ciągiem Fibonacciego."""
+    """Exception for errors related to the Fibonacci sequence."""
     pass
 
 
 def generate_fibonacci_upto(max_value: int) -> List[int]:
     """
-    Generuje liczby Fibonacciego do podanej wartości maksymalnej.
+    Generates Fibonacci numbers up to a given maximum value.
 
     Args:
-        max_value: Maksymalna wartość (włącznie)
+        max_value: Maximum value (inclusive)
 
     Returns:
-        Lista liczb Fibonacciego <= max_value
+        List of Fibonacci numbers <= max_value
 
     Raises:
-        FibonacciError: Gdy max_value < 0
+        FibonacciError: When max_value < 0
 
     Example:
         >>> generate_fibonacci_upto(10)
         [0, 1, 1, 2, 3, 5, 8]
     """
     if max_value < 0:
-        raise FibonacciError("Wartość maksymalna musi być nieujemna!")
+        raise FibonacciError("The maximum value must be non-negative!")
 
     if max_value == 0:
         return [0]
@@ -70,18 +70,18 @@ def generate_fibonacci_upto(max_value: int) -> List[int]:
 
 def get_nth_fibonacci(n: int, zero_indexed: bool = True) -> int:
     """
-    Zwraca n-tą liczbę Fibonacciego.
+    Returns the nth Fibonacci number.
 
     Args:
-        n: Pozycja w ciągu
-        zero_indexed: Jeśli True (domyślnie): F(0)=0, F(1)=1, F(2)=1...
-                     Jeśli False: F(1)=0, F(2)=1, F(3)=1... (backwards compatibility)
+        n: Position in the sequence
+        zero_indexed: If True (default): F(0)=0, F(1)=1, F(2)=1...
+                     If False: F(1)=0, F(2)=1, F(3)=1... (backwards compatibility)
 
     Returns:
-        n-ta liczba Fibonacciego
+        The nth Fibonacci number
 
     Raises:
-        FibonacciError: Gdy n < 0 (0-indexed) lub n <= 0 (1-indexed)
+        FibonacciError: When n < 0 (0-indexed) or n <= 0 (1-indexed)
 
     Example:
         >>> get_nth_fibonacci(6)  # 0-indexed
@@ -91,14 +91,14 @@ def get_nth_fibonacci(n: int, zero_indexed: bool = True) -> int:
     """
     if zero_indexed:
         if n < 0:
-            raise FibonacciError("Pozycja musi być nieujemną liczbą całkowitą!")
+            raise FibonacciError("Position must be a non-negative integer!")
         actual_n = n
     else:
         if n <= 0:
-            raise FibonacciError("Pozycja musi być dodatnią liczbą całkowitą!")
+            raise FibonacciError("Position must be a positive integer!")
         actual_n = n - 1
     
-    logging.info(f"Obliczanie F({actual_n})")
+    logging.info(f"Calculating F({actual_n})")
     
     if actual_n == 0:
         return 0
@@ -114,23 +114,23 @@ def get_nth_fibonacci(n: int, zero_indexed: bool = True) -> int:
 
 def generate_first_n_fibonacci(n: int) -> List[int]:
     """
-    Generuje pierwsze n liczb Fibonacciego.
+    Generates the first n Fibonacci numbers.
 
     Args:
-        n: Liczba elementów do wygenerowania
+        n: Number of elements to generate
 
     Returns:
-        Lista pierwszych n liczb Fibonacciego
+        List of the first n Fibonacci numbers
 
     Raises:
-        FibonacciError: Gdy n < 0
+        FibonacciError: When n < 0
 
     Example:
         >>> generate_first_n_fibonacci(5)
         [0, 1, 1, 2, 3]
     """
     if n < 0:
-        raise FibonacciError("Liczba elementów nie może być ujemna!")
+        raise FibonacciError("The number of elements cannot be negative!")
 
     if n == 0:
         return []
@@ -148,17 +148,17 @@ def generate_first_n_fibonacci(n: int) -> List[int]:
 @lru_cache(maxsize=1024)
 def fibonacci_fast(n: int) -> int:
     """
-    Szybkie obliczanie n-tej liczby Fibonacciego metodą macierzową.
-    Złożoność: O(log n)
-    Używa memoizacji (@lru_cache) dla optymalizacji.
+    Fast calculation of the nth Fibonacci number using the matrix method.
+    Complexity: O(log n)
+    Uses memoization (@lru_cache) for optimization.
 
     Args:
-        n: Pozycja w ciągu (0-indexed: F(0)=0, F(1)=1, F(2)=1...)
+        n: Position in the sequence (0-indexed: F(0)=0, F(1)=1, F(2)=1...)
 
     Returns:
-        n-ta liczba Fibonacciego
+        The nth Fibonacci number
     """
-    logging.info(f"fibonacci_fast: obliczanie F({n})")
+    logging.info(f"fibonacci_fast: calculating F({n})")
     
     if n < 0:
         return 0
@@ -168,7 +168,7 @@ def fibonacci_fast(n: int) -> int:
         return 1
 
     def matrix_multiply(a, b):
-        """Mnoży dwie macierze 2x2."""
+        """Multiplies two 2x2 matrices."""
         return [
             [a[0][0] * b[0][0] + a[0][1] * b[1][0],
              a[0][0] * b[0][1] + a[0][1] * b[1][1]],
@@ -177,7 +177,7 @@ def fibonacci_fast(n: int) -> int:
         ]
 
     def matrix_power(matrix, n):
-        """Podnosi macierz do potęgi n metodą szybkiego potęgowania."""
+        """Raises a matrix to the power n using fast exponentiation."""
         if n == 1:
             return matrix
         if n % 2 == 0:
@@ -193,16 +193,16 @@ def fibonacci_fast(n: int) -> int:
 
 def is_fibonacci(num: int) -> bool:
     """
-    Sprawdza, czy liczba należy do ciągu Fibonacciego.
+    Checks whether a number belongs to the Fibonacci sequence.
 
-    Liczba n jest liczbą Fibonacciego wtedy i tylko wtedy, gdy
-    5*n^2 + 4 lub 5*n^2 - 4 jest kwadratem doskonałym.
+    A number n is a Fibonacci number if and only if
+    5*n^2 + 4 or 5*n^2 - 4 is a perfect square.
 
     Args:
-        num: Liczba do sprawdzenia
+        num: Number to check
 
     Returns:
-        True jeśli num jest liczbą Fibonacciego
+        True if num is a Fibonacci number
     """
     if num < 0:
         return False
@@ -217,11 +217,11 @@ def is_fibonacci(num: int) -> bool:
 
 def export_fibonacci_sequence(sequence: List[int], filename: Optional[str] = None) -> None:
     """
-    Eksportuje ciąg Fibonacciego do pliku tekstowego.
+    Exports the Fibonacci sequence to a text file.
     
     Args:
-        sequence: Lista liczb Fibonacciego
-        filename: Nazwa pliku (opcjonalna, domyślnie z timestampem)
+        sequence: List of Fibonacci numbers
+        filename: File name (optional, defaults to a timestamped name)
     """
     if filename is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -229,42 +229,42 @@ def export_fibonacci_sequence(sequence: List[int], filename: Optional[str] = Non
     
     try:
         with open(filename, 'w', encoding='utf-8') as f:
-            f.write("Ciąg Fibonacciego\n")
-            f.write(f"Wygenerowano: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"Liczba elementów: {len(sequence)}\n")
+            f.write("Fibonacci sequence\n")
+            f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"Number of elements: {len(sequence)}\n")
             f.write("=" * 60 + "\n\n")
             
-            # Zapisz liczby, 10 na linię
+            # Write numbers, 10 per line
             for i in range(0, len(sequence), 10):
                 line = ', '.join(map(str, sequence[i:i+10]))
                 f.write(f"F({i})-F({min(i+9, len(sequence)-1)}): {line}\n")
             
-            # Statystyki
+            # Statistics
             if sequence:
                 f.write("\n" + "=" * 60 + "\n")
-                f.write("STATYSTYKI:\n")
-                f.write(f"Najmniejsza: {min(sequence):,}\n")
-                f.write(f"Największa: {max(sequence):,}\n")
-                f.write(f"Suma: {sum(sequence):,}\n")
+                f.write("STATISTICS:\n")
+                f.write(f"Smallest: {min(sequence):,}\n")
+                f.write(f"Largest: {max(sequence):,}\n")
+                f.write(f"Sum: {sum(sequence):,}\n")
                 if len(sequence) > 1:
                     ratio = sequence[-1] / sequence[-2] if sequence[-2] != 0 else 0
-                    f.write(f"Ostatni stosunek: {ratio:.10f}\n")
-                    f.write(f"Złoty podział φ: {GOLDEN_RATIO:.10f}\n")
+                    f.write(f"Last ratio: {ratio:.10f}\n")
+                    f.write(f"Golden ratio φ: {GOLDEN_RATIO:.10f}\n")
         
-        print(f"✅ Eksportowano do: {filename}")
-        logging.info(f"Wyeksportowano ciąg do {filename}")
+        print(f"✅ Exported to: {filename}")
+        logging.info(f"Exported sequence to {filename}")
     except IOError as e:
-        print(f"❌ Błąd zapisu pliku: {e}")
-        logging.error(f"Błąd eksportu: {e}")
+        print(f"❌ File write error: {e}")
+        logging.error(f"Export error: {e}")
 
 
 def print_fibonacci_info(n: int, zero_indexed: bool = True) -> None:
     """
-    Wyświetla szczegółowe informacje o n-tej liczbie Fibonacciego.
+    Displays detailed information about the nth Fibonacci number.
     
     Args:
-        n: Pozycja w ciągu
-        zero_indexed: Indeksowanie (domyślnie 0-based)
+        n: Position in the sequence
+        zero_indexed: Indexing (0-based by default)
     """
     try:
         fib_n = get_nth_fibonacci(n, zero_indexed=zero_indexed)
@@ -272,135 +272,135 @@ def print_fibonacci_info(n: int, zero_indexed: bool = True) -> None:
         fib_seq = generate_first_n_fibonacci(display_n + 1 if display_n >= 0 else 1)
 
         print(f"\n{'=' * 60}")
-        print(f"📊 INFORMACJE O F({display_n})")
+        print(f"📊 INFORMATION ABOUT F({display_n})")
         print(f"{'=' * 60}")
-        print(f"Wartość: {fib_n:,}")
-        print(f"Liczba cyfr: {len(str(fib_n))}")
-        print(f"Ciąg do F({display_n}): {fib_seq[:10]}{'...' if len(fib_seq) > 10 else ''}")
+        print(f"Value: {fib_n:,}")
+        print(f"Number of digits: {len(str(fib_n))}")
+        print(f"Sequence up to F({display_n}): {fib_seq[:10]}{'...' if len(fib_seq) > 10 else ''}")
 
         if len(fib_seq) > 1 and fib_seq[-2] != 0:
             ratio = fib_seq[-1] / fib_seq[-2]
-            print(f"Stosunek F({display_n})/F({display_n-1}): {ratio:.10f}")
-            print(f"Złoty podział φ: {GOLDEN_RATIO:.10f}")
-            print(f"Różnica: {abs(ratio - GOLDEN_RATIO):.10e}")
+            print(f"Ratio F({display_n})/F({display_n-1}): {ratio:.10f}")
+            print(f"Golden ratio φ: {GOLDEN_RATIO:.10f}")
+            print(f"Difference: {abs(ratio - GOLDEN_RATIO):.10e}")
 
         print(f"{'=' * 60}\n")
-        logging.info(f"Wyświetlono informacje dla F({display_n}) = {fib_n}")
+        logging.info(f"Displayed information for F({display_n}) = {fib_n}")
     except FibonacciError as e:
-        print(f"❌ Błąd: {e}")
-        logging.error(f"Błąd w print_fibonacci_info: {e}")
+        print(f"❌ Error: {e}")
+        logging.error(f"Error in print_fibonacci_info: {e}")
 
 
 def main() -> None:
-    """Główna funkcja programu."""
+    """Main program function."""
     print("=" * 60)
-    print("🔢 KALKULATOR CIĄGU FIBONACCIEGO".center(60))
+    print("🔢 FIBONACCI SEQUENCE CALCULATOR".center(60))
     print("=" * 60)
-    print("📌 Wszystkie funkcje używają indeksowania 0-based")
+    print("📌 All functions use 0-based indexing")
     print("   (F(0)=0, F(1)=1, F(2)=1, F(3)=2...)\n")
     
-    logging.info("Uruchomiono kalkulator Fibonacciego")
+    logging.info("Fibonacci calculator started")
     
-    # Przechowywanie ostatniego ciągu do eksportu
+    # Store the last sequence for export
     last_sequence: List[int] = []
 
     while True:
-        print("\nWybierz opcję:")
-        print("1. Generuj liczby Fibonacciego do wartości")
-        print("2. Pobierz n-tą liczbę Fibonacciego (0-indexed)")
-        print("3. Generuj pierwsze n liczb Fibonacciego")
-        print("4. Szybkie obliczanie (algorytm O(log n))")
-        print("5. Sprawdź, czy liczba jest liczbą Fibonacciego")
-        print("6. Szczegółowe informacje o F(n)")
-        print("7. Eksportuj ostatni ciąg do pliku")
-        print("8. Koniec (wyjście z programu)")
+        print("\nChoose an option:")
+        print("1. Generate Fibonacci numbers up to a value")
+        print("2. Get the nth Fibonacci number (0-indexed)")
+        print("3. Generate the first n Fibonacci numbers")
+        print("4. Fast calculation (O(log n) algorithm)")
+        print("5. Check whether a number is a Fibonacci number")
+        print("6. Detailed information about F(n)")
+        print("7. Export the last sequence to a file")
+        print("8. Quit (exit the program)")
 
         try:
-            choice = input("\n👉 Twój wybór (1-8): ").strip()
+            choice = input("\n👉 Your choice (1-8): ").strip()
 
             if choice == "8":
-                print("\n👋 Do widzenia!")
-                logging.info("Zakończono działanie kalkulatora")
+                print("\n👋 Goodbye!")
+                logging.info("Calculator terminated")
                 break
 
             elif choice == "1":
-                max_val = int(input("Podaj wartość maksymalną: "))
+                max_val = int(input("Enter the maximum value: "))
                 result = generate_fibonacci_upto(max_val)
-                print(f"\n✅ Liczby Fibonacciego ≤ {max_val}:")
+                print(f"\n✅ Fibonacci numbers ≤ {max_val}:")
                 print(f"   {result}")
-                print(f"   Znaleziono: {len(result)} liczb")
+                print(f"   Found: {len(result)} numbers")
 
             elif choice == "2":
-                n = int(input("Podaj pozycję n (0-indexed, np. F(0)=0, F(6)=8): "))
+                n = int(input("Enter position n (0-indexed, e.g. F(0)=0, F(6)=8): "))
                 result = get_nth_fibonacci(n, zero_indexed=True)
                 print(f"\n✅ F({n}) = {result:,}")
                 last_sequence = [result]
 
             elif choice == "3":
-                n = int(input("Ile liczb wygenerować: "))
+                n = int(input("How many numbers to generate: "))
                 result = generate_first_n_fibonacci(n)
                 last_sequence = result
                 if len(result) <= 20:
-                    print(f"\n✅ Pierwsze {n} liczby: {result}")
+                    print(f"\n✅ First {n} numbers: {result}")
                 else:
-                    show_all = input("Wyświetlić wszystkie liczby? (T/N) [N]: ").strip().upper()
-                    if show_all == "T":
-                        print(f"\n✅ Wszystkie {n} liczby:")
-                        # Wyświetl liczby, 10 na linię
+                    show_all = input("Show all numbers? (Y/N) [N]: ").strip().upper()
+                    if show_all == "Y":
+                        print(f"\n✅ All {n} numbers:")
+                        # Display numbers, 10 per line
                         for i in range(0, len(result), 10):
                             line = ', '.join(map(str, result[i:i+10]))
                             print(f"   F({i})-F({min(i+9, len(result)-1)}): {line}")
                     else:
-                        print(f"\n✅ Pierwsze 10: {result[:10]}")
-                        print(f"   Ostatnie 10: {result[-10:]}")
-                        print(f"   (pominięto {len(result) - 20} środkowych)")
+                        print(f"\n✅ First 10: {result[:10]}")
+                        print(f"   Last 10: {result[-10:]}")
+                        print(f"   ({len(result) - 20} middle numbers omitted)")
 
             elif choice == "4":
-                n = int(input("Podaj n (0-indexed, dla dużych n): "))
+                n = int(input("Enter n (0-indexed, for large n): "))
                 result = fibonacci_fast(n)
                 print(f"\n✅ F({n}) = {result:,}")
-                print(f"   Liczba cyfr: {len(str(result))}")
+                print(f"   Number of digits: {len(str(result))}")
                 last_sequence = [result]
 
             elif choice == "5":
-                num = int(input("Podaj liczbę do sprawdzenia: "))
+                num = int(input("Enter the number to check: "))
                 if is_fibonacci(num):
-                    print(f"\n✅ {num:,} JEST liczbą Fibonacciego!")
+                    print(f"\n✅ {num:,} IS a Fibonacci number!")
                 else:
-                    print(f"\n❌ {num:,} NIE JEST liczbą Fibonacciego.")
+                    print(f"\n❌ {num:,} is NOT a Fibonacci number.")
 
             elif choice == "6":
-                n = int(input("Podaj n (0-indexed): "))
+                n = int(input("Enter n (0-indexed): "))
                 print_fibonacci_info(n, zero_indexed=True)
             
             elif choice == "7":
                 if not last_sequence:
-                    print("\n❌ Brak ciągu do eksportu! Wygeneruj najpierw liczby.")
+                    print("\n❌ No sequence to export! Generate numbers first.")
                 else:
-                    eksport = input("\nEksportować do pliku? (T/N) [T]: ").strip().upper() or "T"
-                    if eksport == "T":
-                        custom_name = input("Nazwa pliku (Enter = auto): ").strip()
+                    export_choice = input("\nExport to a file? (Y/N) [Y]: ").strip().upper() or "Y"
+                    if export_choice == "Y":
+                        custom_name = input("File name (Enter = auto): ").strip()
                         export_fibonacci_sequence(
                             last_sequence,
                             custom_name if custom_name else None
                         )
 
             else:
-                print("\n❌ Nieprawidłowy wybór! Wybierz 1-8.")
+                print("\n❌ Invalid choice! Choose 1-8.")
 
         except ValueError as e:
-            print("\n❌ Nieprawidłowe dane! Podaj liczbę całkowitą.")
+            print("\n❌ Invalid input! Enter an integer.")
             logging.warning(f"ValueError: {e}")
         except FibonacciError as e:
-            print(f"\n❌ Błąd: {e}")
+            print(f"\n❌ Error: {e}")
             logging.error(f"FibonacciError: {e}")
         except KeyboardInterrupt:
-            print("\n\n👋 Przerwano przez użytkownika.")
-            logging.info("Przerwano przez użytkownika (KeyboardInterrupt)")
+            print("\n\n👋 Interrupted by user.")
+            logging.info("Interrupted by user (KeyboardInterrupt)")
             break
         except Exception as e:
-            print(f"\n❌ Nieoczekiwany błąd: {e}")
-            logging.error(f"Nieoczekiwany błąd: {e}", exc_info=True)
+            print(f"\n❌ Unexpected error: {e}")
+            logging.error(f"Unexpected error: {e}", exc_info=True)
 
 
 if __name__ == "__main__":
@@ -409,6 +409,6 @@ if __name__ == "__main__":
     except SystemExit:
         pass
     except Exception as e:
-        print(f"\n❌ Krytyczny błąd: {e}")
-        logging.critical(f"Krytyczny błąd: {e}", exc_info=True)
+        print(f"\n❌ Critical error: {e}")
+        logging.critical(f"Critical error: {e}", exc_info=True)
         sys.exit(1)

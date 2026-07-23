@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prosty downloader torrentow oparty o aria2."""
+"""Simple torrent downloader built on aria2."""
 
 from __future__ import annotations
 
@@ -17,95 +17,95 @@ from pathlib import Path
 
 try:
     import aria2p
-except ImportError as e:  # pragma: no cover - zalezne od srodowiska
-    print(f"Brak wymaganego pakietu: {e.name}", file=sys.stderr)
-    print("\nZainstaluj zaleznosci:", file=sys.stderr)
+except ImportError as e:  # pragma: no cover - depends on the environment
+    print(f"Missing required package: {e.name}", file=sys.stderr)
+    print("\nInstall dependencies:", file=sys.stderr)
     print("   pip install -r requirements.txt", file=sys.stderr)
-    print("   lub", file=sys.stderr)
+    print("   or", file=sys.stderr)
     print("   pip install aria2p", file=sys.stderr)
     sys.exit(1)
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Pobieranie torrentow z magnet linku lub pliku .torrent.",
+        description="Download torrents from a magnet link or a .torrent file.",
     )
     parser.add_argument(
         "source",
         nargs="?",
-        help="Magnet link lub sciezka do pliku .torrent",
+        help="Magnet link or path to a .torrent file",
     )
     parser.add_argument(
         "-o",
         "--output",
         default=".",
-        help="Katalog docelowy dla pobieranych danych (domyslnie: biezacy katalog)",
+        help="Destination directory for downloaded data (default: current directory)",
     )
     parser.add_argument(
         "--listen-port",
         type=int,
         default=6881,
-        help="Port nasluchu BitTorrent (domyslnie: 6881)",
+        help="BitTorrent listen port (default: 6881)",
     )
     parser.add_argument(
         "--listen-port-end",
         type=int,
         default=6891,
-        help="Koniec zakresu portow BitTorrent i DHT (domyslnie: 6891)",
+        help="End of the BitTorrent and DHT port range (default: 6891)",
     )
     parser.add_argument(
         "--rpc-port",
         type=int,
         default=0,
-        help="Port RPC aria2 dostepny na interfejsach hosta (domyslnie: losowy wolny port)",
+        help="aria2 RPC port exposed on host interfaces (default: random free port)",
     )
     parser.add_argument(
         "--listen-address",
         choices=("localhost", "127.0.0.1", "0.0.0.0"),
         default="0.0.0.0",
-        help="Zakres nasluchu RPC: localhost albo 0.0.0.0 (domyslnie: 0.0.0.0)",
+        help="RPC listen scope: localhost or 0.0.0.0 (default: 0.0.0.0)",
     )
     parser.add_argument(
         "--local-only",
         action="store_true",
-        help="Skrot dla --listen-address localhost.",
+        help="Shortcut for --listen-address localhost.",
     )
     parser.add_argument(
         "--public-rpc",
         action="store_true",
-        help="Skrot dla --listen-address 0.0.0.0.",
+        help="Shortcut for --listen-address 0.0.0.0.",
     )
     parser.add_argument(
         "--timeout",
         type=int,
         default=120,
-        help="Maksymalny czas oczekiwania na metadane w sekundach (domyslnie: 120)",
+        help="Maximum time to wait for metadata, in seconds (default: 120)",
     )
     parser.add_argument(
         "--seed",
         action="store_true",
-        help="Po zakonczeniu pobierania pozostaw klient w trybie seedowania.",
+        help="Keep the client in seeding mode after the download finishes.",
     )
     parser.add_argument(
         "--allow-overwrite",
         action="store_true",
-        help="Pozwala nadpisac istniejacy plik docelowy, gdy aria2 blokuje ponowne pobranie.",
+        help="Allow overwriting an existing destination file when aria2 blocks re-downloading.",
     )
     parser.add_argument(
         "-i",
         "--interactive",
         action="store_true",
-        help="Uruchom prosty tryb interaktywny do podania zrodla i opcji.",
+        help="Run a simple interactive mode to provide the source and options.",
     )
     parser.add_argument(
         "-f",
         "--batch-file",
-        help="Plik tekstowy z lista magnet linkow lub sciezek do plikow .torrent.",
+        help="Text file with a list of magnet links or paths to .torrent files.",
     )
     parser.add_argument(
         "--log-file",
         default="torrent_downloader.log",
-        help="Sciezka do pliku logowania (domyslnie: torrent_downloader.log)",
+        help="Path to the log file (default: torrent_downloader.log)",
     )
     return parser
 
@@ -121,12 +121,12 @@ def setup_logging(log_file: str) -> Path:
         ],
         force=True,
     )
-    logging.info("Uruchomienie skryptu torrent downloader")
+    logging.info("Starting torrent downloader script")
     return log_path
 
 
 def prompt_bool(message: str, default: bool = False) -> bool:
-    suffix = "[T/n]" if default else "[t/N]"
+    suffix = "[Y/n]" if default else "[y/N]"
     answer = input(f"{message} {suffix}: ").strip().lower()
     if not answer:
         return default
@@ -137,9 +137,9 @@ def get_output_directory(default_output: str = ".") -> str:
     current_dir = Path.cwd().resolve()
     default_path = (current_dir / default_output).resolve()
 
-    print(f"Katalog wyjsciowy [domyslnie: {default_path}]:")
+    print(f"Output directory [default: {default_path}]:")
     try:
-        user_input = input("   (wcisnij Enter, aby uzyc domyslnego katalogu): ").strip()
+        user_input = input("   (press Enter to use the default directory): ").strip()
     except EOFError:
         print()
         return str(default_path)
@@ -149,17 +149,17 @@ def get_output_directory(default_output: str = ".") -> str:
 
     output_path = Path(user_input).expanduser().resolve()
     if not output_path.exists():
-        print(f"Katalog nie istnieje: {output_path}")
-        if not prompt_bool("Utworzyc katalog?", default=False):
-            print(f"Uzywam domyslnego katalogu: {default_path}")
+        print(f"Directory does not exist: {output_path}")
+        if not prompt_bool("Create the directory?", default=False):
+            print(f"Using default directory: {default_path}")
             return str(default_path)
 
     return str(output_path)
 
 
 def collect_interactive_sources() -> tuple[str | None, str | None]:
-    print("Podaj magnet linki albo sciezki do plikow .torrent.")
-    print("Wprowadzaj po jednym wpisie w linii; pusta linia konczy.")
+    print("Enter magnet links or paths to .torrent files.")
+    print("Enter one entry per line; an empty line finishes.")
 
     entries: list[str] = []
     entry_count = 0
@@ -167,22 +167,22 @@ def collect_interactive_sources() -> tuple[str | None, str | None]:
     while True:
         entry_count += 1
         try:
-            source = input(f"   Zrodlo #{entry_count}: ").strip()
+            source = input(f"   Source #{entry_count}: ").strip()
         except EOFError:
             print()
             if entries:
                 break
-            print("   Wprowadz przynajmniej jedno zrodlo")
+            print("   Enter at least one source")
             raise SystemExit(2)
         if not source:
             if entries:
                 break
-            print("   Wprowadz przynajmniej jedno zrodlo")
+            print("   Enter at least one source")
             entry_count -= 1
             continue
         entries.append(source)
         if len(entries) == 1:
-            print("   (wcisnij Enter, aby zakonczyc lub podaj kolejne zrodlo)")
+            print("   (press Enter to finish or provide another source)")
 
     if len(entries) == 1:
         return entries[0], None
@@ -193,8 +193,8 @@ def collect_interactive_sources() -> tuple[str | None, str | None]:
 
 
 def interactive_args(args: argparse.Namespace, full_interactive: bool = True) -> argparse.Namespace:
-    print("Tryb interaktywny torrent downloader")
-    logging.info("Uruchomiono tryb interaktywny")
+    print("Torrent downloader interactive mode")
+    logging.info("Started interactive mode")
 
     if args.output == ".":
         args.output = get_output_directory(args.output)
@@ -204,22 +204,22 @@ def interactive_args(args: argparse.Namespace, full_interactive: bool = True) ->
 
     if not args.allow_overwrite:
         args.allow_overwrite = prompt_bool(
-            "Czy nadpisac istniejace pliki docelowe, jesli aria2 zablokuje wznowienie?",
+            "Overwrite existing destination files if aria2 blocks resuming?",
             default=False,
         )
 
     if full_interactive and args.listen_port == 6881:
-        port = input("Port nasluchu [6881]: ").strip()
+        port = input("Listen port [6881]: ").strip()
         if port:
             args.listen_port = int(port)
 
     if full_interactive and args.timeout == 120:
-        timeout = input("Timeout metadanych w sekundach [120]: ").strip()
+        timeout = input("Metadata timeout in seconds [120]: ").strip()
         if timeout:
             args.timeout = int(timeout)
 
     if full_interactive and not args.seed:
-        args.seed = prompt_bool("Czy pozostawic seedowanie po pobraniu?", default=False)
+        args.seed = prompt_bool("Keep seeding after the download finishes?", default=False)
 
     return args
 
@@ -233,8 +233,8 @@ def resolve_sources(args: argparse.Namespace) -> list[str]:
     if args.batch_file:
         batch_path = Path(args.batch_file).expanduser().resolve()
         if not batch_path.is_file():
-            logging.error("Nie znaleziono pliku z lista: %s", batch_path)
-            print(f"Nie znaleziono pliku z lista: {batch_path}", file=sys.stderr)
+            logging.error("Batch file not found: %s", batch_path)
+            print(f"Batch file not found: {batch_path}", file=sys.stderr)
             raise SystemExit(1)
 
         lines = batch_path.read_text(encoding="utf-8").splitlines()
@@ -250,11 +250,11 @@ def resolve_sources(args: argparse.Namespace) -> list[str]:
         unique_sources.append(source)
 
     if not unique_sources:
-        logging.error("Nie podano zadnego zrodla do pobierania")
-        print("Musisz podac source, --interactive lub --batch-file.", file=sys.stderr)
+        logging.error("No download source was provided")
+        print("You must provide a source, --interactive, or --batch-file.", file=sys.stderr)
         raise SystemExit(2)
 
-    logging.info("Przygotowano %d unikalnych zrodel", len(unique_sources))
+    logging.info("Prepared %d unique sources", len(unique_sources))
     return unique_sources
 
 
@@ -262,9 +262,9 @@ def ensure_aria2() -> None:
     if shutil.which("aria2c"):
         return
 
-    logging.error("Brak programu aria2c")
+    logging.error("aria2c program not found")
     print(
-        "Brak programu 'aria2c'. Zainstaluj zaleznosci: brew install aria2",
+        "The 'aria2c' program is missing. Install dependencies: brew install aria2",
         file=sys.stderr,
     )
     raise SystemExit(1)
@@ -291,8 +291,8 @@ def resolve_rpc_port(requested_port: int, listen_address: str, explicit_port: bo
 
     if requested_port <= 0:
         random_port = find_free_port(bind_host)
-        logging.info("Wybrano losowy wolny port RPC: %d", random_port)
-        print(f"Wybrano losowy wolny port RPC: {random_port}", file=sys.stderr)
+        logging.info("Selected a random free RPC port: %d", random_port)
+        print(f"Selected a random free RPC port: {random_port}", file=sys.stderr)
         return random_port
 
     if can_bind_tcp_port(bind_host, requested_port):
@@ -300,19 +300,19 @@ def resolve_rpc_port(requested_port: int, listen_address: str, explicit_port: bo
 
     if explicit_port:
         print(
-            f"Port RPC {requested_port} jest juz zajety. Wybierz inny przez --rpc-port.",
+            f"RPC port {requested_port} is already in use. Choose another one via --rpc-port.",
             file=sys.stderr,
         )
         raise SystemExit(1)
 
     fallback_port = find_free_port(bind_host)
     logging.warning(
-        "Domyslny port RPC %d jest zajety; uzywam wolnego portu %d",
+        "Default RPC port %d is in use; using free port %d instead",
         requested_port,
         fallback_port,
     )
     print(
-        f"Port RPC {requested_port} jest zajety. Uzywam wolnego portu: {fallback_port}",
+        f"RPC port {requested_port} is in use. Using free port instead: {fallback_port}",
         file=sys.stderr,
     )
     return fallback_port
@@ -372,16 +372,16 @@ class Aria2Runtime:
                 break
             except Exception:
                 if time.monotonic() >= deadline:
-                    logging.exception("Nie udalo sie uruchomic aria2 RPC")
+                    logging.exception("Failed to start aria2 RPC")
                     print(
-                        f"Nie udalo sie uruchomic aria2 RPC na porcie {self.rpc_port}.",
+                        f"Failed to start aria2 RPC on port {self.rpc_port}.",
                         file=sys.stderr,
                     )
                     raise SystemExit(1)
                 time.sleep(0.2)
 
-        logging.info("Uruchomiono aria2 RPC na porcie %d", self.rpc_port)
-        print(f"RPC aria2 nasluchuje na {self.listen_address}:{self.rpc_port}")
+        logging.info("Started aria2 RPC on port %d", self.rpc_port)
+        print(f"aria2 RPC is listening on {self.listen_address}:{self.rpc_port}")
         return self.api
 
     def close(self) -> None:
@@ -391,7 +391,7 @@ class Aria2Runtime:
                 try:
                     shutdown()
                 except Exception:
-                    logging.debug("Nie udalo sie zamknac aria2 RPC", exc_info=True)
+                    logging.debug("Failed to shut down aria2 RPC", exc_info=True)
         self.runtime_dir.cleanup()
 
 
@@ -414,16 +414,16 @@ def add_download(
         options["allow-overwrite"] = "true"
 
     if source.startswith("magnet:"):
-        logging.info("Dodawanie magnet linku")
+        logging.info("Adding magnet link")
         return api.add_magnet(source, options=options)
 
     torrent_path = Path(source).expanduser().resolve()
     if not torrent_path.is_file():
-        logging.error("Nie znaleziono pliku torrent: %s", torrent_path)
-        print(f"Nie znaleziono pliku torrent: {torrent_path}", file=sys.stderr)
+        logging.error("Torrent file not found: %s", torrent_path)
+        print(f"Torrent file not found: {torrent_path}", file=sys.stderr)
         raise SystemExit(1)
 
-    logging.info("Dodawanie pliku torrent: %s", torrent_path)
+    logging.info("Adding torrent file: %s", torrent_path)
     return api.add_torrent(str(torrent_path), options=options)
 
 
@@ -432,7 +432,7 @@ def fail_download(download: aria2p.Download, message: str) -> None:
     if "control file(*.aria2) does not exist" in error_message:
         error_message = (
             error_message
-            + " Uzyj --allow-overwrite albo usun istniejacy plik przed ponownym pobraniem."
+            + " Use --allow-overwrite or delete the existing file before downloading again."
         )
     logging.error("%s: %s", message, error_message)
     print(f"{message}: {error_message}", file=sys.stderr)
@@ -447,17 +447,17 @@ def wait_for_metadata(download: aria2p.Download, timeout: int) -> aria2p.Downloa
         if current.followed_by:
             current = current.followed_by[0]
             current.update()
-            logging.info("Pobrano metadane torrentu")
-            print("Metadane pobrane." + " " * 20)
+            logging.info("Torrent metadata downloaded")
+            print("Metadata downloaded." + " " * 20)
             return current
         if current.has_failed or current.is_removed:
-            fail_download(current, "Nie udalo sie pobrac metadanych torrentu")
+            fail_download(current, "Failed to download torrent metadata")
         if time.monotonic() - started > timeout:
             current.remove(force=True, files=False)
-            logging.error("Przekroczono czas oczekiwania na metadane torrentu")
-            print("Przekroczono czas oczekiwania na metadane torrentu.", file=sys.stderr)
+            logging.error("Timed out waiting for torrent metadata")
+            print("Timed out waiting for torrent metadata.", file=sys.stderr)
             raise SystemExit(1)
-        print("Oczekiwanie na metadane...", end="\r", flush=True)
+        print("Waiting for metadata...", end="\r", flush=True)
         time.sleep(1)
     return current
 
@@ -493,39 +493,39 @@ def download(download_item: aria2p.Download, seed: bool) -> None:
     while True:
         download_item.update()
         if download_item.has_failed or download_item.is_removed:
-            fail_download(download_item, "Pobieranie nie powiodlo sie")
+            fail_download(download_item, "Download failed")
 
         if seed and download_item.seeder:
-            logging.info("Tryb seedowania aktywny")
-            print("\nTryb seedowania aktywny. Zatrzymaj program Ctrl+C.")
+            logging.info("Seeding mode active")
+            print("\nSeeding mode active. Stop the program with Ctrl+C.")
             try:
                 while True:
                     download_item.update()
                     if download_item.has_failed or download_item.is_removed:
-                        fail_download(download_item, "Seedowanie zostalo przerwane")
+                        fail_download(download_item, "Seeding was interrupted")
                     line = print_progress(download_item)
                     elapsed_second = int(time.monotonic())
                     if elapsed_second != last_logged_second:
-                        logging.info("Seedowanie: %s", line)
+                        logging.info("Seeding: %s", line)
                         last_logged_second = elapsed_second
                     time.sleep(5)
             except KeyboardInterrupt:
-                logging.info("Zatrzymano seedowanie przez uzytkownika")
-                print("\nZatrzymano seedowanie.")
+                logging.info("Seeding stopped by the user")
+                print("\nSeeding stopped.")
                 return
 
         line = print_progress(download_item)
         elapsed_second = int(time.monotonic())
         if elapsed_second != last_logged_second:
-            logging.info("Postep: %s", line)
+            logging.info("Progress: %s", line)
             last_logged_second = elapsed_second
         if download_item.is_complete:
             break
         time.sleep(1)
 
     final_line = print_progress(download_item)
-    logging.info("Pobieranie zakonczone: %s", final_line)
-    print("\nPobieranie zakonczone.")
+    logging.info("Download finished: %s", final_line)
+    print("\nDownload finished.")
 
 
 def run_download(
@@ -536,14 +536,14 @@ def run_download(
     seed: bool,
     allow_overwrite: bool,
 ) -> None:
-    logging.info("Rozpoczecie obslugi zrodla: %s", source)
+    logging.info("Starting to handle source: %s", source)
     download_item = add_download(api, source, output_dir, seed, allow_overwrite)
     download_item = wait_for_metadata(download_item, timeout)
 
-    name = download_item.name or "nieznany torrent"
-    logging.info("Start pobierania: %s", name)
-    print(f"Start pobierania: {name}")
-    print(f"Katalog docelowy: {output_dir}")
+    name = download_item.name or "unknown torrent"
+    logging.info("Starting download: %s", name)
+    print(f"Starting download: {name}")
+    print(f"Destination directory: {output_dir}")
     download(download_item, seed)
 
 
@@ -556,7 +556,7 @@ def main() -> None:
     )
 
     if args.local_only and args.public_rpc:
-        print("Nie mozna uzyc jednoczesnie --local-only i --public-rpc.", file=sys.stderr)
+        print("Cannot use --local-only and --public-rpc at the same time.", file=sys.stderr)
         raise SystemExit(2)
 
     if args.local_only:
@@ -565,11 +565,11 @@ def main() -> None:
         args.listen_address = "0.0.0.0"
 
     if args.listen_port_end < args.listen_port:
-        print("--listen-port-end musi byc wiekszy lub rowny --listen-port.", file=sys.stderr)
+        print("--listen-port-end must be greater than or equal to --listen-port.", file=sys.stderr)
         raise SystemExit(2)
 
     log_path = setup_logging(args.log_file)
-    logging.info("Plik logu: %s", log_path)
+    logging.info("Log file: %s", log_path)
 
     auto_interactive = not args.source and not args.batch_file
 
@@ -577,12 +577,12 @@ def main() -> None:
         try:
             args = interactive_args(args, full_interactive=args.interactive)
         except KeyboardInterrupt:
-            logging.info("Przerwano tryb interaktywny przez uzytkownika")
-            print("\nPrzerwano.")
+            logging.info("Interactive mode interrupted by the user")
+            print("\nInterrupted.")
             raise SystemExit(130)
         except ValueError as error:
-            logging.exception("Bledna wartosc w trybie interaktywnym")
-            print(f"Bledna wartosc w trybie interaktywnym: {error}", file=sys.stderr)
+            logging.exception("Invalid value in interactive mode")
+            print(f"Invalid value in interactive mode: {error}", file=sys.stderr)
             raise SystemExit(2) from error
 
     sources = resolve_sources(args)
@@ -593,7 +593,7 @@ def main() -> None:
 
     output_dir = Path(args.output).expanduser().resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
-    logging.info("Katalog docelowy: %s", output_dir)
+    logging.info("Destination directory: %s", output_dir)
 
     runtime = Aria2Runtime(
         args.listen_port,
@@ -607,14 +607,14 @@ def main() -> None:
     try:
         for index, source in enumerate(sources, start=1):
             if len(sources) > 1:
-                print(f"\n[{index}/{len(sources)}] Zrodlo: {source}")
+                print(f"\n[{index}/{len(sources)}] Source: {source}")
             run_download(api, source, output_dir, args.timeout, args.seed, args.allow_overwrite)
     except KeyboardInterrupt:
-        logging.info("Przerwano pobieranie przez uzytkownika")
-        print("\nPrzerwano pobieranie.")
+        logging.info("Download interrupted by the user")
+        print("\nDownload interrupted.")
         raise SystemExit(130)
     except Exception:
-        logging.exception("Nieoczekiwany blad podczas pobierania")
+        logging.exception("Unexpected error during download")
         raise
     finally:
         runtime.close()

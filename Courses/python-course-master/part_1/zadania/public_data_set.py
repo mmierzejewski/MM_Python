@@ -1,5 +1,5 @@
 """
-    1. Znajdz publiczne dane serwerowe do parsowania w formacie tekstowym, np: http://ita.ee.lbl.gov/html/contrib/NASA-HTTP.html
-    2. Wykonaj przeparsuj te dane, zlicz ilosc wystapien metod HTTP wzgledem adresow IP
-    3. Wykonaj statystyke top 10 najczesciej wystepujacych adresow IP
+    1. Find public server data to parse in text format, e.g.: http://ita.ee.lbl.gov/html/contrib/NASA-HTTP.html
+    2. Parse this data, count the number of occurrences of HTTP methods relative to IP addresses
+    3. Compute the statistics of the top 10 most frequently occurring IP addresses
 """

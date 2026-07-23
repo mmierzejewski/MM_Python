@@ -1,190 +1,200 @@
 # 📊 BMI Calculator - Advanced
 
-Zaawansowany kalkulator BMI (Body Mass Index) z rekomendacjami zdrowotnymi, uwzględnieniem płci i opcją eksportu wyników.
+Advanced BMI (Body Mass Index) calculator with health recommendations, gender awareness, and result export.
 
 ## ✨ Features
 
-- 📏 **Dokładne obliczenia BMI** - wzór: waga(kg) / (wzrost(m))²
-- 👥 **Uwzględnienie płci** - różne zakresy prawidłowe dla mężczyzn i kobiet
-- 🎯 **Dokładne rekomendacje** - obliczanie docelowej wagi
-- 🔄 **Wielokrotne obliczenia** - możliwość wykonania wielu pomiarów w jednej sesji
-- 💾 **Eksport do pliku** - zapisanie wyników z timestampem
-- 📝 **Logging** - śledzenie sesji w pliku log
-- 🛡️ **Obsługa błędów** - pełna walidacja i error handling
-- 🌈 **Przyjazny UI** - emoji, kolory, czytelne komunikaty
+- 📏 **Accurate BMI calculation** - formula: weight(kg) / (height(m))²
+- 👥 **Gender awareness** - different healthy ranges for men and women
+- 🎯 **Precise recommendations** - calculation of the target weight
+- 🔄 **Multiple calculations** - possibility to perform several measurements in one session
+- 💾 **Export to file** - save results with a timestamp
+- 📝 **Logging** - session tracking in a log file
+- 🛡️ **Error handling** - full validation and error handling
+- 🌈 **Friendly UI** - emoji, colors, readable messages
 
-## 📋 Kategorie BMI (według WHO)
+## 📋 BMI Categories (according to WHO)
 
-| BMI Range | Kategoria | Status |
-|-----------|-----------|--------|
-| < 16.0 | Wygłodzenie | 🚨 Krytyczne |
-| 16.0 - 17.0 | Wychudzenie | ⚠️ Wysokie ryzyko |
-| 17.0 - 18.5 | Niedowaga | ⚠️ Średnie ryzyko |
-| 18.5 - 25.0 | Waga prawidłowa | ✅ Zdrowe |
-| 25.0 - 30.0 | Nadwaga | ⚠️ Średnie ryzyko |
-| 30.0 - 35.0 | Otyłość I° | 🚨 Wysokie ryzyko |
-| 35.0 - 40.0 | Otyłość II° | 🚨 Krytyczne |
-| ≥ 40.0 | Otyłość skrajna III° | 🔴 Bardzo krytyczne |
+| BMI Range | Category | Status |
+| --- | --- | --- |
+| < 16.0 | Starvation | 🚨 Critical |
+| 16.0 - 17.0 | Severe underweight | ⚠️ High risk |
+| 17.0 - 18.5 | Underweight | ⚠️ Medium risk |
+| 18.5 - 25.0 | Normal weight | ✅ Healthy |
+| 25.0 - 30.0 | Overweight | ⚠️ Medium risk |
+| 30.0 - 35.0 | Obesity class I | 🚨 High risk |
+| 35.0 - 40.0 | Obesity class II | 🚨 Critical |
+| ≥ 40.0 | Extreme obesity class III | 🔴 Very critical |
 
-## 🎯 Zakresy prawidłowe według płci
+## 🎯 Healthy ranges by gender
 
-- **Mężczyźni**: BMI 20.0 - 25.0
-- **Kobiety**: BMI 19.0 - 24.0
-- **Inne/Ogólne**: BMI 18.5 - 24.99
+- **Men**: BMI 20.0 - 25.0
+- **Women**: BMI 19.0 - 24.0
+- **Other/General**: BMI 18.5 - 24.99
 
-## 💻 Użycie
+## 💻 Usage
 
-### Podstawowe uruchomienie
+### Basic run
 
 ```bash
 python BMI.py
 ```
 
-### Interaktywny flow
+### Interactive flow
 
-1. **Podaj imię** (opcjonalne)
-2. **Wybierz płeć** (1-Mężczyzna, 2-Kobieta, 3-Inna)
-3. **Waga** w kilogramach
-4. **Wzrost** w centymetrach
-5. **Eksport** wyników (opcjonalnie)
-6. **Oblicz ponownie** lub zakończ
+1. **Enter your name** (optional)
+2. **Choose gender** (1-Male, 2-Female, 3-Other)
+3. **Weight** in kilograms
+4. **Height** in centimeters
+5. **Export** results (optional)
+6. **Calculate again** or finish
 
-### Przykład sesji
+### Sample session
 
-```
-📊 KALKULATOR BMI - ADVANCED
+```text
+📊 BMI CALCULATOR - ADVANCED
 
-👤 Jak masz na imię? Jan
+👤 What's your name? Jan
 
-🤝 Miło mi Cię poznać, Jan!
+🤝 Nice to meet you, Jan!
 
-👤 Płeć (wpływa na zakres prawidłowy):
-   1. Mężczyzna
-   2. Kobieta
-   3. Inna / Wolę nie podawać
-   Wybór [3]: 1
+👤 Gender (affects the healthy range):
+   1. Male
+   2. Female
+   3. Other / Prefer not to say
+   Choice [3]: 1
 
-⚖️  Podaj swoją wagę (kg): 75
-📏 Podaj swój wzrost (cm): 175
+⚖️  Enter your weight (kg): 75
+📏 Enter your height (cm): 175
 
 ==================================================
-✅  Twoje BMI: 24.49
-   Kategoria: waga prawidłowa
-   Zakres prawidłowy: 20 - 25
+✅  Your BMI: 24.49
+   Category: normal weight
+   Healthy range: 20 - 25
 ==================================================
 
-🎉 Gratulacje, Jan! Twoja waga jest prawidłowa!
-   Jesteś w zdrowym zakresie 20 - 25.
-   Utrzymuj zdrowy styl życia! 💪
+🎉 Congratulations, Jan! Your weight is normal!
+   You are in the healthy range 20 - 25.
+   Keep up a healthy lifestyle! 💪
 
-💾 Zapisać wynik do pliku? (tak/nie) [nie]: tak
-💾 Wynik zapisany do pliku: bmi_wynik_20251212_143022.txt
+💾 Save the result to a file? (Y/N) [N]: Y
+💾 Result saved to file: bmi_wynik_20251212_143022.txt
 
-🔄 Obliczyć ponownie? (tak/nie) [nie]: nie
+🔄 Calculate again? (Y/N) [N]: N
 
-👋 Dziękuję za skorzystanie z kalkulatora BMI!
-   Dbaj o zdrowie! 💚
+👋 Thank you for using the BMI calculator!
+   Take care of your health! 💚
 ```
 
-## 📁 Generowane pliki
+## 📁 Generated files
 
 ### Log file: `bmi_calculator.log`
-```
-2025-12-12 14:30:15 - INFO - Uruchomiono kalkulator BMI
-2025-12-12 14:30:22 - INFO - Obliczono BMI: 24.49 dla Jan (płeć: mężczyzna)
-2025-12-12 14:30:25 - INFO - Wynik wyeksportowany do bmi_wynik_20251212_143022.txt
-2025-12-12 14:30:30 - INFO - Zakończono działanie kalkulatora
+
+```text
+2025-12-12 14:30:15 - INFO - BMI calculator started
+2025-12-12 14:30:22 - INFO - Calculated BMI: 24.49 for Jan (gender: male)
+2025-12-12 14:30:25 - INFO - Result exported to bmi_wynik_20251212_143022.txt
+2025-12-12 14:30:30 - INFO - Calculator stopped
 ```
 
 ### Export file: `bmi_wynik_YYYYMMDD_HHMMSS.txt`
-```
+
+```text
 ==================================================
-📊 WYNIK KALKULACJI BMI
+📊 BMI CALCULATION RESULT
 ==================================================
 
-Data: 2025-12-12 14:30:22
-Imię: Jan
-Płeć: mężczyzna
-Waga: 75.0 kg
-Wzrost: 175.0 cm
+Date: 2025-12-12 14:30:22
+Name: Jan
+Gender: male
+Weight: 75.0 kg
+Height: 175.0 cm
 
 BMI: 24.49
-Kategoria: waga prawidłowa
+Category: normal weight
 
-REKOMENDACJE:
-Gratulacje, Jan! Twoja waga jest prawidłowa!
-Jesteś w zdrowym zakresie 20 - 25.
-Utrzymuj zdrowy styl życia!
+RECOMMENDATIONS:
+Congratulations, Jan! Your weight is normal!
+You are in the healthy range 20 - 25.
+Keep up a healthy lifestyle!
 
 ==================================================
-ℹ️  Pamiętaj: BMI to tylko orientacyjny wskaźnik.
-   Skonsultuj się z lekarzem w sprawach zdrowia!
+ℹ️  Remember: BMI is only an approximate indicator.
+   Consult a doctor about health matters!
 ==================================================
 ```
 
-## 🔬 Obliczenia
+## 🔬 Calculations
 
-### Wzór BMI
-```
-BMI = waga(kg) / (wzrost(m))²
-```
+### BMI formula
 
-### Docelowa waga
-```
-Docelowa waga = BMI_cel × (wzrost(m))²
+```text
+BMI = weight(kg) / (height(m))²
 ```
 
-### Przykład
-- Wzrost: 175 cm (1.75 m)
-- Waga: 85 kg
-- BMI = 85 / (1.75)² = 27.76 → **Nadwaga**
+### Target weight
 
-Dla osiągnięcia BMI 25 (górna granica prawidłowa dla mężczyzn):
-- Docelowa waga = 25 × (1.75)² = 76.56 kg
-- Należy zrzucić: 85 - 76.56 = **8.44 kg**
+```text
+Target weight = target_BMI × (height(m))²
+```
 
-## 🆚 Porównanie wersji
+### Example
 
-| Feature | Stara wersja | Nowa wersja |
-|---------|--------------|-------------|
+- Height: 175 cm (1.75 m)
+- Weight: 85 kg
+- BMI = 85 / (1.75)² = 27.76 → **Overweight**
+
+To reach a BMI of 25 (upper healthy limit for men):
+
+- Target weight = 25 × (1.75)² = 76.56 kg
+- Weight to lose: 85 - 76.56 = **8.44 kg**
+
+## 🆚 Version comparison
+
+| Feature | Old version | New version |
+| --- | --- | --- |
 | Shebang & encoding | ❌ | ✅ |
-| Type hints | ⚠️ Częściowe | ✅ Pełne |
-| Uwzględnienie płci | ❌ | ✅ |
-| Wielokrotne obliczenia | ❌ | ✅ |
-| Dokładne obliczenia wagi | ❌ | ✅ |
-| Eksport do pliku | ❌ | ✅ |
+| Type hints | ⚠️ Partial | ✅ Full |
+| Gender awareness | ❌ | ✅ |
+| Multiple calculations | ❌ | ✅ |
+| Precise weight calculations | ❌ | ✅ |
+| Export to file | ❌ | ✅ |
 | Logging | ❌ | ✅ |
-| Error handling | ⚠️ Podstawowy | ✅ Kompletny |
-| Stałe vs magic numbers | ❌ | ✅ |
-| Kategorie jako dict | ❌ | ✅ |
+| Error handling | ⚠️ Basic | ✅ Complete |
+| Constants vs magic numbers | ❌ | ✅ |
+| Categories as dict | ❌ | ✅ |
 
-## ⚠️ Ważne informacje
+## ⚠️ Important information
 
-### Ograniczenia BMI
+### BMI limitations
 
-BMI jest **orientacyjnym wskaźnikiem** i nie uwzględnia:
-- Masy mięśniowej (sportowcy mogą mieć "nadwagę")
-- Rozkładu tkanki tłuszczowej
-- Wieku (inne normy dla dzieci i osób starszych)
-- Budowy kości
-- Stanu zdrowia
+BMI is an **approximate indicator** and does not account for:
 
-### Kiedy skonsultować się z lekarzem?
+- Muscle mass (athletes may be "overweight")
+- Body fat distribution
+- Age (different norms for children and older adults)
+- Bone structure
+- Overall health condition
 
-- BMI < 18.5 lub > 30
-- Nagła zmiana wagi
-- Problemy zdrowotne
-- Planowanie diety/treningu
-- Ciąża
+### When to consult a doctor?
 
-## 🔧 Wymagania
+- BMI < 18.5 or > 30
+- Sudden weight change
+- Health issues
+- Diet/training planning
+- Pregnancy
+
+## 🔧 Requirements
 
 ```bash
+
 # Python 3.10+
-# Tylko standardowa biblioteka - bez zewnętrznych zależności
+
+# Standard library only - no external dependencies
+
 ```
 
-## 📖 Źródła
+## 📖 Sources
 
 - [WHO BMI Classification](https://www.who.int/news-room/fact-sheets/detail/obesity-and-overweight)
 - [CDC BMI Information](https://www.cdc.gov/healthyweight/assessing/bmi/index.html)
@@ -193,25 +203,27 @@ BMI jest **orientacyjnym wskaźnikiem** i nie uwzględnia:
 ## 📝 Changelog
 
 ### Version 2.0 (2025-12-12)
-- ✨ Dodano uwzględnienie płci
-- ✨ Wielokrotne obliczenia w jednej sesji
-- ✨ Eksport wyników do pliku
-- ✨ Logging do pliku
-- ✨ Dokładne obliczenia docelowej wagi
-- 🔧 Poprawiono type hints
-- 🔧 Refaktoryzacja na stałe i Enum
-- 🔧 Pełna obsługa błędów
-- 📚 Rozszerzona dokumentacja
+
+- ✨ Added gender awareness
+- ✨ Multiple calculations in one session
+- ✨ Export results to file
+- ✨ Logging to file
+- ✨ Precise target weight calculations
+- 🔧 Improved type hints
+- 🔧 Refactored to use constants and Enum
+- 🔧 Full error handling
+- 📚 Expanded documentation
 
 ### Version 1.0
-- Podstawowy kalkulator BMI
-- Kategorie WHO
-- Proste rekomendacje
 
-## 📄 Licencja
+- Basic BMI calculator
+- WHO categories
+- Simple recommendations
+
+## 📄 License
 
 Free to use and modify.
 
 ---
 
-**⚕️ Disclaimer**: Ten kalkulator jest narzędziem edukacyjnym. Zawsze konsultuj się z lekarzem lub dietetykiem w sprawach zdrowia i diety.
+**⚕️ Disclaimer**: This calculator is an educational tool. Always consult a doctor or dietitian about health and diet matters.

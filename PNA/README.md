@@ -1,468 +1,575 @@
-# 🔢 Generator Liczb Pierwszych - PNA.py
+# 🔢 Prime Number Generator - PNA.py
 
-## 📋 Opis
+## 📋 Description
 
-**PNA.py** (Prime Numbers Analyzer) to wydajny generator liczb pierwszych wykorzystujący **Sito Eratostenesa**. Program znajduje wszystkie liczby pierwsze w zadanym zakresie z pomiarem wydajności i szczegółowymi statystykami. Zawiera optymalizację dla bardzo dużych zakresów w postaci **sita segmentowanego**.
+**PNA.py** (Prime Numbers Analyzer) is an efficient prime number generator using the **Sieve of Eratosthenes**. The program finds all prime numbers within a given range with performance timing and detailed statistics. It includes an optimization for very large ranges in the form of a **segmented sieve**.
 
-### Czym jest Liczba Pierwsza?
+### What Is a Prime Number?
 
-**Liczba pierwsza** to liczba naturalna większa od 1, która ma dokładnie dwa dzielniki: 1 i samą siebie.
+A **prime number** is a natural number greater than 1 that has exactly two divisors: 1 and itself.
 
-**Przykłady:**
+**Examples:**
+
 - ✅ 2, 3, 5, 7, 11, 13, 17, 19, 23, 29...
-- ❌ 1 (ma tylko jeden dzielnik)
-- ❌ 4 = 2 × 2 (ma więcej niż dwa dzielniki)
-- ❌ 6 = 2 × 3 (ma więcej niż dwa dzielniki)
+- ❌ 1 (has only one divisor)
+- ❌ 4 = 2 × 2 (has more than two divisors)
+- ❌ 6 = 2 × 3 (has more than two divisors)
 
-## ⭐ Kluczowe Funkcje
+## ⭐ Key Features
 
-### 🎯 Trzy Tryby Działania
+### 🎯 Three Operation Modes
 
-#### Tryb 1: Liczby Pierwsze do Limitu
-Znajdź wszystkie liczby pierwsze od 2 do podanego limitu n.
+#### Mode 1: Primes up to a Limit
 
-#### Tryb 2: Pierwsze n Liczb Pierwszych
-Znajdź dokładnie pierwsze n liczb pierwszych (np. pierwsze 100, 1000, 10000 liczb pierwszych).
-- **Automatyczne szacowanie**: Używa przybliżenia matematycznego n * (ln(n) + ln(ln(n)))
-- **Inteligentne rozszerzanie**: Automatycznie zwiększa limit jeśli potrzeba
-- **Optymalizacja**: Dla dużych n wykorzystuje wydajne sito
+Find all prime numbers from 2 to a given limit n.
 
-#### Tryb 3: Sprawdzanie Liczby Pierwszej ⭐ NOWOŚĆ!
-Sprawdź, czy podana liczba jest liczbą pierwszą.
-- **Szybka weryfikacja**: Algorytm O(√n)
-- **Optymalizacja**: Sprawdza tylko nieparzyste dzielniki
-- **Wyświetlanie dzielników**: Jeśli liczba nie jest pierwsza, program pokazuje jej dzielniki właściwe (bez 1 i samej liczby)
-- **Pomiar czasu**: Szczegółowy pomiar wydajności sprawdzania
+#### Mode 2: First n Primes
 
-### 🚀 Dwie Metody Generowania
+Find exactly the first n prime numbers (e.g., the first 100, 1000, 10000 primes).
 
-#### 1. Standardowe Sito Eratostenesa
-- **Zakres**: Do ~100 milionów
-- **Pamięć**: O(n) - ~100 MB na 100 milionów
-- **Szybkość**: Bardzo szybkie dla małych i średnich zakresów
-- **Użycie**: Automatyczne dla zakresów < 10 milionów
+- **Automatic estimation**: Uses the mathematical approximation n * (ln(n) + ln(ln(n)))
+- **Smart expansion**: Automatically increases the limit if needed
+- **Optimization**: Uses an efficient sieve for large n
 
-#### 2. Sito Segmentowane (Zaawansowane)
-- **Zakres**: Powyżej 1 miliarda
-- **Pamięć**: O(√n) - oszczędność pamięci!
-- **Szybkość**: Optymalne dla bardzo dużych zakresów
-- **Użycie**: Zalecane/automatyczne dla zakresów > 1 miliarda
+#### Mode 3: Check a Prime Number (New)
 
-### 📊 Szczegółowe Statystyki
-- **Zakres**: Od-do
-- **Liczba znalezionych**: Ile liczb pierwszych
-- **Gęstość**: Procent liczb pierwszych w zakresie
-- **Najmniejsza/Największa**: Ekstremalne wartości
-- **Czas generowania**: Pomiar wydajności
+Check whether a given number is prime.
 
-### 💾 Eksport do Pliku
-- Automatyczne zapisywanie do katalogu PNA/
+- **Fast verification**: O(√n) algorithm
+- **Optimization**: Only checks odd divisors
+- **Divisor display**: If the number is not prime, the program shows its proper divisors (excluding 1 and the number itself)
+- **Timing**: Detailed performance timing for the check
+
+### 🚀 Two Generation Methods
+
+#### 1. Standard Sieve of Eratosthenes
+
+- **Range**: Up to ~100 million
+- **Memory**: O(n) - ~100 MB for 100 million
+- **Speed**: Very fast for small and medium ranges
+- **Usage**: Automatic for ranges < 10 million
+
+#### 2. Segmented Sieve (Advanced)
+
+- **Range**: Above 1 billion
+- **Memory**: O(√n) - memory savings!
+- **Speed**: Optimal for very large ranges
+- **Usage**: Recommended/automatic for ranges > 1 billion
+
+### 📊 Detailed Statistics
+
+- **Range**: From-to
+- **Number found**: How many primes
+- **Density**: Percentage of primes in the range
+- **Smallest/Largest**: Extreme values
+- **Generation time**: Performance timing
+
+### 💾 Export to File
+
+- Automatic saving to the PNA/ directory
 - Format: `primes_up_to_{limit}_{timestamp}.txt`
-- Zawartość: Header + liczby pierwsze (10 na linię)
-- Oferowane dla zestawów > 100 liczb
+- Content: Header + prime numbers (10 per line)
+- Offered for sets > 100 numbers
 
-### 🔄 Pętla Menu
-- Program działa w trybie ciągłym
-- Po wykonaniu obliczeń automatyczny powrót do menu głównego
-- Możliwość wykonywania wielu operacji bez ponownego uruchamiania
-- Opcja 4: "Koniec" - eleganckie wyjście z programu
+### 🔄 Menu Loop
 
-### ⚡ Optymalizacje Wydajności
-- Progress bar dla dużych zakresów (> 1M)
-- Ostrzeżenia o czasie/pamięci dla dużych limitów
-- Automatyczna sugestia sita segmentowanego
-- Formatowanie czasu (μs, ms, s, m)
+- The program runs in continuous mode
+- Automatic return to the main menu after computations
+- Ability to perform multiple operations without restarting
+- Option 4: "Exit" - a clean way to quit the program
 
-## 🔬 Algorytm: Sito Eratostenesa
+### ⚡ Performance Optimizations
 
-### Zasada Działania
+- Progress bar for large ranges (> 1M)
+- Warnings about time/memory for large limits
+- Automatic suggestion of the segmented sieve
+- Time formatting (μs, ms, s, m)
 
-**Sito Eratostenesa** (III wiek p.n.e.) to jeden z najstarszych i najwydajniejszych algorytmów znajdowania liczb pierwszych.
+## 🔬 Algorithm: Sieve of Eratosthenes
 
-#### Kroki Algorytmu:
-1. Utwórz listę liczb od 2 do n
-2. Zacznij od pierwszej liczby (2)
-3. Oznacz wszystkie wielokrotności tej liczby jako złożone
-4. Przejdź do kolejnej nieoznaczonej liczby
-5. Powtarzaj kroki 3-4 aż do √n
+### How It Works
 
-#### Wizualizacja (dla n=30):
-```
+The **Sieve of Eratosthenes** (3rd century BC) is one of the oldest and most efficient algorithms for finding prime numbers.
+
+#### Algorithm Steps
+
+1. Create a list of numbers from 2 to n
+2. Start with the first number (2)
+3. Mark all multiples of this number as composite
+4. Move to the next unmarked number
+5. Repeat steps 3-4 until √n
+
+#### Visualization (for n=30)
+
+```text
 Start: 2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30
 
-Krok 1 (2): 2  3  ✗  5  ✗  7  ✗  9  ✗  11 ✗  13 ✗  15 ✗  17 ✗  19 ✗  21 ✗  23 ✗  25 ✗  27 ✗  29 ✗
+Step 1 (2): 2  3  ✗  5  ✗  7  ✗  9  ✗  11 ✗  13 ✗  15 ✗  17 ✗  19 ✗  21 ✗  23 ✗  25 ✗  27 ✗  29 ✗
 
-Krok 2 (3): 2  3  ✗  5  ✗  7  ✗  ✗  ✗  11 ✗  13 ✗  ✗  ✗  17 ✗  19 ✗  ✗  ✗  23 ✗  ✗  ✗  ✗  ✗  29 ✗
+Step 2 (3): 2  3  ✗  5  ✗  7  ✗  ✗  ✗  11 ✗  13 ✗  ✗  ✗  17 ✗  19 ✗  ✗  ✗  23 ✗  ✗  ✗  ✗  ✗  29 ✗
 
-Krok 3 (5): 2  3  ✗  5  ✗  7  ✗  ✗  ✗  11 ✗  13 ✗  ✗  ✗  17 ✗  19 ✗  ✗  ✗  23 ✗  ✗  ✗  ✗  ✗  29 ✗
+Step 3 (5): 2  3  ✗  5  ✗  7  ✗  ✗  ✗  11 ✗  13 ✗  ✗  ✗  17 ✗  19 ✗  ✗  ✗  23 ✗  ✗  ✗  ✗  ✗  29 ✗
 
-Wynik: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29
+Result: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29
 ```
 
-### Złożoność Czasowa
-- **Standardowe sito**: O(n log log n)
-- **Sito segmentowane**: O(n log log n) z O(√n) pamięci
+### Time Complexity
 
-## 🚀 Instalacja i Uruchomienie
+- **Standard sieve**: O(n log log n)
+- **Segmented sieve**: O(n log log n) with O(√n) memory
 
-### Wymagania
+## 🚀 Installation and Running
+
+### Requirements
+
 ```bash
 Python 3.10+
-# Brak zewnętrznych zależności - tylko biblioteka standardowa
+
+# No external dependencies - standard library only
+
 ```
 
-### Uruchomienie
+### Running
+
 ```bash
 cd PNA
 python PNA.py
 ```
 
-## 💻 Sposób Użycia
+## 💻 How to Use
 
-### Krok 1: Uruchom program
+### Step 1: Run the program
+
 ```bash
 python PNA.py
 ```
 
-### Krok 2: Wybierz tryb działania
-```
+### Step 2: Choose the operation mode
+
+```text
 ╔══════════════════════════════════════════════════════╗
-║        GENERATOR LICZB PIERWSZYCH                    ║
-║            (Sito Eratostenesa)                       ║
+║        PRIME NUMBER GENERATOR                         ║
+║            (Sieve of Eratosthenes)                    ║
 ╚══════════════════════════════════════════════════════╝
 
-Wybierz tryb działania:
-  1. Znajdź wszystkie liczby pierwsze do podanego limitu
-  2. Znajdź pierwsze n liczb pierwszych
-  3. Sprawdź czy liczba jest pierwsza
-  4. Koniec (wyjście z programu)
+Choose the operation mode:
+  1. Find all primes up to a given limit
+  2. Find the first n primes
+  3. Check whether a number is prime
+  4. Exit (quit the program)
 
-Twój wybór (1/2/3/4): 1
+Your choice (1/2/3/4): 1
 
-Podaj zakres (liczba całkowita >= 2): 100
+Enter the range (integer >= 2): 100
 ```
 
-### Krok 3: Otrzymaj wyniki
+### Step 3: Get the results
 
-#### Małe Zakresy (< 10M)
-```
-🔍 Wyszukiwanie liczb pierwszych do 100...
+#### Small Ranges (< 10M)
 
-⏱️  Czas generowania: 0.145 ms
+```text
+🔍 Searching for primes up to 100...
 
-============================================================
-📊 STATYSTYKI LICZB PIERWSZYCH
-============================================================
-Zakres:              2 do 100
-Liczby pierwsze:     25
-Gęstość:             25.0000%
-Najmniejsza:         2
-Największa:          97
-Wszystkie liczby:    2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97
-============================================================
-```
-
-#### Średnie Zakresy (10M - 1B)
-```
-⚠️  Duży zakres (50,000,000) może wymagać znacznego czasu i pamięci!
-   Szacowana pamięć: ~48 MB
-   Kontynuować? (T/N) [N]: T
-
-🔍 Wyszukiwanie liczb pierwszych do 50,000,000...
-Postęp: 100.0% (sprawdzanie 7,071)
-
-⏱️  Czas generowania: 2.847 s
+⏱️  Generation time: 0.145 ms
 
 ============================================================
-📊 STATYSTYKI LICZB PIERWSZYCH
+📊 PRIME NUMBER STATISTICS
 ============================================================
-Zakres:              2 do 50,000,000
-Liczby pierwsze:     3,001,134
-Gęstość:             6.0023%
-Najmniejsza:         2
-Największa:          49,999,991
+Range:               2 to 100
+Primes:              25
+Density:             25.0000%
+Smallest:            2
+Largest:             97
+All numbers:         2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97
 ============================================================
-
-💾 Zapisać liczby pierwsze do pliku? (T/N) [T]: T
-✅ Liczby pierwsze zapisano do: /Users/.../PNA/primes_up_to_50000000_20251212_143052.txt
 ```
 
-#### Bardzo Duże Zakresy (> 1B) - Sito Segmentowane
-```
-⚠️  BARDZO DUŻY zakres (2,000,000,000)!
-   Standardowe sito: ~1907 MB (~1.9 GB)
-   Sito segmentowane: ~43 MB (zalecane!)
+#### Medium Ranges (10M - 1B)
 
-   💡 Sito segmentowane używa znacznie mniej pamięci dla dużych zakresów
-   Użyć sita segmentowanego? (T/N) [T]: T
+```text
+⚠️  Large range (50,000,000) may require significant time and memory!
+   Estimated memory: ~48 MB
+   Continue? (Y/N) [N]: Y
 
-🔍 Wyszukiwanie liczb pierwszych do 2,000,000,000...
-   Używanie sita segmentowanego (optymalizacja pamięci)
-Faza 1/2: Wyszukiwanie podstawowych liczb pierwszych do 44,721...
-Faza 2/2: Przetwarzanie 1,955 segmentów o rozmiarze 1,000,000...
-Postęp: 100.0% (przetworzono do 2,000,000,000)
+🔍 Searching for primes up to 50,000,000...
+Progress: 100.0% (checking 7,071)
 
-⏱️  Czas generowania: 2m 15.34s
+⏱️  Generation time: 2.847 s
 
 ============================================================
-📊 STATYSTYKI LICZB PIERWSZYCH
+📊 PRIME NUMBER STATISTICS
 ============================================================
-Zakres:              2 do 2,000,000,000
-Liczby pierwsze:     98,222,287
-Gęstość:             4.9111%
-Najmniejsza:         2
-Największa:          1,999,999,973
+Range:               2 to 50,000,000
+Primes:              3,001,134
+Density:             6.0023%
+Smallest:            2
+Largest:             49,999,991
 ============================================================
 
-💾 Zapisać liczby pierwsze do pliku? (T/N) [T]: T
-✅ Liczby pierwsze zapisano do: /Users/.../PNA/primes_up_to_2000000000_20251212_144523.txt
+💾 Save the primes to a file? (Y/N) [Y]: Y
+✅ Primes saved to: /Users/.../PNA/primes_up_to_50000000_20251212_143052.txt
 ```
 
-## 📊 Przykłady Użycia
+#### Very Large Ranges (> 1B) - Segmented Sieve
 
-### Przykład 1: Pierwsze n Liczb Pierwszych (NOWOŚĆ!)
+```text
+⚠️  VERY LARGE range (2,000,000,000)!
+   Standard sieve: ~1907 MB (~1.9 GB)
+   Segmented sieve: ~43 MB (recommended!)
+
+   💡 The segmented sieve uses significantly less memory for large ranges
+   Use the segmented sieve? (Y/N) [Y]: Y
+
+🔍 Searching for primes up to 2,000,000,000...
+   Using segmented sieve (memory optimization)
+Phase 1/2: Finding base primes up to 44,721...
+Phase 2/2: Processing 1,955 segments of size 1,000,000...
+Progress: 100.0% (processed up to 2,000,000,000)
+
+⏱️  Generation time: 2m 15.34s
+
+============================================================
+📊 PRIME NUMBER STATISTICS
+============================================================
+Range:               2 to 2,000,000,000
+Primes:              98,222,287
+Density:             4.9111%
+Smallest:            2
+Largest:             1,999,999,973
+============================================================
+
+💾 Save the primes to a file? (Y/N) [Y]: Y
+✅ Primes saved to: /Users/.../PNA/primes_up_to_2000000000_20251212_144523.txt
+```
+
+## 📊 Usage Examples
+
+### Example 1: First n Primes (NEW!)
+
 ```bash
 python PNA.py
-# Wybór: 2 (Pierwsze n liczb pierwszych)
-# Wejście: 100
-# Wyjście: Pierwsze 100 liczb pierwszych
-# Największa: 541
-# Czas: < 5 ms
 
-# Przykład wyjścia:
+# Choice: 2 (First n primes)
+
+# Input: 100
+
+# Output: The first 100 primes
+
+# Largest: 541
+
+# Time: < 5 ms
+
+# Sample output
+
 ============================================================
-📊 STATYSTYKI LICZB PIERWSZYCH
+📊 PRIME NUMBER STATISTICS
 ============================================================
-Tryb:                Pierwsze 100 liczb pierwszych
-Znaleziono:          100
-Najmniejsza:         2
-Największa:          541
-Pierwsze 10:         2, 3, 5, 7, 11, 13, 17, 19, 23, 29
-Ostatnie 10:         467, 479, 487, 491, 499, 503, 509, 521, 523, 541
+Mode:                First 100 primes
+Found:               100
+Smallest:            2
+Largest:             541
+First 10:            2, 3, 5, 7, 11, 13, 17, 19, 23, 29
+Last 10:             467, 479, 487, 491, 499, 503, 509, 521, 523, 541
 ============================================================
 ```
 
-### Przykład 2: Małe Zakresy (Tryb Limitu)
+### Example 2: Small Ranges (Limit Mode)
+
 ```bash
 python PNA.py
-# Wybór: 1 (Limit)
-# Wejście: 1000
-# Wyjście: 168 liczb pierwszych (16.8%)
-# Czas: < 1 ms
+
+# Choice: 1 (Limit)
+
+# Input: 1000
+
+# Output: 168 primes (16.8%)
+
+# Time: < 1 ms
+
 ```
 
-### Przykład 3: Średnie Zakresy (Tryb Limitu)
+### Example 3: Medium Ranges (Limit Mode)
+
 ```bash
 python PNA.py
-# Wybór: 1 (Limit)
-# Wejście: 10000000 (10 milionów)
-# Wyjście: 664,579 liczb pierwszych (6.6%)
-# Czas: ~0.5s
-# Pamięć: ~10 MB
+
+# Choice: 1 (Limit)
+
+# Input: 10000000 (10 million)
+
+# Output: 664,579 primes (6.6%)
+
+# Time: ~0.5s
+
+# Memory: ~10 MB
+
 ```
 
-### Przykład 4: Duże Zakresy (Tryb Limitu)
+### Example 4: Large Ranges (Limit Mode)
+
 ```bash
 python PNA.py
-# Wybór: 1 (Limit)
-# Wejście: 100000000 (100 milionów)
-# Wyjście: 5,761,455 liczb pierwszych (5.76%)
-# Czas: ~5s
-# Pamięć: ~100 MB
+
+# Choice: 1 (Limit)
+
+# Input: 100000000 (100 million)
+
+# Output: 5,761,455 primes (5.76%)
+
+# Time: ~5s
+
+# Memory: ~100 MB
+
 ```
 
-### Przykład 5: Bardzo Duże Zakresy (Sito Segmentowane)
+### Example 5: Very Large Ranges (Segmented Sieve)
+
 ```bash
 python PNA.py
-# Wybór: 1 (Limit)
-# Wejście: 1000000000 (1 miliard)
-# Metoda: Sito segmentowane (automatycznie)
-# Wyjście: 50,847,534 liczb pierwszych (5.08%)
-# Czas: ~1 minuta
-# Pamięć: ~32 MB (zamiast ~950 MB!)
+
+# Choice: 1 (Limit)
+
+# Input: 1000000000 (1 billion)
+
+# Method: Segmented sieve (automatic)
+
+# Output: 50,847,534 primes (5.08%)
+
+# Time: ~1 minute
+
+# Memory: ~32 MB (instead of ~950 MB!)
+
 ```
 
-### Przykład 6: Pierwsze 1 Milion Liczb Pierwszych
-```bash
-python PNA.py
-# Wybór: 2 (Pierwsze n)
-# Wejście: 1000000
-# Wyjście: Pierwsze 1,000,000 liczb pierwszych
-# Największa: 15,485,863
-# C
+### Example 6: First 1 Million Primes
 
-### Przykład 7a: Sprawdzanie Liczby Pierwszej (NOWOŚĆ!)
 ```bash
 python PNA.py
-# Wybór: 3 (Sprawdź czy liczba jest pierwsza)
-# Wejście: 17
-# Wyjście: 
+
+# Choice: 2 (First n)
+
+# Input: 1000000
+
+# Output: The first 1,000,000 primes
+
+# Largest: 15,485,863
+
+# T
+
+### Example 7a: Checking a Prime Number (NEW!)
+
+```bash
+
+python PNA.py
+
+# Choice: 3 (Check whether a number is prime)
+
+# Input: 17
+
+# Output
+
 ============================================================
-✅ Liczba 17 JEST liczbą pierwszą
+✅ 17 IS a prime number
 ============================================================
-⏱️  Czas sprawdzania: 2.15 μs
-```
+⏱️  Check time: 2.15 μs
 
-### Przykład 7b: Sprawdzanie Liczby Niepier wszej z Dzielnikami (NOWOŚĆ!)
+```text
+
+### Example 7b: Checking a Non-Prime Number with Divisors (NEW!)
+
 ```bash
-python PNA.py
-# Wybór: 3 (Sprawdź czy liczba jest pierwsza)
-# Wejście: 24
-# Wyjście:
-============================================================
-❌ Liczba 24 NIE JEST liczbą pierwszą
 
-📋 Dzielniki liczby 24 (bez 1 i 24):
+python PNA.py
+
+# Choice: 3 (Check whether a number is prime)
+
+# Input: 24
+
+# Output
+
+============================================================
+❌ 24 is NOT a prime number
+
+📋 Divisors of 24 (excluding 1 and 24):
    2, 3, 4, 6, 8, 12
-   Liczba dzielników właściwych: 6
+   Number of proper divisors: 6
 ============================================================
-⏱️  Czas sprawdzania: 3.42 μs
-```
+⏱️  Check time: 3.42 μs
 
-### Przykład 8: Funkcja get_divisors() (NOWOŚĆ!)
+```text
+
+### Example 8: The get_divisors() Function (NEW!)
+
 ```python
+
 def get_divisors(n: int) -> list[int]:
     """
-    Znajduje wszystkie dzielniki podanej liczby.
-    
-    Algorytm:
-    - Iteruje od 1 do √n
-    - Dla każdego dzielnika i dodaje zarówno i jak i n/i
-    - Unika duplikatów dla liczb kwadratowych
-    - Zwraca posortowaną listę dzielników
-    
-    Złożoność: O(√n)
-    
-    Przykłady:
-    - is_prime(2) → True (najmniejsza liczba pierwsza)
+    Finds all divisors of the given number.
+
+    Algorithm:
+
+    - Iterates from 1 to √n
+    - For each divisor i, adds both i and n/i
+    - Avoids duplicates for perfect squares
+    - Returns a sorted list of divisors
+
+    Complexity: O(√n)
+
+    Examples:
+
+    - is_prime(2) → True (the smallest prime)
     - is_prime(17) → True
     - is_prime(97) → True
     - is_prime(100) → False (100 = 2 × 50)
-    - is_prime(1) → False (nie jest liczbą pierwszą)
+    - is_prime(1) → False (not a prime number)
     """
-```
 
-### 2. Pierwsze n Liczb Pierwszych
-# Wejście: 97
-# Wyjście:
-============================================================
-✅ Liczba 97 JEST liczbą pierwszą
-============================================================
-⏱️  Czas sprawdzania: 3.81 μs
+```text
 
-# Przykład - liczba złożona:
-# Wejście: 100
-# Wyjście:
+### 2. First n Primes
+
+# Input: 97
+
+# Output
+
 ============================================================
-❌ Liczba 100 NIE JEST liczbą pierwszą
+✅ 97 IS a prime number
 ============================================================
-⏱️  Czas sprawdzania: 2.15 μs
-```zas: ~1.5s
-```3. Sito Segmentowane
+⏱️  Check time: 3.81 μs
+
+# Example - composite number
+
+# Input: 100
+
+# Output
+
+============================================================
+❌ 100 is NOT a prime number
+============================================================
+⏱️  Check time: 2.15 μs
+```Time: ~1.5s
+
+```3. Segmented Sieve
 ```python
+
 def generate_primes_segmented(limit: int, verbose: bool = False) -> list[int]
     """
-    Generuje liczby pierwsze dla bardzo dużych zakresów.
-    
-    Zalety:
-    - Pamięć: O(√n) zamiast O(n)
-    - Dla 1 miliarda: ~32 MB zamiast ~950 MB
-    - Progress bar dla monitorowania postępu
-    
-    Algorytm:
-    1. Znajdź bazowe liczby pierwsze do √n
-    2. Przetwarzaj zakres w segmentach (domyślnie 1M)
-    3. W każdym segmencie oznacz wielokrotności
-    """
-```
+    Generates prime numbers for very large ranges.
 
-### 4. Standardowe Sito
+    Advantages:
+
+    - Memory: O(√n) instead of O(n)
+    - For 1 billion: ~32 MB instead of ~950 MB
+    - Progress bar for tracking progress
+
+    Algorithm:
+
+    1. Find base primes up to √n
+    2. Process the range in segments (default 1M)
+    3. In each segment, mark multiples
+    """
+
+```text
+
+### 4. Standard Sieve
+
 ```python
+
 def generate_primes(limit: int, verbose: bool = False) -> list[int]
     """
-    Klasyczne Sito Eratostenesa.
-    
-    Zalety:
-    - Bardzo szybkie dla zakresów < 100M
-    - Proste i sprawdzone
-    - Progress bar dla zakresów > 1M
-    
-    Złożoność: O(n log log n)
+    Classic Sieve of Eratosthenes.
+
+    Advantages:
+
+    - Very fast for ranges < 100M
+    - Simple and proven
+    - Progress bar for ranges > 1M
+
+    Complexity: O(n log log n)
+    """
+
+```text
+
+### 5. Time Formatting
+
+```python
+
+def format_duration(duration) -> str
+    """
+    Automatic time formatting:
+
+    - μs (microseconds): < 1ms
+    - ms (milliseconds): < 1s
+    - s (seconds): < 60s
+    - m (minutes) + s: ≥ 60s
+    """
+
+```text
+
+### 6 Classic Sieve of Eratosthenes.
+
+    Advantages:
+    - Very fast for ranges < 100M
+    - Simple and proven
+    - Progress bar for ranges > 1M
+
+    Complexity: O(n log log n)
     """
 ```
 
-### 5. Formatowanie Czasu
+### 4. Time Formatting
+
 ```python
 def format_duration(duration) -> str
     """
-    Automatyczne formatowanie czasu:
-    - μs (mikrosekundy): < 1ms
-    - ms (milisekundy): < 1s
-    - s (sekundy): < 60s
-    - m (minuty) + s: ≥ 60s
+    Automatic time formatting:
+    - μs (microseconds): < 1ms
+    - ms (milliseconds): < 1s
+    - s (seconds): < 60s
+    - m (minutes) + s: ≥ 60s
     """
 ```
 
-### 6lasyczne Sito Eratostenesa.
-    
-    Zalety:
-    - Bardzo szybkie dla zakresów < 100M
-    - Proste i sprawdzone
-    - Progress bar dla zakresów > 1M
-    
-    Złożoność: O(n log log n)
-    """
-```
+### 5. Saving to a File
 
-### 4. Formatowanie Czasu
-```python
-def format_duration(duration) -> str
-    """
-    Automatyczne formatowanie czasu:
-    - μs (mikrosekundy): < 1ms
-    - ms (milisekundy): < 1s
-    - s (sekundy): < 60s
-    - m (minuty) + s: ≥ 60s
-    """
-```
-
-### 5. Zapis do Pliku
 ```python
 def save_primes_to_file(primes: list[int], limit: int, filename: Optional[str] = None)
     """
-    Zapisuje liczby pierwsze do pliku tekstowego.
-    
-    Format pliku:
-    - Header z metadanymi (zakres, liczba, data)
-    - Liczby pierwsze: 10 na linię, oddzielone przecinkami
-    - Kodowanie UTF-8
+    Saves the prime numbers to a text file.
+
+    File format:
+    - Header with metadata (range, count, date)
+    - Primes: 10 per line, comma-separated
+    - UTF-8 encoding
     """
 ```
 
-## 📈 Wydajność
+## 📈 Performance
 
-### Benchmarki (Apple M1/Intel i5)
+### Benchmarks (Apple M1/Intel i5)
 
-| Zakres | Liczby pierwsze | Czas | Pamięć | Metoda |
-|--------|----------------|------|--------|--------|
-| 1,000 | 168 | < 1 ms | < 1 MB | Standardowe |
-| 10,000 | 1,229 | < 5 ms | < 1 MB | Standardowe |
-| 100,000 | 9,592 | ~20 ms | ~1 MB | Standardowe |
-| 1,000,000 | 78,498 | ~50 ms | ~5 MB | Standardowe |
-| 10,000,000 | 664,579 | ~500 ms | ~10 MB | Standardowe |
-| 100,000,000 | 5,761,455 | ~5s | ~100 MB | Standardowe |
-| 1,000,000,000 | 50,847,534 | ~60s | ~32 MB | **Segmentowane** |
-| 2,000,000,000 | 98,222,287 | ~135s | ~44 MB | **Segmentowane** |
+| Range | Primes | Time | Memory | Method |
+| --- | --- | --- | --- | --- |
+| 1,000 | 168 | < 1 ms | < 1 MB | Standard |
+| 10,000 | 1,229 | < 5 ms | < 1 MB | Standard |
+| 100,000 | 9,592 | ~20 ms | ~1 MB | Standard |
+| 1,000,000 | 78,498 | ~50 ms | ~5 MB | Standard |
+| 10,000,000 | 664,579 | ~500 ms | ~10 MB | Standard |
+| 100,000,000 | 5,761,455 | ~5s | ~100 MB | Standard |
+| 1,000,000,000 | 50,847,534 | ~60s | ~32 MB | **Segmented** |
+| 2,000,000,000 | 98,222,287 | ~135s | ~44 MB | **Segmented** |
 
-### Gęstość Liczb Pierwszych
+### Prime Number Density
 
-Zgodnie z **Twierdzeniem o liczbach pierwszych**:
-```
+According to the **Prime Number Theorem**:
+
+```text
 π(n) ≈ n / ln(n)
 ```
 
-Gęstość maleje wraz ze wzrostem n:
-- **n = 100**: 25% liczb pierwszych
+Density decreases as n increases:
+
+- **n = 100**: 25% primes
 - **n = 1,000**: 16.8%
 - **n = 10,000**: 12.3%
 - **n = 100,000**: 9.6%
@@ -471,141 +578,168 @@ Gęstość maleje wraz ze wzrostem n:
 - **n = 100,000,000**: 5.8%
 - **n = 1,000,000,000**: 5.1%
 
-## 🔍 Szczegóły Techniczne
+## 🔍 Technical Details
 
-### Optymalizacje Pamięci
+### Memory Optimizations
 
-#### Standardowe Sito
+#### Standard Sieve
+
 ```python
-is_prime = [True] * (limit + 1)  # O(n) pamięci
-# Dla 1 miliarda: ~950 MB
+is_prime = [True] * (limit + 1)  # O(n) memory
+
+# For 1 billion: ~950 MB
+
 ```
 
-#### Sito Segmentowane
+#### Segmented Sieve
+
 ```python
-result = generate_primes(sqrt_limit)  # O(√n) pamięci dla bazy
-segment = [True] * segment_size        # Tylko 1M elementów na raz
-# Dla 1 miliarda: ~32 MB (30x oszczędność!)
+result = generate_primes(sqrt_limit)  # O(√n) memory for the base
+segment = [True] * segment_size        # Only 1M elements at a time
+
+# For 1 billion: ~32 MB (30x savings!)
+
 ```
 
 ### Progress Bar
 
-Dla zakresów > 1,000,000:
-```
-Postęp: 45.3% (sprawdzanie 3,207)
-```
+For ranges > 1,000,000:
 
-Dla sita segmentowanego:
-```
-Faza 1/2: Wyszukiwanie podstawowych liczb pierwszych do 44,721...
-Faza 2/2: Przetwarzanie 1,955 segmentów o rozmiarze 1,000,000...
-Postęp: 67.8% (przetworzono do 678,000,000)
+```text
+Progress: 45.3% (checking 3,207)
 ```
 
-## 🐛 Obsługa Błędów
+For the segmented sieve:
 
-Program obsługuje:
-- ❌ **Nieprawidłowe dane**: Nie-liczby, liczby < 2
-- ⚠️ **Ostrzeżenia**: Duże zakresy (> 10M) z szacowaniem pamięci
-- 💡 **Sugestie**: Automatyczna rekomendacja sita segmentowanego
-- 🚨 **MemoryError**: Łapanie błędów pamięci z sugestiami
-- 🛑 **Ctrl+C**: Bezpieczne przerwanie, 2 a 3?
-**A:** 
-- **Tryb 1** znajduje wszystkie liczby pierwsze do limitu (np. do 100 znajdzie 25 liczb pierwszych).
-- **Tryb 2** znajduje dokładnie n pierwszych liczb pierwszych (np. pierwsze 100 liczb, czyli 2, 3, 5... aż do 541).
-- **Tryb 3** sprawdza, czy pojedyncza liczba jest pierwsza (np. czy 97 jest liczbą pierwszą → TAK
-
-### Przykłady Obsługi Błędów
-
-#### Zbyt duży zakres (standardowe sito)
-```
-❌ Błąd pamięci: Not enough memory to create sieve for 5,000,000,000
-
-💡 Sugestie:
-   • Spróbuj mniejszego zakresu
-   • Użyj opcji sita segmentowanego dla dużych zakresów
-   • Zamknij inne aplikacje, aby zwolnić pamięć
+```text
+Phase 1/2: Finding base primes up to 44,721...
+Phase 2/2: Processing 1,955 segments of size 1,000,000...
+Progress: 67.8% (processed up to 678,000,000)
 ```
 
-#### Nieprawidłowe dane
+## 🐛 Error Handling
+
+The program handles:
+
+- ❌ **Invalid input**: Non-numbers, numbers < 2
+- ⚠️ **Warnings**: Large ranges (> 10M) with memory estimation
+- 💡 **Suggestions**: Automatic recommendation of the segmented sieve
+- 🚨 **MemoryError**: Catching memory errors with suggestions
+- 🛑 **Ctrl+C**: Safe interruption, 2 or 3?
+
+**A:**
+
+- **Mode 1** finds all primes up to the limit (e.g., up to 100 will find 25 primes).
+- **Mode 2** finds exactly the first n primes (e.g., the first 100 numbers, i.e. 2, 3, 5... up to 541).
+- **Mode 3** checks whether a single number is prime (e.g., whether 97 is prime → YES
+
+### Error Handling Examples
+
+#### Range too large (standard sieve)
+
+```text
+❌ Memory error: Not enough memory to create sieve for 5,000,000,000
+
+💡 Suggestions:
+   • Try a smaller range
+   • Use the segmented sieve option for large ranges
+   • Close other applications to free up memory
 ```
-Podaj zakres (liczba całkowita >= 2): abc
-❌ Nieprawidłowe dane! Proszę podać poprawną liczbę całkowitą dodatnią.
+
+#### Invalid input
+
+```text
+Enter the range (integer >= 2): abc
+❌ Invalid input! Please enter a valid positive integer.
 ```
 
 ## ❓ FAQ
 
-### Q: Jaka jest różnica między trybem 1 a 2?
-**A:** Tryb 1 znajduje wszystkie liczby pierwsze do limitu (np. do 100). Tryb 2 znajduje dokładnie n pierwszych liczb pierwszych (np. pierwsze 100 liczb, czyli 2, 3, 5... aż do 541).
+### Q: What is the difference between mode 1 and 2?
 
-### Q: Jak program szacuje limit dla pierwszych n liczb?
-**A:** Używa przybliżenia matematycznego n * (ln(n) + ln(ln(n))) * 1.3, a następnie automatycznie rozszerza limit jeśli potrzeba.
+**A:** Mode 1 finds all primes up to the limit (e.g., up to 100). Mode 2 finds exactly the first n primes (e.g., the first 100 numbers, i.e. 2, 3, 5... up to 541).
 
-### Q: Jaka jest maksymalna wartość zakresu?
-**A:** Teoretycznie nie ma limitu dzięki situ segmentowanemu. Praktycznie ogranicza czas obliczeń (np. 10 miliardów zajmie ~20 minut).
+### Q: How does the program estimate the limit for the first n numbers?
 
-### Q: Czy 1 jest liczbą pierwszą?
-**A:** Nie! Liczba pierwsza musi mieć dokładnie dwa dzielniki. 1 ma tylko jeden dzielnik (siebie).
+**A:** It uses the mathematical approximation n × (ln(n) + ln(ln(n))) × 1.3, and then automatically expands the limit if needed.
 
-### Q: Dlaczego gęstość liczb pierwszych maleje?
-**A:** Zgodnie z Twierdzeniem o liczbach pierwszych, liczby pierwsze stają się rzadsze w miarę wzrostu n, z gęstością ~1/ln(n).
+### Q: What is the maximum range value?
 
-### Q: Co to jest sito segmentowane?
-**A:** To optymalizacja Sita Eratostenesa, która przetwarza zakres w małych segmentach zamiast całości naraz, oszczędzając pamięć.
+**A:** Theoretically there is no limit thanks to the segmented sieve. In practice, computation time is the constraint (e.g., 10 billion would take ~20 minutes).
 
-### Q: Czy mogę zapisać wyniki dla małych zakresów?
-**A:** Opcja zapisu pojawia się automatycznie dla zakresów > 100 liczb pierwszych.
+### Q: Is 1 a prime number?
 
-### Q: Jak działa progress bar?
-**A:** Wyświetla się automatycznie dla zakresów > 1,000,000, pokazując procent ukończenia i aktualnie sprawdzaną liczbę.
+**A:** No! A prime number must have exactly two divisors. 1 has only one divisor (itself).
 
-## 📚 Teoria Matematyczna
+### Q: Why does the density of primes decrease?
 
-### Twierdzenie o Liczbach Pierwszych (Prime Number Theorem)
+**A:** According to the Prime Number Theorem, primes become rarer as n grows, with a density of ~1/ln(n).
 
-Dla dużych n, liczba liczb pierwszych ≤ n jest w przybliżeniu:
-```
+### Q: What is a segmented sieve?
+
+**A:** It's an optimization of the Sieve of Eratosthenes that processes the range in small segments instead of all at once, saving memory.
+
+### Q: Can I save the results for small ranges?
+
+**A:** The save option appears automatically for ranges with > 100 primes.
+
+### Q: How does the progress bar work?
+
+**A:** It's displayed automatically for ranges > 1,000,000, showing the percentage of completion and the number currently being checked.
+
+## 📚 Mathematical Theory
+
+### Prime Number Theorem
+
+For large n, the number of primes ≤ n is approximately:
+
+```text
 π(n) ≈ n / ln(n)
 ```
 
-gdzie π(n) to funkcja zliczająca liczby pierwsze.
+where π(n) is the prime-counting function.
 
-### Pierwsze Liczby Pierwsze
-```
+### The First Primes
+
+```text
 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97...
 ```
 
-### Ciekawostki
-- **2** jest jedyną parzystą liczbą pierwszą
-- Każda liczba naturalna > 1 ma unikalny rozkład na czynniki pierwsze
-- Między n a 2n zawsze istnieje co najmniej jedna liczba pierwsza (Postulat Bertranda)
-- Największa znana liczba pierwsza (2024): 2^82,589,933 - 1 (ponad 24 miliony cyfr!)
+### Fun Facts
 
-### Hipoteza Riemanna
-Związana z rozkładem liczb pierwszych, jeden z **Problemów Milenijnych** z nagrodą $1,000,000!
+- **2** is the only even prime number
+- Every natural number > 1 has a unique prime factorization
+- Between n and 2n there always exists at least one prime (Bertrand's Postulate)
+- The largest known prime number (2024): 2^82,589,933 - 1 (over 24 million digits!)
 
-## 🔗 Powiązane Projekty
+### The Riemann Hypothesis
 
-W tym samym katalogu dostępny jest również:
-- **PNA2a.py** - Ulepszona wersja z dodatkowymi funkcjami
+Related to the distribution of primes, one of the **Millennium Prize Problems** with a $1,000,000 reward!
 
-## 📖 Bibliografia
+## 🔗 Related Projects
 
-1. **Sito Eratostenesa** - Wikipedia PL: https://pl.wikipedia.org/wiki/Sito_Eratostenesa
-2. **Liczby pierwsze** - Wikipedia PL: https://pl.wikipedia.org/wiki/Liczba_pierwsza
-3. **Prime Number Theorem**: https://en.wikipedia.org/wiki/Prime_number_theorem
-4. **Segmented Sieve**: https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes#Segmented_sieve
+Also available in the same directory:
 
-## 👨‍💻 Autor
+- **PNA2a.py** - An improved version with additional features
 
-**Maciej Mierzejewski**
+## 📖 Bibliography
+
+1. **Sieve of Eratosthenes** - Wikipedia PL: <https://pl.wikipedia.org/wiki/Sito_Eratostenesa>
+2. **Prime numbers** - Wikipedia PL: <https://pl.wikipedia.org/wiki/Liczba_pierwsza>
+3. **Prime Number Theorem**: <https://en.wikipedia.org/wiki/Prime_number_theorem>
+4. **Segmented Sieve**: <https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes#Segmented_sieve>
+
+## 👨‍💻 Author
+
+### Maciej Mierzejewski
+
 - GitHub: [@mmierzejewski](https://github.com/mmierzejewski)
 - Repository: [MM_Python](https://github.com/mmierzejewski/MM_Python)
 
-## 📄 Licencja
+## 📄 License
 
 Free to use and modify.
 
 ---
 
-**💡 Wskazówka:** Program jest idealny do celów edukacyjnych, eksperymentów z teorią liczb oraz generowania dużych zestawów liczb pierwszych do testów kryptograficznych!
+**💡 Tip:** This program is ideal for educational purposes, experimenting with number theory, and generating large sets of prime numbers for cryptographic testing!

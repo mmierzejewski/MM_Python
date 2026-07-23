@@ -1,59 +1,66 @@
-# 🔺 Generator Trójek Pitagorejskich - Pitagoras.py
+# 🔺 Pythagorean Triple Generator - Pitagoras.py
 
-## 📋 Opis
+## 📋 Description
 
-**Pitagoras.py** to zaawansowany generator trójek pitagorejskich z pełną analizą matematyczną. Program generuje **tylko prymitywne** trójki pitagorejskie (eliminując duplikaty typu 3,4,5 i 6,8,10) oraz przeprowadza szczegółową analizę statystyczną z detekcją liczb pierwszych.
+**Pitagoras.py** is an advanced Pythagorean triple generator with full mathematical analysis. The program generates **only primitive** Pythagorean triples (eliminating duplicates such as 3,4,5 and 6,8,10) and performs detailed statistical analysis with prime number detection.
 
-### Czym jest Trójka Pitagorejska?
+### What is a Pythagorean Triple?
 
-Trójka pitagorejska to zbiór trzech dodatnich liczb całkowitych `a`, `b`, `c` spełniających równanie:
+A Pythagorean triple is a set of three positive integers `a`, `b`, `c` satisfying the equation:
 
-```
+```text
 a² + b² = c²
 ```
 
-**Przykłady:**
+**Examples:**
+
 - (3, 4, 5) → 3² + 4² = 9 + 16 = 25 = 5²  ✓
 - (5, 12, 13) → 5² + 12² = 25 + 144 = 169 = 13²  ✓
 - (8, 15, 17) → 8² + 15² = 64 + 225 = 289 = 17²  ✓
 
-## ⭐ Kluczowe Funkcje
+## ⭐ Key Features
 
-### ✅ Tylko Trójki Prymitywne
-- **NWD(a, b, c) = 1** - eliminuje wielokrotności
-- Brak duplikatów typu (3,4,5) i (6,8,10)
-- Gwarancja unikalności wszystkich wygenerowanych trójek
+### ✅ Primitive Triples Only
 
-### 📊 Szczegółowa Analiza
-Dla każdej trójki program oblicza:
-- **Wymiary**: a, b, c (boki trójkąta)
-- **Obwód**: a + b + c
-- **Powierzchnia**: (a × b) / 2
-- **Liczby pierwsze**: które wartości w trójce są liczbami pierwszymi
+- **GCD(a, b, c) = 1** - eliminates multiples
+- No duplicates such as (3,4,5) and (6,8,10)
+- Guaranteed uniqueness of all generated triples
 
-### 📈 Statystyki
-- Liczba wygenerowanych trójek prymitywnych
-- Liczba trójek zawierających liczby pierwsze (%)
-- Wszystkie liczby pierwsze w zakresie
-- Obwód: najmniejszy, największy, średni
-- Powierzchnia: najmniejsza, największa, średnia
+### 📊 Detailed Analysis
 
-### ✓ Weryfikacja Poprawności
-- Sprawdzanie NWD > 1 (trójki nieprymitywne)
-- Detekcja dokładnych duplikatów
-- Przykładowa weryfikacja wzoru Pitagorasa
+For each triple, the program calculates:
 
-### 🔄 Pętla Menu ⭐ NOWOŚĆ!
-- Program działa w trybie ciągłym
-- Po wygenerowaniu trójek automatyczny powrót do menu głównego
-- Możliwość wykonywania wielu generacji bez ponownego uruchamiania
-- Opcja "Koniec" - eleganckie wyjście z programu
+- **Dimensions**: a, b, c (sides of the triangle)
+- **Perimeter**: a + b + c
+- **Area**: (a × b) / 2
+- **Prime numbers**: which values in the triple are prime numbers
 
-## 🔬 Algorytm: Wzór Euklidesa
+### 📈 Statistics
 
-Program wykorzystuje **wzór Euklidesa** do generowania prymitywnych trójek pitagorejskich:
+- Number of generated primitive triples
+- Number of triples containing prime numbers (%)
+- All prime numbers in range
+- Perimeter: smallest, largest, average
+- Area: smallest, largest, average
 
-Dla liczb względnie pierwszych `m > n > 0` o różnej parzystości:
+### ✓ Correctness Verification
+
+- Checking GCD > 1 (non-primitive triples)
+- Detection of exact duplicates
+- Sample verification of the Pythagorean formula
+
+### 🔄 Menu Loop (New)
+
+- The program runs in continuous mode
+- After generating triples, it automatically returns to the main menu
+- Ability to perform multiple generations without restarting
+- "Exit" option - graceful exit from the program
+
+## 🔬 Algorithm: Euclid's Formula
+
+The program uses **Euclid's formula** to generate primitive Pythagorean triples:
+
+For coprime numbers `m > n > 0` of different parity:
 
 ```python
 a = m² - n²
@@ -61,67 +68,79 @@ b = 2mn
 c = m² + n²
 ```
 
-**Warunki:**
-1. `m > n > 0`
-2. `NWD(m, n) = 1` (liczby względnie pierwsze)
-3. `m` i `n` mają różną parzystość (jeden parzysty, drugi nieparzysty)
+**Conditions:**
 
-**Przykład:** m=2, n=1
-```
+1. `m > n > 0`
+2. `GCD(m, n) = 1` (coprime numbers)
+3. `m` and `n` have different parity (one even, one odd)
+
+**Example:** m=2, n=1
+
+```text
 a = 2² - 1² = 4 - 1 = 3
 b = 2 × 2 × 1 = 4
 c = 2² + 1² = 4 + 1 = 5
-Wynik: (3, 4, 5) ✓
+Result: (3, 4, 5) ✓
 ```
 
-### Złożoność Czasowa
-- **Generowanie trójek**: O(m²) gdzie m to parametr wzoru
-- **Sito Eratostenesa**: O(n log log n) gdzie n to największa wartość
-- **Sortowanie**: O(k log k) gdzie k to liczba trójek
+### Time Complexity
 
-## 🚀 Instalacja i Uruchomienie
+- **Triple generation**: O(m²) where m is the formula parameter
+- **Sieve of Eratosthenes**: O(n log log n) where n is the largest value
+- **Sorting**: O(k log k) where k is the number of triples
 
-### Wymagania
+## 🚀 Installation and Running
+
+### Requirements
+
 ```bash
 Python 3.8+
-# Brak zewnętrznych zależności - tylko biblioteka standardowa
+
+# No external dependencies - standard library only
+
 ```
 
-### Uruchomienie
+### Running
+
 ```bash
 cd PITAGORAS
 python Pitagoras.py
 ```
 
-## 💻 Sposób Użycia
+## 💻 Usage
 
-### Krok 1: Uruchom program
+### Step 1: Run the program
+
 ```bash
 python Pitagoras.py
 ```
 
-### Krok 2: Wybierz opcję i podaj liczbę trójek
-```
+### Step 2: Choose an option and enter the number of triples
+
+```text
 ╔════════════════════════════════════════════════════════════════════════════════════════╗
-║                GENERATOR TRÓJEK PITAGOREJSKICH                                       ║
-║                         (Tylko prymitywne)                                           ║
+║                PYTHAGOREAN TRIPLE GENERATOR                                           ║
+║                         (Primitive only)                                             ║
 ╚════════════════════════════════════════════════════════════════════════════════════════╝
 
-Wybierz opcję:
-  1. Generuj trójki pitagorejskie
-  2. Koniec (wyjście z programu)
+Choose an option:
+  1. Generate Pythagorean triples
+  2. Exit (quit the program)
 
-Twój wybór (1/2): 1
+Your choice (1/2): 1
 
-Podaj liczbę trójek pitagorejskich do wygenerowania (1-1000): 10
+Enter the number of Pythagorean triples to generate (1-1000): 10
 ```
 
-### Krok 3: Otrzymaj wyniki
+### Step 3: Get the results
 
-#### Tabela Trójek
-```
+#### Triples Table
+
+```text
 ==========================================================================================
-#        a     b     c     Obwód  Powierzchnia L. pierwsze                    
+
+# a     b     c     Perimeter  Area L. Primes
+
 ==========================================================================================
 1        3     4     5        12           6.0 [3, 5]                         
 2        5    12    13        30          30.0 [5, 13]                        
@@ -136,146 +155,169 @@ Podaj liczbę trójek pitagorejskich do wygenerowania (1-1000): 10
 ==========================================================================================
 ```
 
-#### Weryfikacja Duplikatów
+#### Duplicate Verification
+
+```text
+==========================================================================================
+DUPLICATE VERIFICATION:
+==========================================================================================
+✅ All triples are primitive (no multiples such as 3,4,5 and 6,8,10)
+✅ No exact duplicates found
+==========================================================================================
 ```
-==========================================================================================
-WERYFIKACJA DUPLIKATÓW:
-==========================================================================================
-✅ Wszystkie trójki są prymitywne (brak wielokrotności jak 3,4,5 i 6,8,10)
-✅ Nie znaleziono dokładnych duplikatów
-==========================================================================================
-```
 
-#### Statystyki
-```
-==========================================================================================
-STATYSTYKI:
-==========================================================================================
-Trójki prymitywne łącznie:         10
-Trójki zawierające liczby pierwsze: 9 (90.0%)
-Liczby pierwsze do 85:             23
+#### Statistics
 
-Obwód:
-  Najmniejszy:                     12
-  Największy:                      182
-  Średni:                          88.2
+```text
+==========================================================================================
+STATISTICS:
+==========================================================================================
+Total primitive triples:           10
+Triples containing prime numbers:  9 (90.0%)
+Primes up to 85:                   23
 
-Powierzchnia:
-  Najmniejsza:                     6.0
-  Największa:                      546.0
-  Średnia:                         228.6
+Perimeter:
+  Smallest:                        12
+  Largest:                         182
+  Average:                         88.2
+
+Area:
+  Smallest:                        6.0
+  Largest:                         546.0
+  Average:                         228.6
 ==========================================================================================
 
-⏱️  Czas generowania: 0.001s
-   Średnio na trójkę: 0.000100s
+⏱️  Generation time: 0.001s
+   Average per triple: 0.000100s
 
-💡 Przykładowa weryfikacja (pierwsze 3 trójki):
+💡 Sample verification (first 3 triples):
    1. 3² + 4² = 9 + 16 = 25 = 25 = 5²  ✓
    2. 5² + 12² = 25 + 144 = 169 = 169 = 13²  ✓
    3. 8² + 15² = 64 + 225 = 289 = 289 = 17²  ✓
 ```
 
-## 📊 Przykłady Użycia
+## 📊 Usage Examples
 
-### Przykład 1: Małe Zestawy (5 trójek)
+### Example 1: Small Sets (5 triples)
+
 ```bash
 python Pitagoras.py
-# Wejście: 5
-# Wyjście: (3,4,5), (5,12,13), (8,15,17), (7,24,25), (20,21,29)
+
+# Input: 5
+
+# Output: (3,4,5), (5,12,13), (8,15,17), (7,24,25), (20,21,29)
+
 ```
 
-### Przykład 2: Średnie Zestawy (50 trójek)
+### Example 2: Medium Sets (50 triples)
+
 ```bash
 python Pitagoras.py
-# Wejście: 50
-# Otrzymuje 50 unikalnych trójek prymitywnych
-# Czas: ~0.01s
+
+# Input: 50
+
+# Get 50 unique primitive triples
+
+# Time: ~0.01s
+
 ```
 
-### Przykład 3: Duże Zestawy (500 trójek)
+### Example 3: Large Sets (500 triples)
+
 ```bash
 python Pitagoras.py
-# Wejście: 500
-# System ostrzeże: "⚠️  Duża liczba (500) może zająć trochę czasu!"
-# Potwierdź: T (Tak) lub N (Nie)
+
+# Input: 500
+
+# System warns: "⚠️  A large number (500) may take some time!"
+
+# Confirm: Y (Yes) or N (No)
+
 ```
 
-## 🎯 Funkcje Zaawansowane
+## 🎯 Advanced Features
 
-### 1. Klasa PythagoreanTriple
+### 1. PythagoreanTriple Class
+
 ```python
 class PythagoreanTriple:
     def __init__(self, a: int, b: int, c: int)
-    
+
     @property
     def perimeter(self) -> int
-        """Oblicza obwód: a + b + c"""
-    
+        """Calculates the perimeter: a + b + c"""
+
     @property
     def area(self) -> float
-        """Oblicza powierzchnię: (a × b) / 2"""
+        """Calculates the area: (a × b) / 2"""
 ```
 
-### 2. Generowanie Trójek
+### 2. Triple Generation
+
 ```python
 def generate_primitive_triples(count: int) -> List[PythagoreanTriple]
     """
-    Generuje określoną liczbę prymitywnych trójek pitagorejskich
-    używając wzoru Euklidesa.
-    
-    Zwraca: Listę posortowaną według obwodu (rosnąco)
+    Generates a specified number of primitive Pythagorean triples
+    using Euclid's formula.
+
+    Returns: A list sorted by perimeter (ascending)
     """
 ```
 
-### 3. Sito Eratostenesa
+### 3. Sieve of Eratosthenes
+
 ```python
 def sieve_of_eratosthenes(limit: int) -> Set[int]
     """
-    Generuje wszystkie liczby pierwsze do limitu.
-    
-    Złożoność: O(n log log n)
-    Zwraca: Zbiór liczb pierwszych dla O(1) wyszukiwania
+    Generates all prime numbers up to the limit.
+
+    Complexity: O(n log log n)
+    Returns: Set of prime numbers for O(1) lookup
     """
 ```
 
-### 4. Analiza Liczb Pierwszych
+### 4. Prime Number Analysis
+
 ```python
 def analyze_primes_in_triple(triple: PythagoreanTriple, primes: Set[int]) -> List[int]
     """
-    Znajduje, które liczby w trójce są pierwsze.
-    
-    Przykład: (5, 12, 13) → [5, 13]
+    Finds which numbers in the triple are prime.
+
+    Example: (5, 12, 13) → [5, 13]
     """
 ```
 
-## 🔍 Szczegóły Matematyczne
+## 🔍 Mathematical Details
 
-### Prymitywne vs Nieprymitywne
+### Primitive vs Non-Primitive
 
-**Trójki Prymitywne** (NWD = 1):
+**Primitive Triples** (GCD = 1):
+
 - (3, 4, 5) ✓
 - (5, 12, 13) ✓
 - (8, 15, 17) ✓
 - (7, 24, 25) ✓
 
-**Trójki Nieprymitywne** (NWD > 1):
+**Non-Primitive Triples** (GCD > 1):
+
 - (6, 8, 10) = 2 × (3, 4, 5) ✗
 - (9, 12, 15) = 3 × (3, 4, 5) ✗
 - (10, 24, 26) = 2 × (5, 12, 13) ✗
 
-### Właściwości Trójek Prymitywnych
+### Properties of Primitive Triples
 
-1. **Dokładnie jedna** z liczb a, b jest parzysta
-2. **Dokładnie jedna** z liczb a, b, c jest podzielna przez 3
-3. **Dokładnie jedna** z liczb a, b, c jest podzielna przez 5
-4. Suma a + b + c jest **zawsze parzysta**
-5. Iloczyn abc jest **zawsze podzielny przez 60**
+1. **Exactly one** of the numbers a, b is even
+2. **Exactly one** of the numbers a, b, c is divisible by 3
+3. **Exactly one** of the numbers a, b, c is divisible by 5
+4. The sum a + b + c is **always even**
+5. The product abc is **always divisible by 60**
 
-## 📈 Wydajność
+## 📈 Performance
 
-### Benchmarki
-```
-Liczba trójek    Czas         Pamięć
+### Benchmarks
+
+```text
+Number of triples    Time         Memory
 ──────────────────────────────────────
 10              < 0.001s     < 1 MB
 50              ~ 0.005s     < 1 MB
@@ -284,58 +326,71 @@ Liczba trójek    Czas         Pamięć
 1000            ~ 0.100s     ~ 5 MB
 ```
 
-### Optymalizacje
-- ⚡ Wzór Euklidesa zamiast brute force
-- 🔍 Set dla O(1) wyszukiwania liczb pierwszych
-- 📊 Sortowanie tylko raz na końcu
-- 💾 Minimalne zużycie pamięci
+### Optimizations
+
+- ⚡ Euclid's formula instead of brute force
+- 🔍 Set for O(1) prime number lookup
+- 📊 Sorting only once at the end
+- 💾 Minimal memory usage
 
 ## ❓ FAQ
 
-### Q: Dlaczego tylko trójki prymitywne?
-**A:** Trójki prymitywne są podstawowymi "blokami budulcowymi". Wszystkie inne trójki to ich wielokrotności, więc są redundantne.
+### Q: Why only primitive triples?
 
-### Q: Jak długo trwa generowanie 1000 trójek?
-**A:** Około 0.1 sekundy na nowoczesnym komputerze.
+**A:** Primitive triples are the basic "building blocks". All other triples are their multiples, so they are redundant.
 
-### Q: Czy mogę generować więcej niż 1000 trójek?
-**A:** Tak, ale program ostrzeże o potencjalnie długim czasie obliczeń. Możesz potwierdzić kontynuację.
+### Q: How long does it take to generate 1000 triples?
 
-### Q: Co to jest NWD (Największy Wspólny Dzielnik)?
-**A:** To największa liczba całkowita, która dzieli wszystkie podane liczby. Dla trójek prymitywnych NWD(a,b,c) = 1.
+**A:** About 0.1 seconds on a modern computer.
 
-### Q: Dlaczego program pokazuje liczby pierwsze?
-**A:** To dodatkowa analiza matematyczna pokazująca, które wartości w trójce są liczbami pierwszymi - interesująca właściwość z punktu widzenia teorii liczb.
+### Q: Can I generate more than 1000 triples?
 
-## 🐛 Obsługa Błędów
+**A:** Yes, but the program will warn about potentially long computation time. You can confirm to continue.
 
-Program obsługuje:
-- ❌ Nieprawidłowe dane wejściowe (nie-liczby)
-- ❌ Liczby < 1
-- ⚠️ Ostrzeżenia dla dużych wartości (> 1000)
-- 🛑 Ctrl+C (przerwanie przez użytkownika)
-- 🚨 Nieoczekiwane błędy z komunikatami
+### Q: What is GCD (Greatest Common Divisor)?
 
-## 📚 Teoria Matematyczna
+**A:** It is the largest integer that divides all the given numbers. For primitive triples, GCD(a,b,c) = 1.
 
-### Twierdzenie Pitagorasa
-Dla trójkąta prostokątnego o bokach a, b i przeciwprostokątnej c:
-```
+### Q: Why does the program show prime numbers?
+
+**A:** This is additional mathematical analysis showing which values in the triple are prime numbers - an interesting property from a number theory perspective.
+
+## 🐛 Error Handling
+
+The program handles:
+
+- ❌ Invalid input (non-numbers)
+- ❌ Numbers < 1
+- ⚠️ Warnings for large values (> 1000)
+- 🛑 Ctrl+C (interruption by the user)
+- 🚨 Unexpected errors with messages
+
+## 📚 Mathematical Theory
+
+### Pythagorean Theorem
+
+For a right triangle with legs a, b and hypotenuse c:
+
+```text
 a² + b² = c²
 ```
 
-### Wzór Euklidesa (ok. 300 p.n.e.)
-Wszystkie prymitywne trójki pitagorejskie można wygenerować za pomocą:
-```
+### Euclid's Formula (c. 300 BC)
+
+All primitive Pythagorean triples can be generated using:
+
+```text
 a = m² - n²
 b = 2mn
 c = m² + n²
 ```
-gdzie m > n > 0, NWD(m,n) = 1, i m-n jest nieparzyste.
 
-### Pierwsze Trójki Pitagorejskie
-```
-(3, 4, 5)       - Najmniejsza
+where m > n > 0, GCD(m,n) = 1, and m-n is odd.
+
+### First Pythagorean Triples
+
+```text
+(3, 4, 5)       - Smallest
 (5, 12, 13)
 (8, 15, 17)
 (7, 24, 25)
@@ -347,28 +402,30 @@ gdzie m > n > 0, NWD(m,n) = 1, i m-n jest nieparzyste.
 (28, 45, 53)
 ```
 
-## 🔗 Powiązane Projekty
+## 🔗 Related Projects
 
-W tym samym katalogu dostępne są również:
-- **Pitagoras_unified.py** - Rozszerzona wersja z dodatkowymi funkcjami
-- **Pit2.py** - Wersja z wyszukiwaniem według limitu
+The same directory also contains:
 
-## 📖 Bibliografia
+- **Pitagoras_unified.py** - Extended version with additional features
+- **Pit2.py** - Version with limit-based search
 
-1. **Trójka pitagorejska** - Wikipedia PL: https://pl.wikipedia.org/wiki/Trójka_pitagorejska
-2. **Euclid's Formula** - Wikipedia EN: https://en.wikipedia.org/wiki/Formulas_for_generating_Pythagorean_triples
-3. **Tree of Primitive Pythagorean Triples**: https://en.wikipedia.org/wiki/Tree_of_primitive_Pythagorean_triples
+## 📖 Bibliography
 
-## 👨‍💻 Autor
+1. **Pythagorean triple** - Wikipedia PL: <https://pl.wikipedia.org/wiki/Trójka_pitagorejska>
+2. **Euclid's Formula** - Wikipedia EN: <https://en.wikipedia.org/wiki/Formulas_for_generating_Pythagorean_triples>
+3. **Tree of Primitive Pythagorean Triples**: <https://en.wikipedia.org/wiki/Tree_of_primitive_Pythagorean_triples>
 
-**Maciej Mierzejewski**
+## 👨‍💻 Author
+
+### Maciej Mierzejewski
+
 - GitHub: [@mmierzejewski](https://github.com/mmierzejewski)
 - Repository: [MM_Python](https://github.com/mmierzejewski/MM_Python)
 
-## 📄 Licencja
+## 📄 License
 
 Free to use and modify.
 
 ---
 
-**💡 Wskazówka:** Program jest idealny do celów edukacyjnych, badania teorii liczb oraz generowania zestawów testowych dla algorytmów geometrycznych!
+**💡 Tip:** The program is ideal for educational purposes, exploring number theory, and generating test sets for geometric algorithms!
