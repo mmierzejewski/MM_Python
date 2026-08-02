@@ -213,6 +213,45 @@ cd YT-DLP && python yt-dlp.py
 
 ---
 
+### 🧹 [macOS Clear Cache](MacOSClearCache/)
+
+**Cache, log, and temporary file cleaner** for macOS with category-based selection and dry-run preview.
+
+**Features:**
+
+- 🗂️ 12 cleanup categories (system, browsers, apps, developer, package managers, logs, and more)
+- 👁️ Dry-run mode to preview what would be removed
+- 🧭 Automatic browser profile discovery (Chrome, Edge, Brave)
+- 📅 Age-based filtering (`--older-than`)
+- 🗑️ Optional move-to-Trash instead of permanent deletion
+- 🧾 JSON run log and macOS notifications
+- ⏰ Scheduled daily cleanup via `launchd`
+- 🔄 Post-clean system reindexing (Spotlight, DNS, Launch Services, Homebrew, Docker…)
+
+```bash
+cd MacOSClearCache && python3 clear_caches.py --dry-run
+```
+
+---
+
+### 🌊 [Torrent Downloader](Torrent/)
+
+**Torrent downloader** driven by `aria2`/`aria2p`, supporting magnet links and `.torrent` files.
+
+**Features:**
+
+- 🔗 Magnet link and `.torrent` file support
+- 📦 Batch downloads from a text file list
+- 🎮 Interactive mode
+- 📝 Logging of all download operations
+- ⚙️ Built on `aria2` for fast, resumable downloads
+
+```bash
+cd Torrent && python torrent_downloader.py "magnet:?xt=urn:btih:..."
+```
+
+---
+
 ## 🛠️ Requirements
 
 - Python 3.10+
@@ -298,11 +337,20 @@ MM_Python/
 │       ├── part_2/        # Advanced topics
 │       └── workshops/     # Practical exercises
 │
-└── YT-DLP/                 # Universal video downloader (audio track selection)
-    ├── yt-dlp.py
-    ├── cookies.txt.example
-    ├── README.md
-    └── requirements.txt
+├── YT-DLP/                 # Universal video downloader (audio track selection)
+│   ├── yt-dlp.py
+│   ├── cookies.txt.example
+│   ├── README.md
+│   └── requirements.txt
+│
+├── MacOSClearCache/         # macOS cache/log/temp file cleaner (dry-run, scheduling)
+│   ├── clear_caches.py
+│   └── README.md
+│
+└── Torrent/                 # Torrent downloader (aria2/aria2p, magnet + .torrent)
+    ├── torrent_downloader.py
+    ├── requirements.txt
+    └── README.md
 ```
 
 ## 🎯 Common Features of the Main Projects
