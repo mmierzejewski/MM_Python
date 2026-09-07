@@ -71,6 +71,18 @@ TARGETS: list[Target] = [
         Path.home() / "Library" / "Application Support" / "Code" / "CachedData",
         "VSCode Cached Data", "developer",
     ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "Code" / "Cache",
+        "VSCode Cache", "developer",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "Code" / "Code Cache",
+        "VSCode Code Cache", "developer",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "Code" / "GPUCache",
+        "VSCode GPU Cache", "developer",
+    ),
 
     # --- Package managers ---------------------------------------------------
     Target(Path.home() / ".npm" / "_cacache",
@@ -138,12 +150,33 @@ TARGETS: list[Target] = [
         "Spotify Cache", "apps",
     ),
     Target(
-        Path.home() / "Library" / "Application Support" / "zoom.us" / "data",
-        "Zoom Data Cache", "apps",
-    ),
-    Target(
         Path.home() / "Library" / "Application Support" / "Microsoft" / "Teams" / "Cache",
         "Microsoft Teams Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "Microsoft" / "Teams" / "Code Cache",
+        "Microsoft Teams Code Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "Microsoft" / "Teams" / "GPUCache",
+        "Microsoft Teams GPU Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "Microsoft" / "Teams"
+        / "Service Worker" / "CacheStorage",
+        "Microsoft Teams Service Worker Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "Microsoft" / "Skype for Desktop" / "Cache",
+        "Skype Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "Microsoft" / "Skype for Desktop" / "Code Cache",
+        "Skype Code Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "Microsoft" / "Skype for Desktop" / "GPUCache",
+        "Skype GPU Cache", "apps",
     ),
     Target(
         Path.home() / "Library" / "Application Support" / "discord" / "Cache",
@@ -168,6 +201,54 @@ TARGETS: list[Target] = [
     Target(
         Path.home() / "Library" / "Application Support" / "Telegram Desktop" / "tdata" / "emoji",
         "Telegram Emoji Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "GitHub Desktop" / "Cache",
+        "GitHub Desktop Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "GitHub Desktop" / "Code Cache",
+        "GitHub Desktop Code Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "GitHub Desktop" / "GPUCache",
+        "GitHub Desktop GPU Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "Bitwarden" / "Cache",
+        "Bitwarden Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "Bitwarden" / "Code Cache",
+        "Bitwarden Code Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "Bitwarden" / "GPUCache",
+        "Bitwarden GPU Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "balenaEtcher" / "Cache",
+        "balenaEtcher Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "balenaEtcher" / "Code Cache",
+        "balenaEtcher Code Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "balenaEtcher" / "GPUCache",
+        "balenaEtcher GPU Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "Google" / "DriveFS" / "cef_cache" / "Cache",
+        "Google DriveFS Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "Google" / "DriveFS" / "cef_cache" / "Code Cache",
+        "Google DriveFS Code Cache", "apps",
+    ),
+    Target(
+        Path.home() / "Library" / "Application Support" / "Google" / "DriveFS" / "cef_cache" / "component_crx_cache",
+        "Google DriveFS Component Cache", "apps",
     ),
 
     # --- Mail ---------------------------------------------------------------
@@ -236,6 +317,7 @@ def browser_profile_targets(cache_root: Path, browser_name: str) -> list[Target]
     subpaths = (
         ("Cache", "Cache"),
         ("Code Cache", "Code Cache"),
+        ("GPUCache", "GPU Cache"),
         ("Service Worker/CacheStorage", "Service Worker CacheStorage"),
     )
     for profile_dir in cache_root.iterdir():
@@ -247,6 +329,15 @@ def browser_profile_targets(cache_root: Path, browser_name: str) -> list[Target]
                 targets.append(
                     Target(path, f"{browser_name} {profile_dir.name} {label_suffix}", "browsers")
                 )
+    for rel, label_suffix in (
+        ("ShaderCache", "Shader Cache"),
+        ("GraphiteDawnCache", "Graphite Dawn Cache"),
+        ("GrShaderCache", "GrShader Cache"),
+        ("GPUPersistentCache/GPUCache", "GPU Persistent Cache"),
+    ):
+        path = cache_root / Path(*rel.split("/"))
+        if path.exists():
+            targets.append(Target(path, f"{browser_name} {label_suffix}", "browsers"))
     return targets
 
 
@@ -301,7 +392,7 @@ CATEGORY_LABELS: dict[str, str] = {
     "logs":         "Logs & Diagnostics",
 }
 
-DEFAULT_CATEGORIES = {"system", "trash", "browsers", "apps", "quicklook", "crashreports", "tmp"}
+DEFAULT_CATEGORIES = {"system", "browsers", "apps", "quicklook", "crashreports"}
 ALL_CATEGORIES = set(CATEGORY_LABELS)
 
 
@@ -435,9 +526,10 @@ def resolve_targets(targets: list[Target]) -> list[Target]:
     return result
 
 
-def confirm(total_size: int) -> bool:
+def confirm(total_size: int, to_trash: bool) -> bool:
     print(f"\nEstimated space to reclaim: {format_size(total_size)}")
-    reply = input("This will permanently delete the listed items. Continue? [y/N]: ")
+    action = "move the listed items to Trash" if to_trash else "permanently delete the listed items"
+    reply = input(f"This will {action}. Continue? [y/N]: ")
     return reply.strip().lower() in {"y", "yes"}
 
 
@@ -563,24 +655,6 @@ REINDEX_TASKS: list[ReindexTask] = [
         cmd=["qlmanage", "-r", "cache"],
     ),
     ReindexTask(
-        label="Time Machine – delete local snapshots",
-        cmd=["tmutil", "deletelocalsnapshots", "/"],
-        note="Requires sudo",
-    ),
-    ReindexTask(
-        label="Inactive memory – purge",
-        cmd=["purge"],
-        note="Requires sudo",
-    ),
-    ReindexTask(
-        label="Homebrew – cleanup old versions",
-        cmd=["brew", "cleanup", "--prune=all"],
-    ),
-    ReindexTask(
-        label="Docker – prune unused images/volumes/networks",
-        cmd=["docker", "system", "prune", "-f"],
-    ),
-    ReindexTask(
         label="Dock – relaunch (icon cache refresh)",
         cmd=["killall", "Dock"],
     ),
@@ -643,7 +717,7 @@ def main() -> int:
     parser.add_argument(
         "--all",
         action="store_true",
-        help="Enable all categories (system, trash, developer, packages, logs).",
+        help="Enable all categories, including destructive ones.",
     )
     parser.add_argument(
         "--categories",
@@ -668,7 +742,12 @@ def main() -> int:
     parser.add_argument(
         "--no-reindex",
         action="store_true",
-        help="Skip reindexing and service restarts after cleaning.",
+        help="Keep the default behavior of skipping reindexing and service restarts.",
+    )
+    parser.add_argument(
+        "--reindex",
+        action="store_true",
+        help="Run reindexing and service restarts after cleaning.",
     )
     parser.add_argument(
         "--older-than",
@@ -727,6 +806,9 @@ def main() -> int:
     if args.exclude:
         active_categories -= set(args.exclude)
 
+    if args.to_trash and "trash" in active_categories:
+        parser.error("--to-trash cannot be combined with the trash category")
+
     active_targets = [t for t in TARGETS if t.category in active_categories]
     active_targets = resolve_targets(active_targets)
 
@@ -750,7 +832,7 @@ def main() -> int:
 
     total_size = sum(size_cache.values())
 
-    if not args.dry_run and not args.yes and not confirm(total_size):
+    if not args.dry_run and not args.yes and not confirm(total_size, args.to_trash):
         print("Cancelled.")
         return 1
 
@@ -803,7 +885,7 @@ def main() -> int:
         print(f"Free disk space: {format_size(disk_before)} -> {format_size(disk_after)} "
               f"(+{format_size(disk_after - disk_before)})")
 
-    if not args.no_reindex:
+    if args.reindex and not args.no_reindex:
         run_reindex(args.dry_run)
 
     if not args.no_log:
