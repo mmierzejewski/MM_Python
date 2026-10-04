@@ -44,17 +44,17 @@ Check whether a given number is prime.
 
 #### 1. Standard Sieve of Eratosthenes
 
-- **Range**: Up to ~100 million
-- **Memory**: O(n) - ~100 MB for 100 million
+- **Selection**: Default for limits up to and including 1 billion
+- **Memory**: O(n) sieve table plus the list of primes returned
 - **Speed**: Very fast for small and medium ranges
-- **Usage**: Automatic for ranges < 10 million
+- **Usage**: Above 10 million, the program asks before running the standard sieve
 
 #### 2. Segmented Sieve (Advanced)
 
-- **Range**: Above 1 billion
-- **Memory**: O(√n) - memory savings!
+- **Selection**: Offered after a prompt only for limits greater than 1 billion
+- **Memory**: O(√n) auxiliary sieve space plus O(π(n)) for the returned prime list
 - **Speed**: Optimal for very large ranges
-- **Usage**: Recommended/automatic for ranges > 1 billion
+- **Usage**: Recommended by the prompt, but not selected automatically; exactly 1 billion uses the standard sieve
 
 ### 📊 Detailed Statistics
 
@@ -66,10 +66,10 @@ Check whether a given number is prime.
 
 ### 💾 Export to File
 
-- Automatic saving to the PNA/ directory
+- After a non-empty result in modes 1 or 2, the program asks whether to save it (default: N)
+- If confirmed, the file is saved to the PNA/ directory when running `PNA.py`
 - Format: `primes_up_to_{limit}_{timestamp}.txt`
 - Content: Header + prime numbers (10 per line)
-- Offered for sets > 100 numbers
 
 ### 🔄 Menu Loop
 
@@ -82,7 +82,7 @@ Check whether a given number is prime.
 
 - Progress bar for large ranges (> 1M)
 - Warnings about time/memory for large limits
-- Automatic suggestion of the segmented sieve
+- For limits above 1 billion, prompts the user to choose the segmented sieve
 - Time formatting (μs, ms, s, m)
 
 ## 🔬 Algorithm: Sieve of Eratosthenes
@@ -115,8 +115,8 @@ Result: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29
 
 ### Time Complexity
 
-- **Standard sieve**: O(n log log n)
-- **Segmented sieve**: O(n log log n) with O(√n) memory
+- **Standard sieve**: O(n log log n), with O(n) sieve-table space plus the output list
+- **Segmented sieve**: O(n log log n), with O(√n) auxiliary sieve space plus the output list (O(π(n)))
 
 ## 🚀 Installation and Running
 
@@ -188,7 +188,7 @@ All numbers:         2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53,
 
 ```text
 ⚠️  Large range (50,000,000) may require significant time and memory!
-   Estimated memory: ~48 MB
+    Program's rough sieve-table estimate: ~48 MB
    Continue? (Y/N) [N]: Y
 
 🔍 Searching for primes up to 50,000,000...
@@ -214,8 +214,8 @@ Largest:             49,999,991
 
 ```text
 ⚠️  VERY LARGE range (2,000,000,000)!
-   Standard sieve: ~1907 MB (~1.9 GB)
-   Segmented sieve: ~43 MB (recommended!)
+    Standard sieve estimate: ~1907 MB (~1.9 GB)
+    Segmented sieve estimate: ~43 MB for the sieve buffers; the returned prime list uses additional memory
 
    💡 The segmented sieve uses significantly less memory for large ranges
    Use the segmented sieve? (Y/N) [Y]: Y
@@ -301,7 +301,7 @@ python PNA.py
 
 # Time: ~0.5s
 
-# Memory: ~10 MB
+# Program's rough sieve-table estimate: ~10 MB
 
 ```
 
@@ -318,26 +318,22 @@ python PNA.py
 
 # Time: ~5s
 
-# Memory: ~100 MB
+# Program's rough sieve-table estimate: ~100 MB
 
 ```
 
-### Example 5: Very Large Ranges (Segmented Sieve)
+### Example 5: Segmented Sieve Selection
 
 ```bash
 python PNA.py
 
 # Choice: 1 (Limit)
 
-# Input: 1000000000 (1 billion)
+# Input: 1000000001 (just above 1 billion)
 
-# Method: Segmented sieve (automatic)
+# The program asks whether to use the segmented sieve; answer Y to select it.
 
-# Output: 50,847,534 primes (5.08%)
-
-# Time: ~1 minute
-
-# Memory: ~32 MB (instead of ~950 MB!)
+# The program still stores all generated primes in the returned result list.
 
 ```
 
@@ -458,8 +454,8 @@ def generate_primes_segmented(limit: int, verbose: bool = False) -> list[int]
 
     Advantages:
 
-    - Memory: O(√n) instead of O(n)
-    - For 1 billion: ~32 MB instead of ~950 MB
+    - Processes the range in segments instead of allocating one sieve table for the whole range
+    - Still retains all discovered primes in the returned result list
     - Progress bar for tracking progress
 
     Algorithm:
@@ -546,18 +542,18 @@ def save_primes_to_file(primes: list[int], limit: int, filename: Optional[str] =
 
 ## 📈 Performance
 
-### Benchmarks (Apple M1/Intel i5)
+### Benchmarks (Apple M1/Intel i5; approximate and system-dependent)
 
-| Range | Primes | Time | Memory | Method |
-| --- | --- | --- | --- | --- |
-| 1,000 | 168 | < 1 ms | < 1 MB | Standard |
-| 10,000 | 1,229 | < 5 ms | < 1 MB | Standard |
-| 100,000 | 9,592 | ~20 ms | ~1 MB | Standard |
-| 1,000,000 | 78,498 | ~50 ms | ~5 MB | Standard |
-| 10,000,000 | 664,579 | ~500 ms | ~10 MB | Standard |
-| 100,000,000 | 5,761,455 | ~5s | ~100 MB | Standard |
-| 1,000,000,000 | 50,847,534 | ~60s | ~32 MB | **Segmented** |
-| 2,000,000,000 | 98,222,287 | ~135s | ~44 MB | **Segmented** |
+| Range | Primes | Time | Method |
+| --- | --- | --- | --- |
+| 1,000 | 168 | < 1 ms | Standard |
+| 10,000 | 1,229 | < 5 ms | Standard |
+| 100,000 | 9,592 | ~20 ms | Standard |
+| 1,000,000 | 78,498 | ~50 ms | Standard |
+| 10,000,000 | 664,579 | ~500 ms | Standard |
+| 100,000,000 | 5,761,455 | ~5s | Standard |
+| 1,000,000,000 | 50,847,534 | ~60s | Standard |
+| 2,000,000,000 | 98,222,287 | ~135s | Segmented, if selected at the prompt |
 
 ### Prime Number Density
 
@@ -582,22 +578,26 @@ Density decreases as n increases:
 
 ### Memory Optimizations
 
+The displayed memory values are rough sieve-table estimates. They do not
+include all Python list/object overhead or the memory needed to retain the
+returned prime list, so actual peak memory can be substantially higher.
+
 #### Standard Sieve
 
 ```python
-is_prime = [True] * (limit + 1)  # O(n) memory
+is_prime = [True] * (limit + 1)  # O(n) sieve-table space
 
-# For 1 billion: ~950 MB
+# The returned prime list and Python object overhead require additional memory.
 
 ```
 
 #### Segmented Sieve
 
 ```python
-result = generate_primes(sqrt_limit)  # O(√n) memory for the base
-segment = [True] * segment_size        # Only 1M elements at a time
+result = generate_primes(sqrt_limit)  # Base primes, then all discovered primes
+segment = [True] * segment_size        # One segment at a time
 
-# For 1 billion: ~32 MB (30x savings!)
+# Sieve buffers are bounded, but result retains every prime found.
 
 ```
 
@@ -665,7 +665,7 @@ Enter the range (integer >= 2): abc
 
 ### Q: What is the maximum range value?
 
-**A:** Theoretically there is no limit thanks to the segmented sieve. In practice, computation time is the constraint (e.g., 10 billion would take ~20 minutes).
+**A:** There is no fixed input limit, but runtime and memory are practical constraints. The segmented sieve reduces temporary sieve-buffer space for limits above 1 billion; the program still retains the full prime list in memory.
 
 ### Q: Is 1 a prime number?
 
@@ -681,7 +681,7 @@ Enter the range (integer >= 2): abc
 
 ### Q: Can I save the results for small ranges?
 
-**A:** The save option appears automatically for ranges with > 100 primes.
+**A:** After generating primes in mode 1 or 2, the program asks whether to save the result. The default answer is no, regardless of the number of primes.
 
 ### Q: How does the progress bar work?
 
@@ -715,12 +715,6 @@ where π(n) is the prime-counting function.
 ### The Riemann Hypothesis
 
 Related to the distribution of primes, one of the **Millennium Prize Problems** with a $1,000,000 reward!
-
-## 🔗 Related Projects
-
-Also available in the same directory:
-
-- **PNA2a.py** - An improved version with additional features
 
 ## 📖 Bibliography
 

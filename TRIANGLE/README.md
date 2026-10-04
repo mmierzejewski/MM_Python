@@ -84,8 +84,10 @@ BC = 5.00
 
 Triangle area: 6.00
 
-Plot saved as /home/mmierzejewski/GitHub/MM_Python/TRIANGLE/triangle_3d.png
+Plot saved as /path/to/script/triangle_3d.png
 ```
+
+The exact output path depends on the directory containing `triangle_3d.py`.
 
 ## 🔧 Functionality
 

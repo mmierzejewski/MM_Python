@@ -48,15 +48,14 @@ Run without arguments:
 python torrent_downloader.py
 ```
 
-The script will then ask for the destination directory and for a magnet link or path to a `.torrent` file, similar to how `YT-DLP` asks for a directory and URLs.
-By default it only asks for these two items.
+The no-argument flow asks for the destination directory, one or more sources, and whether existing files may be overwritten. The `--interactive` option additionally prompts for the listen port, metadata timeout, and seeding when those values are left at their defaults.
 
 Additional options:
 
 - `--listen-port 6881` - BitTorrent client listen port
 - `--listen-port-end 6891` - end of the BitTorrent and DHT port range
 - `--rpc-port 0` - aria2 RPC port exposed on host interfaces; defaults to a random free port
-- `--listen-address 0.0.0.0` - RPC listen scope: `0.0.0.0` or `localhost`
+- `--listen-address 0.0.0.0` - RPC listen scope: `0.0.0.0`, `localhost`, or `127.0.0.1`
 - `--local-only` - shortcut for `--listen-address localhost`
 - `--public-rpc` - shortcut for `--listen-address 0.0.0.0`
 - `--timeout 120` - maximum time to wait for metadata
@@ -88,6 +87,6 @@ If you want to explicitly expose RPC on host interfaces, use `--public-rpc`.
 The `--local-only` and `--public-rpc` flags cannot be combined in a single run.
 The `--listen-address` option only controls RPC exposure: `localhost` restricts RPC to this machine, while `0.0.0.0` exposes RPC on host interfaces. `aria2c` does not offer an equivalent option for binding IPv4 BitTorrent to a specific address.
 If you don't provide `--rpc-port`, the script automatically picks a random free RPC port on the host. An explicitly provided `--rpc-port` causes a hard failure on conflict.
-In interactive mode, the script also asks whether it should overwrite existing destination files.
+The overwrite confirmation is asked in both the no-argument flow and `--interactive` mode.
 
 While running, the script writes logs to the `torrent_downloader.log` file in the current directory, unless you provide a different path via `--log-file`.

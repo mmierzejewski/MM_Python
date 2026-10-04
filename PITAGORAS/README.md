@@ -402,13 +402,6 @@ where m > n > 0, GCD(m,n) = 1, and m-n is odd.
 (28, 45, 53)
 ```
 
-## 🔗 Related Projects
-
-The same directory also contains:
-
-- **Pitagoras_unified.py** - Extended version with additional features
-- **Pit2.py** - Version with limit-based search
-
 ## 📖 Bibliography
 
 1. **Pythagorean triple** - Wikipedia PL: <https://pl.wikipedia.org/wiki/Trójka_pitagorejska>

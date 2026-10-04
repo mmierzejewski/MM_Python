@@ -271,7 +271,7 @@ Uses the property:
 ### ✅ **Strengths:**
 
 1. **Functional completeness**
-   - 6 different functions for working with the sequence
+   - Functions for generating, retrieving, analyzing, and exporting sequence values
    - Algorithms of varying complexity
    - Mathematical membership test
 

@@ -191,8 +191,10 @@ python yt-dlp.py
 
 ##### Method 2: Built-in yt-dlp feature
 
+Export the browser cookie jar to the Netscape-format file used by this script:
+
 ```bash
-yt-dlp --cookies-from-browser chrome
+yt-dlp --cookies-from-browser chrome --cookies cookies.txt --skip-download "https://www.youtube.com/"
 ```
 
 #### Cookie file locations (auto-detected)
@@ -314,7 +316,7 @@ The cookie file must be in Netscape format. Use the browser extensions mentioned
 
 # Export from browser using yt-dlp
 
-yt-dlp --cookies-from-browser firefox --cookies cookies.txt "https://youtube.com"
+yt-dlp --cookies-from-browser firefox --cookies cookies.txt --skip-download "https://youtube.com"
 ```
 
 ### Long filenames

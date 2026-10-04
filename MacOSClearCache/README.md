@@ -20,8 +20,13 @@ preview, and optional post-clean system reindexing.
 - **Browser profile discovery** – automatically finds per-profile `Cache`,
   `Code Cache`, and `Service Worker/CacheStorage` folders for Chrome, Edge,
   and Brave under `Application Support`.
-- **Age filtering** – `--older-than DAYS` skips anything modified more
-  recently than the given number of days.
+- **Additional app cache discovery** – finds conventional Chromium caches
+  under `Application Support` and `Library/Containers` cache folders for
+  third-party sandboxed apps. Persistent stores such as `blob_storage` and
+  Drive content caches are excluded.
+- **Age filtering** – `--older-than DAYS` removes a directory only when every
+  item in its tree is older than the threshold. If any item is newer or its
+  age cannot be checked, the whole top-level item is skipped.
 - **Move to Trash option** – `--to-trash` moves items to `~/.Trash` instead of
   permanently deleting them.
 - **Interactive mode** – `--interactive` asks for per-category confirmation.
@@ -37,9 +42,9 @@ preview, and optional post-clean system reindexing.
   thread pool for faster planning output.
 - **Scheduling** – `--install-schedule HH:MM` installs a `launchd` agent to
   run the cleanup daily; `--uninstall-schedule` removes it.
-- **System reindexing** – after cleaning, optionally runs Spotlight, DNS,
-  Launch Services, QuickLook, Homebrew, Docker, Dock/Finder maintenance tasks
-  (skippable with `--no-reindex`).
+- **System reindexing** – optionally runs Spotlight, DNS/mDNSResponder, Launch
+  Services, font-cache, QuickLook, Dock, and Finder maintenance tasks with
+  `--reindex` (skippable with `--no-reindex`).
 
 ## Requirements
 
@@ -54,6 +59,20 @@ preview, and optional post-clean system reindexing.
 ```bash
 python3 clear_caches.py [OPTIONS]
 ```
+
+### Standalone macOS executable
+
+Build a single-file command-line executable with PyInstaller:
+
+```bash
+python3 -m pip install pyinstaller
+python3 -m PyInstaller --clean --onefile --name clear_caches clear_caches.py
+./dist/clear_caches --dry-run
+```
+
+The executable runs without a separately installed Python. A `targets.json`
+beside the executable and `~/.config/clear_caches/targets.json` are both
+supported. Scheduled runs use the executable directly.
 
 ### Common examples
 
@@ -93,10 +112,10 @@ python3 clear_caches.py --uninstall-schedule
 | `--dry-run` | Show what would be removed without deleting anything. |
 | `--yes` | Skip the confirmation prompt. |
 | `--all` | Enable all categories. |
-| `--categories CAT [CAT ...]` | Space-separated list of categories to clean (default: `apps browsers crashreports quicklook system tmp trash`). |
+| `--categories CAT [CAT ...]` | Space-separated list of categories to clean (default: `apps browsers crashreports quicklook system`). |
 | `--exclude CAT [CAT ...]` | Space-separated list of categories to exclude. |
 | `--no-reindex` | Skip Spotlight/DNS/Launch Services/etc. maintenance after cleaning. |
-| `--older-than DAYS` | Only remove items last modified more than `DAYS` days ago. |
+| `--older-than DAYS` | Only remove top-level items whose complete tree is older than `DAYS`; newer or unverifiable trees are skipped. |
 | `--to-trash` | Move items to `~/.Trash` instead of permanently deleting them. |
 | `--interactive` | Ask for confirmation before cleaning each category. |
 | `--no-log` | Do not write a JSON summary log. |
@@ -109,12 +128,12 @@ python3 clear_caches.py --uninstall-schedule
 | Category | Description | Enabled by default |
 | --- | --- | --- |
 | `system` | Generic OS-level caches (`~/Library/Caches`, `~/.cache`) | ✓ |
-| `trash` | Kosz / Trash (`~/.Trash`) | ✓ |
+| `trash` | Kosz / Trash (`~/.Trash`) | – |
 | `browsers` | Web browser caches (Chrome, Firefox, Safari, Edge, Brave, Opera, Vivaldi, Arc, Slack) | ✓ |
 | `apps` | Popular app caches (Spotify, Zoom, Teams, Discord, Steam, WhatsApp, Telegram) | ✓ |
 | `quicklook` | QuickLook thumbnail cache | ✓ |
 | `crashreports` | Crash & diagnostic reports | ✓ |
-| `tmp` | System `/tmp` directory | ✓ |
+| `tmp` | System `/tmp` directory | – |
 | `mail` | Mail.app cache | – |
 | `ios_backups` | iOS/iPadOS backups (MobileSync) ⚠ large & destructive | – |
 | `developer` | Xcode/CoreSimulator artefacts, VS Code caches, JetBrains caches (re-generatable) | – |
@@ -130,7 +149,7 @@ JSON file at either:
 - `~/.config/clear_caches/targets.json`
 
 Each entry needs a `path`, `label`, and `category` (existing category names
-can be reused, or new ones added):
+from the Categories table must be used; custom category names are not supported):
 
 ```json
 [
@@ -155,11 +174,13 @@ per-category breakdown.
   `~/Library/Application Support/MobileSync/Backup`, `~/.Trash`) require
   granting **Full Disk Access** to your terminal/IDE in **System Settings →
   Privacy & Security**, otherwise they are skipped with a warning.
+- Browser profile cache discovery skips and reports profiles it cannot read,
+  rather than preventing the script from starting.
 - The `ios_backups` category deletes iOS/iPadOS device backups and is not
   enabled by default — double-check before using `--all` or explicitly
   selecting it.
-- Several reindex tasks (Spotlight, `mDNSResponder`, font cache, Time Machine
-  local snapshots, `purge`) require `sudo` and will simply fail gracefully if
-  not run with elevated privileges.
+- Spotlight operations, restarting `mDNSResponder`, and resetting the font
+  database may require elevated privileges. Failed tasks are reported as
+  warnings and do not stop the cleanup.
 - Prefer `--dry-run` first, especially when using `--all` or custom
   `--categories`.

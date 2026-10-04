@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import plistlib
 import shutil
+import stat
 import subprocess
 import sys
 import time
@@ -320,7 +323,13 @@ def browser_profile_targets(cache_root: Path, browser_name: str) -> list[Target]
         ("GPUCache", "GPU Cache"),
         ("Service Worker/CacheStorage", "Service Worker CacheStorage"),
     )
-    for profile_dir in cache_root.iterdir():
+    try:
+        profile_dirs = list(cache_root.iterdir())
+    except OSError as exc:
+        print(f"  [info] Could not scan browser profiles in {cache_root}: {exc}")
+        return targets
+
+    for profile_dir in profile_dirs:
         if not profile_dir.is_dir():
             continue
         for rel, label_suffix in subpaths:
@@ -341,6 +350,101 @@ def browser_profile_targets(cache_root: Path, browser_name: str) -> list[Target]
     return targets
 
 
+APPLICATION_SUPPORT_CACHE_NAMES = {
+    "Cache",
+    "Caches",
+    "Code Cache",
+    "GPUCache",
+    "DawnCache",
+    "DawnGraphiteCache",
+    "DawnWebGPUCache",
+    "GraphiteDawnCache",
+    "GrShaderCache",
+    "ShaderCache",
+    "CacheStorage",
+    "ScriptCache",
+    "crx_cache",
+}
+NON_CACHE_DATA_DIRS = {"blob_storage", "content_cache", "thumbnails_cache", "indexeddb", "local storage"}
+
+
+def application_support_cache_targets(root: Path | None = None) -> list[Target]:
+    """Discover conventional, regenerable app caches under Application Support."""
+    root = root or Path.home() / "Library" / "Application Support"
+    targets: list[Target] = []
+    known_paths = {target.path for target in TARGETS}
+    scan_errors: list[OSError] = []
+
+    for current, directories, _ in os.walk(root, topdown=True, onerror=scan_errors.append):
+        current_path = Path(current)
+        depth = len(current_path.relative_to(root).parts)
+        if depth >= 6:
+            directories.clear()
+            continue
+        for name in tuple(directories):
+            lowered_name = name.lower()
+            if name.startswith(".") or lowered_name in NON_CACHE_DATA_DIRS:
+                directories.remove(name)
+                continue
+
+            candidate = current_path / name
+            is_cache = name in APPLICATION_SUPPORT_CACHE_NAMES or (
+                lowered_name == "cache" and current_path.name == "Shared Dictionary"
+            )
+            if not is_cache:
+                continue
+
+            directories.remove(name)
+            relative = candidate.relative_to(root)
+            if relative.parts[0].startswith("com.apple.") or candidate in known_paths:
+                continue
+
+            browser_roots = {
+                ("Google", "Chrome"),
+                ("Microsoft Edge",),
+                ("BraveSoftware", "Brave-Browser"),
+                ("Chromium",),
+            }
+            if any(relative.parts[:len(prefix)] == prefix for prefix in browser_roots):
+                category = "browsers"
+            elif relative.parts[0] == "Code":
+                category = "developer"
+            else:
+                category = "apps"
+
+            targets.append(
+                Target(candidate, f"Discovered cache ({relative.as_posix()})", category)
+            )
+            known_paths.add(candidate)
+
+    if scan_errors:
+        print(f"  [info] Could not inspect {len(scan_errors)} Application Support directories")
+    return targets
+
+
+def sandboxed_app_cache_targets(root: Path | None = None) -> list[Target]:
+    """Discover canonical Caches folders in third-party app containers."""
+    root = root or Path.home() / "Library" / "Containers"
+    targets: list[Target] = []
+    known_paths = {target.path for target in TARGETS}
+    try:
+        containers = list(root.iterdir())
+    except OSError as exc:
+        print(f"  [info] Could not scan app containers in {root}: {exc}")
+        return targets
+
+    for container in containers:
+        if container.name.startswith("com.apple.") or "." not in container.name:
+            continue
+        cache_path = container / "Data" / "Library" / "Caches"
+        if cache_path.is_dir() and cache_path not in known_paths:
+            targets.append(
+                Target(cache_path, f"Sandbox cache ({container.name})", "apps")
+            )
+            known_paths.add(cache_path)
+    return targets
+
+
 for _root, _name in (
     (Path.home() / "Library" / "Application Support" / "Google" / "Chrome", "Chrome"),
     (Path.home() / "Library" / "Application Support" / "Microsoft Edge", "Edge"),
@@ -348,12 +452,21 @@ for _root, _name in (
 ):
     TARGETS.extend(browser_profile_targets(_root, _name))
 
+TARGETS.extend(application_support_cache_targets())
+TARGETS.extend(sandboxed_app_cache_targets())
+
+
+def application_directory() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent
+
 
 def load_external_targets() -> list[Target]:
     """Load extra targets from an optional user-editable JSON config, so new
     paths can be added without touching this file."""
     candidates = [
-        Path(__file__).resolve().parent / "targets.json",
+        application_directory() / "targets.json",
         Path.home() / ".config" / "clear_caches" / "targets.json",
     ]
     extra: list[Target] = []
@@ -443,6 +556,25 @@ def move_to_trash(item: Path) -> None:
     shutil.move(str(item), str(destination))
 
 
+def tree_is_older_than(path: Path, cutoff: float) -> bool:
+    pending = [path]
+    while pending:
+        current = pending.pop()
+        try:
+            metadata = current.lstat()
+        except OSError:
+            return False
+        if metadata.st_mtime > cutoff:
+            return False
+        if stat.S_ISDIR(metadata.st_mode):
+            try:
+                with os.scandir(current) as children:
+                    pending.extend(Path(child.path) for child in children)
+            except OSError:
+                return False
+    return True
+
+
 def clear_directory(
     path: Path,
     dry_run: bool,
@@ -469,13 +601,9 @@ def clear_directory(
     cutoff = time.time() - older_than_days * 86400 if older_than_days is not None else None
 
     for item in children:
-        if cutoff is not None:
-            try:
-                if item.stat().st_mtime > cutoff:
-                    lines.append(f"  [skipped-age] too recent: {item}")
-                    continue
-            except OSError:
-                pass
+        if cutoff is not None and not tree_is_older_than(item, cutoff):
+            lines.append(f"  [skipped-age] recent or age unavailable: {item}")
+            continue
 
         item_size = path_size(item)
         removed_entries += 1
@@ -564,34 +692,29 @@ LAUNCH_AGENT_LABEL = "com.mmierzejewski.clearcaches"
 LAUNCH_AGENT_PATH = Path.home() / "Library" / "LaunchAgents" / f"{LAUNCH_AGENT_LABEL}.plist"
 
 
+def schedule_program_arguments() -> list[str]:
+    arguments = [sys.executable]
+    if not getattr(sys, "frozen", False):
+        arguments.append(str(Path(__file__).resolve()))
+    arguments.extend(["--yes", "--no-reindex"])
+    return arguments
+
+
 def install_schedule(time_str: str) -> None:
     hour, _, minute = time_str.partition(":")
-    plist = f"""<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
- "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key><string>{LAUNCH_AGENT_LABEL}</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>{sys.executable}</string>
-        <string>{Path(__file__).resolve()}</string>
-        <string>--yes</string>
-        <string>--no-reindex</string>
-    </array>
-    <key>StartCalendarInterval</key>
-    <dict>
-        <key>Hour</key><integer>{int(hour)}</integer>
-        <key>Minute</key><integer>{int(minute or 0)}</integer>
-    </dict>
-    <key>StandardOutPath</key><string>{LOG_DIR}/launchd.log</string>
-    <key>StandardErrorPath</key><string>{LOG_DIR}/launchd.err.log</string>
-</dict>
-</plist>
-"""
+    plist = {
+        "Label": LAUNCH_AGENT_LABEL,
+        "ProgramArguments": schedule_program_arguments(),
+        "StartCalendarInterval": {
+            "Hour": int(hour),
+            "Minute": int(minute or 0),
+        },
+        "StandardOutPath": str(LOG_DIR / "launchd.log"),
+        "StandardErrorPath": str(LOG_DIR / "launchd.err.log"),
+    }
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     LAUNCH_AGENT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    LAUNCH_AGENT_PATH.write_text(plist)
+    LAUNCH_AGENT_PATH.write_bytes(plistlib.dumps(plist, fmt=plistlib.FMT_XML, sort_keys=False))
     subprocess.run(["launchctl", "load", "-w", str(LAUNCH_AGENT_PATH)], capture_output=True)
     print(f"Zaplanowano codzienne uruchamianie o {hour}:{minute or '00'} -> {LAUNCH_AGENT_PATH}")
 
