@@ -7,6 +7,8 @@ Advanced video downloader supporting YouTube, TikTok, Vimeo, Facebook and more.
 Includes cookie authorization for private/restricted content.
 """
 
+from __future__ import annotations
+
 import os
 import sys
 import shutil
@@ -280,6 +282,7 @@ def get_audio_tracks(url: str, cookie_file: Optional[Path] = None) -> list[dict]
                     'format_note': format_note,
                     'ext': ext,
                     'abr': abr,
+                    'filesize': fmt.get('filesize') or fmt.get('filesize_approx', 0) or 0,
                 })
 
             audio_tracks.sort(key=lambda x: -x['abr'])
@@ -355,7 +358,6 @@ def download_video(
     """
     Downloads a video from a URL.
     """
-    output_path.mkdir(parents=True, exist_ok=True)
     progress = ProgressBar()
 
     ydl_opts = {
@@ -403,6 +405,10 @@ def download_video(
     print()
 
     try:
+        if output_path.exists() and not output_path.is_dir():
+            raise NotADirectoryError(f"Output path is not a directory: {output_path}")
+        output_path.mkdir(parents=True, exist_ok=True)
+
         with YoutubeDL(ydl_opts) as ydl:
             logging.info(f"Starting download: {url}")
             info = ydl.extract_info(url, download=True)
@@ -439,7 +445,7 @@ def get_output_directory() -> Path:
         if not path.exists():
             print(f"⚠️  Directory does not exist: {path}")
             create = input("   Create the directory? (Y/N): ").strip().lower()
-            if create not in ['t', 'tak']:
+            if create not in ['t', 'tak', 'y', 'yes']:
                 print("Using the current directory.")
                 return current_dir
         return path
@@ -500,7 +506,7 @@ def setup_session() -> tuple[Optional[Path], bool, Path]:
         print(f"\n🍪 Found cookie file: {cookie_file}")
         print("   (Useful for private videos, age-restricted content, members-only content)")
         response = input("   Use this cookie file? (Y/N) [Y]: ").strip().lower()
-        use_cookies = response in ['', 't', 'tak']
+        use_cookies = response in ['', 't', 'tak', 'y', 'yes']
         if use_cookies:
             logging.info(f"User chose to use the cookie file: {cookie_file}")
         else:
@@ -509,7 +515,7 @@ def setup_session() -> tuple[Optional[Path], bool, Path]:
     else:
         print("\nℹ️  No cookie file found (optional - only needed for restricted content)")
         response = input("   Specify a custom path to the cookie file? (Y/N) [N]: ").strip().lower()
-        if response in ['t', 'tak']:
+        if response in ['t', 'tak', 'y', 'yes']:
             custom_path = input("   Path to cookies.txt: ").strip()
             if custom_path:
                 cookie_file = Path(custom_path).expanduser().resolve()

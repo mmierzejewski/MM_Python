@@ -6,7 +6,6 @@ Universal video downloader using yt-dlp, supporting YouTube, TikTok, Vimeo, Face
 
 - 📥 Download videos from over 1000 websites
 - 🍪 **Cookie authorization support** (private/members-only content)
-- 🎵 Audio-only mode (MP3 extraction)
 - 🔊 **Advanced audio track selection** with detailed technical information
 - 📋 Display all available audio tracks (format_id, bitrate, size, language)
 - 🎯 Automatic audio description filtering
@@ -82,7 +81,7 @@ python yt-dlp.py
    - Audio description marker (if present)
 4. **Output directory:** Choose where to save the files
 
-**Note:** Video quality is always set to the BEST - there is no option to choose a lower quality.
+**Note:** The interactive program downloads video only and always uses the BEST available video quality. There is currently no interactive option for audio-only downloads or lower quality levels.
 
 ### Downloading a single video
 
@@ -92,8 +91,6 @@ python yt-dlp.py
 # Enter URL: https://www.youtube.com/watch?v=example
 
 # Press Enter (finish)
-
-# Choose quality: 1
 
 # Press Enter (current directory)
 
@@ -113,8 +110,6 @@ python yt-dlp.py
 # URL: https://www.youtube.com/watch?v=video3
 
 # URL: [press Enter]
-
-# Choose quality: 2
 
 ```
 

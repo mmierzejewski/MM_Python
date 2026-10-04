@@ -6,3 +6,6 @@ tqdm
 
 # Colored terminal output
 colorama
+
+# Testing
+pytest
