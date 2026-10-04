@@ -132,16 +132,9 @@ def find_cookie_file() -> Optional[Path]:
     ]
 
     for location in possible_locations:
-        if location.exists() and location.is_file():
-            try:
-                with open(location, 'r', encoding='utf-8') as f:
-                    first_line = f.readline().strip()
-                    if first_line.startswith('#') or '\t' in first_line:
-                        logging.info(f"Found cookie file: {location}")
-                        return location
-            except Exception as e:
-                logging.warning(f"Error reading cookie file {location}: {e}")
-                continue
+        if validate_cookie_file(location):
+            logging.info(f"Found cookie file: {location}")
+            return location
 
     return None
 
@@ -155,10 +148,32 @@ def validate_cookie_file(cookie_path: Path) -> bool:
 
     try:
         with open(cookie_path, 'r', encoding='utf-8') as f:
-            content = f.read(500)
-            return ('# Netscape HTTP Cookie File' in content or
-                    '# HTTP Cookie File' in content or
-                    '\t' in content)
+            has_netscape_header = False
+            has_cookie_row = False
+            for line in f:
+                line = line.rstrip('\r\n')
+                if line in ('# Netscape HTTP Cookie File', '# HTTP Cookie File'):
+                    has_netscape_header = True
+                    continue
+                if not line or (line.startswith('#') and not line.startswith('#HttpOnly_')):
+                    continue
+
+                fields = line.split('\t')
+                if len(fields) != 7:
+                    return False
+
+                domain, include_subdomains, path, secure, expiry, _, _ = fields
+                if (
+                    not domain
+                    or include_subdomains not in ('TRUE', 'FALSE')
+                    or not path.startswith('/')
+                    or secure not in ('TRUE', 'FALSE')
+                    or not expiry.isdigit()
+                ):
+                    return False
+                has_cookie_row = True
+
+            return has_netscape_header or has_cookie_row
     except Exception:
         return False
 
@@ -228,7 +243,7 @@ def get_audio_tracks(url: str, cookie_file: Optional[Path] = None) -> list[dict]
                     continue
 
                 format_id = fmt.get('format_id', '')
-                format_note = fmt.get('format_note', '')
+                format_note = fmt.get('format_note') or ''
                 ext = fmt.get('ext', 'unknown')
                 abr = fmt.get('abr', 0) or 0
 
@@ -372,7 +387,7 @@ def download_video(
     }
 
     if audio_format_id:
-        ydl_opts['format'] = f"bestvideo+{audio_format_id}/{quality.value}"
+        ydl_opts['format'] = f"bestvideo+{audio_format_id}"
         logging.info(f"Selected audio format: {audio_format_id}")
 
     if cookie_file and validate_cookie_file(cookie_file):
