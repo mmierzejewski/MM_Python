@@ -83,6 +83,8 @@ python yt-dlp.py
 
 **Note:** The interactive program downloads video only and always uses the BEST available video quality. There is currently no interactive option for audio-only downloads or lower quality levels.
 
+When you select an audio track, the downloader requests that exact format ID. If the selected format is no longer available, the download fails instead of silently switching to another audio track.
+
 ### Downloading a single video
 
 ```bash
@@ -201,6 +203,8 @@ yt-dlp --cookies-from-browser chrome
 - Working directory: `~/WORK/cookies.txt`
 - Downloads: `~/Downloads/cookies.txt`
 
+Cookie files must use the Netscape format: a recognized Netscape header or valid tab-separated cookie rows. `HttpOnly` cookies are supported. Files that do not match this structure are ignored.
+
 #### Example with cookies
 
 ```bash
@@ -233,11 +237,19 @@ Enable debug mode:
 DEBUG=1 python yt-dlp.py
 ```
 
+## 🧪 Tests
+
+Install the project dependencies, including `pytest`, with `pip install -r requirements.txt`. Run the test suite from the project directory:
+
+```bash
+python -m pytest -q
+```
+
 ## 🔧 Quality and Audio Tracks
 
 ### Video quality
 
-The script **always uses the best available video quality** (bestvideo+bestaudio). There is no option to choose a lower quality - this ensures the maximum quality of downloaded videos.
+The interactive program uses the best available video quality. By default it selects `bestvideo+bestaudio`; if you choose an audio track, it combines the best video with that exact audio format ID. There is no interactive option to choose a lower video quality.
 
 ### Audio tracks
 
@@ -288,7 +300,7 @@ The video requires authentication. Solutions:
 
 ### The cookie file doesn't work
 
-- Check that the file is in Netscape format (starts with `# Netscape HTTP Cookie File`)
+- Check that the file uses Netscape format, with a recognized header or valid seven-column, tab-separated cookie rows
 - Make sure the cookies are fresh (not expired)
 - Export the cookies again after logging in
 - Check the file encoding (should be UTF-8)
@@ -317,6 +329,8 @@ If the selected audio track (e.g. f6-a1-x3) downloads the wrong audio:
 2. Try a different track from the list (preferably the one with the highest bitrate)
 3. Some sites may require cookies for full access to audio tracks
 4. DASH format (m4a) is usually more reliable than HLS (m3u8)
+
+If the selected format ID is unavailable, the download reports an error; it does not fall back to another audio track.
 
 ## 📄 License
 
