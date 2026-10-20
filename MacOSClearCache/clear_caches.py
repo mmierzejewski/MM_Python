@@ -368,11 +368,17 @@ APPLICATION_SUPPORT_CACHE_NAMES = {
 NON_CACHE_DATA_DIRS = {"blob_storage", "content_cache", "thumbnails_cache", "indexeddb", "local storage"}
 
 
-def application_support_cache_targets(root: Path | None = None) -> list[Target]:
+def application_support_cache_targets(
+    root: Path | None = None,
+    known_paths: set[Path] | None = None,
+) -> list[Target]:
     """Discover conventional, regenerable app caches under Application Support."""
     root = root or Path.home() / "Library" / "Application Support"
     targets: list[Target] = []
-    known_paths = {target.path for target in TARGETS}
+    if known_paths is None:
+        known_paths = {target.path for target in TARGETS}
+    else:
+        known_paths = set(known_paths)
     scan_errors: list[OSError] = []
 
     for current, directories, _ in os.walk(root, topdown=True, onerror=scan_errors.append):
@@ -422,11 +428,17 @@ def application_support_cache_targets(root: Path | None = None) -> list[Target]:
     return targets
 
 
-def sandboxed_app_cache_targets(root: Path | None = None) -> list[Target]:
+def sandboxed_app_cache_targets(
+    root: Path | None = None,
+    known_paths: set[Path] | None = None,
+) -> list[Target]:
     """Discover canonical Caches folders in third-party app containers."""
     root = root or Path.home() / "Library" / "Containers"
     targets: list[Target] = []
-    known_paths = {target.path for target in TARGETS}
+    if known_paths is None:
+        known_paths = {target.path for target in TARGETS}
+    else:
+        known_paths = set(known_paths)
     try:
         containers = list(root.iterdir())
     except OSError as exc:
@@ -443,17 +455,6 @@ def sandboxed_app_cache_targets(root: Path | None = None) -> list[Target]:
             )
             known_paths.add(cache_path)
     return targets
-
-
-for _root, _name in (
-    (Path.home() / "Library" / "Application Support" / "Google" / "Chrome", "Chrome"),
-    (Path.home() / "Library" / "Application Support" / "Microsoft Edge", "Edge"),
-    (Path.home() / "Library" / "Application Support" / "BraveSoftware" / "Brave-Browser", "Brave"),
-):
-    TARGETS.extend(browser_profile_targets(_root, _name))
-
-TARGETS.extend(application_support_cache_targets())
-TARGETS.extend(sandboxed_app_cache_targets())
 
 
 def application_directory() -> Path:
@@ -488,7 +489,23 @@ def load_external_targets() -> list[Target]:
     return extra
 
 
-TARGETS.extend(load_external_targets())
+def get_all_targets() -> list[Target]:
+    """Collect all targets: static targets, browser profiles, Application Support,
+    sandboxed app containers, and user-defined targets from config files."""
+    targets = list(TARGETS)
+    for root, name in (
+        (Path.home() / "Library" / "Application Support" / "Google" / "Chrome", "Chrome"),
+        (Path.home() / "Library" / "Application Support" / "Microsoft Edge", "Edge"),
+        (Path.home() / "Library" / "Application Support" / "BraveSoftware" / "Brave-Browser", "Brave"),
+    ):
+        targets.extend(browser_profile_targets(root, name))
+
+    known = {t.path for t in targets}
+    targets.extend(application_support_cache_targets(known_paths=known))
+    known = {t.path for t in targets}
+    targets.extend(sandboxed_app_cache_targets(known_paths=known))
+    targets.extend(load_external_targets())
+    return targets
 
 CATEGORY_LABELS: dict[str, str] = {
     "system":       "System Caches",
@@ -700,14 +717,34 @@ def schedule_program_arguments() -> list[str]:
     return arguments
 
 
+def parse_schedule_time(time_str: str) -> tuple[int, int]:
+    """Parse and validate schedule time string in HH:MM format."""
+    parts = time_str.strip().split(":")
+    if len(parts) != 2 or not (parts[0].isdigit() and parts[1].isdigit()):
+        raise ValueError(
+            f"Nieprawidłowy format czasu '{time_str}'. Oczekiwano HH:MM (np. 03:00 lub 14:30)."
+        )
+    hour, minute = int(parts[0]), int(parts[1])
+    if not (0 <= hour <= 23 and 0 <= minute <= 59):
+        raise ValueError(
+            f"Wartość czasu poza zakresem '{time_str}'. Godzina musi być w zakresie 0-23, a minuty 0-59."
+        )
+    return hour, minute
+
+
 def install_schedule(time_str: str) -> None:
-    hour, _, minute = time_str.partition(":")
+    try:
+        hour, minute = parse_schedule_time(time_str)
+    except ValueError as exc:
+        print(f"Błąd: {exc}", file=sys.stderr)
+        sys.exit(1)
+
     plist = {
         "Label": LAUNCH_AGENT_LABEL,
         "ProgramArguments": schedule_program_arguments(),
         "StartCalendarInterval": {
-            "Hour": int(hour),
-            "Minute": int(minute or 0),
+            "Hour": hour,
+            "Minute": minute,
         },
         "StandardOutPath": str(LOG_DIR / "launchd.log"),
         "StandardErrorPath": str(LOG_DIR / "launchd.err.log"),
@@ -716,7 +753,7 @@ def install_schedule(time_str: str) -> None:
     LAUNCH_AGENT_PATH.parent.mkdir(parents=True, exist_ok=True)
     LAUNCH_AGENT_PATH.write_bytes(plistlib.dumps(plist, fmt=plistlib.FMT_XML, sort_keys=False))
     subprocess.run(["launchctl", "load", "-w", str(LAUNCH_AGENT_PATH)], capture_output=True)
-    print(f"Zaplanowano codzienne uruchamianie o {hour}:{minute or '00'} -> {LAUNCH_AGENT_PATH}")
+    print(f"Zaplanowano codzienne uruchamianie o {hour:02d}:{minute:02d} -> {LAUNCH_AGENT_PATH}")
 
 
 def uninstall_schedule() -> None:
@@ -735,6 +772,7 @@ class ReindexTask:
     label: str
     cmd: list[str]
     note: str = ""
+    requires_sudo: bool = False
 
 
 REINDEX_TASKS: list[ReindexTask] = [
@@ -742,11 +780,13 @@ REINDEX_TASKS: list[ReindexTask] = [
         label="Spotlight – disable index (flush)",
         cmd=["mdutil", "-i", "off", "/"],
         note="Requires sudo",
+        requires_sudo=True,
     ),
     ReindexTask(
         label="Spotlight – enable & rebuild index",
         cmd=["mdutil", "-i", "on", "/"],
         note="Requires sudo",
+        requires_sudo=True,
     ),
     ReindexTask(
         label="Launch Services – rebuild app database",
@@ -767,11 +807,13 @@ REINDEX_TASKS: list[ReindexTask] = [
         label="mDNSResponder – restart",
         cmd=["killall", "-HUP", "mDNSResponder"],
         note="Requires sudo",
+        requires_sudo=True,
     ),
     ReindexTask(
         label="Font cache – rebuild (atsutil)",
         cmd=["atsutil", "databases", "-remove"],
         note="Requires sudo; fonts reload on next login",
+        requires_sudo=True,
     ),
     ReindexTask(
         label="QuickLook cache – reset",
@@ -790,10 +832,14 @@ REINDEX_TASKS: list[ReindexTask] = [
 
 def run_reindex(dry_run: bool) -> None:
     print("\n[Reindexing & Service Restart]")
+    is_root = hasattr(os, "geteuid") and os.geteuid() == 0
     for task in REINDEX_TASKS:
         note = f"  ({task.note})" if task.note else ""
         if dry_run:
             print(f"  [dry-run] would run: {' '.join(task.cmd)}{note}")
+            continue
+        if task.requires_sudo and not is_root:
+            print(f"  ▶ {task.label}{note} … Skipped (wymaga uprawnień root / sudo)")
             continue
         print(f"  ▶ {task.label}{note} … ", end="", flush=True)
         try:
@@ -837,12 +883,13 @@ def main() -> int:
         action="store_true",
         help="Skip confirmation prompt.",
     )
-    parser.add_argument(
+    cat_group = parser.add_mutually_exclusive_group()
+    cat_group.add_argument(
         "--all",
         action="store_true",
         help="Enable all categories, including destructive ones.",
     )
-    parser.add_argument(
+    cat_group.add_argument(
         "--categories",
         metavar="CAT",
         nargs="+",
@@ -862,14 +909,17 @@ def main() -> int:
         default=None,
         help="Space-separated list of categories to exclude from cleaning.",
     )
-    parser.add_argument(
+    reindex_group = parser.add_mutually_exclusive_group()
+    reindex_group.add_argument(
         "--no-reindex",
         action="store_true",
+        default=False,
         help="Keep the default behavior of skipping reindexing and service restarts.",
     )
-    parser.add_argument(
+    reindex_group.add_argument(
         "--reindex",
         action="store_true",
+        default=False,
         help="Run reindexing and service restarts after cleaning.",
     )
     parser.add_argument(
@@ -932,7 +982,7 @@ def main() -> int:
     if args.to_trash and "trash" in active_categories:
         parser.error("--to-trash cannot be combined with the trash category")
 
-    active_targets = [t for t in TARGETS if t.category in active_categories]
+    active_targets = [t for t in get_all_targets() if t.category in active_categories]
     active_targets = resolve_targets(active_targets)
 
     # Group by category once to avoid repeated filtering
@@ -1008,7 +1058,7 @@ def main() -> int:
         print(f"Free disk space: {format_size(disk_before)} -> {format_size(disk_after)} "
               f"(+{format_size(disk_after - disk_before)})")
 
-    if args.reindex and not args.no_reindex:
+    if args.reindex:
         run_reindex(args.dry_run)
 
     if not args.no_log:

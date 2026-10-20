@@ -112,6 +112,37 @@ class ClearCachesTests(unittest.TestCase):
                     [executable, "--yes", "--no-reindex"],
                 )
 
+    def test_parse_schedule_time_valid(self) -> None:
+        self.assertEqual(clear_caches.parse_schedule_time("03:30"), (3, 30))
+        self.assertEqual(clear_caches.parse_schedule_time("00:00"), (0, 0))
+        self.assertEqual(clear_caches.parse_schedule_time("23:59"), (23, 59))
+        self.assertEqual(clear_caches.parse_schedule_time("9:05"), (9, 5))
+
+    def test_parse_schedule_time_invalid(self) -> None:
+        invalid_inputs = ["abc", "24:00", "12:60", "-1:30", "12", "12:34:56", "ab:cd"]
+        for val in invalid_inputs:
+            with self.subTest(val=val):
+                with self.assertRaises(ValueError):
+                    clear_caches.parse_schedule_time(val)
+
+    def test_get_all_targets_includes_static_targets(self) -> None:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            targets = clear_caches.get_all_targets()
+        paths = {t.path for t in targets}
+        for static in clear_caches.TARGETS:
+            self.assertIn(static.path, paths)
+
+    def test_reindex_skips_sudo_tasks_when_not_root(self) -> None:
+        output = io.StringIO()
+        with patch("os.geteuid", return_value=1000, create=True):
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value.returncode = 0
+                with contextlib.redirect_stdout(output):
+                    clear_caches.run_reindex(dry_run=False)
+        stdout = output.getvalue()
+        self.assertIn("Skipped (wymaga uprawnień root / sudo)", stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
