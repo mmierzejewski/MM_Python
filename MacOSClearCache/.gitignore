@@ -1,0 +1,17 @@
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyInstaller build and distribution artifacts
+build/
+dist/
+*.spec
+
+# macOS system files
+.DS_Store
+
+# Temporary and log files
+*.log
+*.tmp
+
