@@ -14,6 +14,10 @@ preview, and optional post-clean system reindexing.
   unless you opt in with `--all` or `--categories`.
 - **Dry-run mode** – preview exactly what would be removed before deleting
   anything.
+- **Force-close running applications** – automatically force-quits running user
+  and target applications (browsers, Slack, Spotify, etc.) before cleaning so
+  that cache files are unlocked and not immediately recreated. Terminals, shells,
+  and host IDEs are safely protected.
 - **Automatic deduplication** – if an enabled target is nested inside another
   enabled target (e.g. `~/Library/Caches/pip` under `~/Library/Caches`), the
   child is skipped to avoid double counting/deletion.
@@ -92,6 +96,9 @@ python3 clear_caches.py --categories browsers packages
 # Clean all categories except iOS backups
 python3 clear_caches.py --all --exclude ios_backups
 
+# Clean caches without closing running applications
+python3 clear_caches.py --no-kill-apps
+
 # Only remove items untouched for at least 30 days, moving them to Trash
 python3 clear_caches.py --older-than 30 --to-trash
 
@@ -118,6 +125,7 @@ python3 clear_caches.py --uninstall-schedule
 | `--older-than DAYS` | Only remove top-level items whose complete tree is older than `DAYS`; newer or unverifiable trees are skipped. |
 | `--to-trash` | Move items to `~/.Trash` instead of permanently deleting them. |
 | `--interactive` | Ask for confirmation before cleaning each category. |
+| `--no-kill-apps` | Do not force-quit running applications before cleaning caches. |
 | `--no-log` | Do not write a JSON summary log. |
 | `--no-notify` | Do not send a macOS notification when done. |
 | `--install-schedule HH:MM` | Install a `launchd` agent to run this script daily at the given time. |

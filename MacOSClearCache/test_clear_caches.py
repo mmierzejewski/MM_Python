@@ -143,6 +143,75 @@ class ClearCachesTests(unittest.TestCase):
         stdout = output.getvalue()
         self.assertIn("Skipped (wymaga uprawnień root / sudo)", stdout)
 
+    def test_get_protected_pids_includes_self_and_vscode_pid(self) -> None:
+        with patch.dict(os.environ, {"VSCODE_PID": "99999"}):
+            pids = clear_caches.get_protected_pids()
+            self.assertIn(os.getpid(), pids)
+            self.assertIn(os.getppid(), pids)
+            self.assertIn(99999, pids)
+
+    def test_get_running_applications_filters_protected(self) -> None:
+        sample_lsappinfo = """
+ 1) "Finder" ASN:0x0-0x1111:
+    bundleID="com.apple.finder"
+    bundle path="/System/Library/CoreServices/Finder.app"
+    pid = 1001 type="Foreground"
+ 2) "Terminal" ASN:0x0-0x2222:
+    bundleID="com.apple.Terminal"
+    bundle path="/System/Applications/Utilities/Terminal.app"
+    pid = 1002 type="Foreground"
+ 3) "Google Chrome" ASN:0x0-0x3333:
+    bundleID="com.google.Chrome"
+    bundle path="/Applications/Google Chrome.app"
+    pid = 1003 type="Foreground"
+ 4) "Slack" ASN:0x0-0x4444:
+    bundleID="com.tinyspeck.slackmacgap"
+    bundle path="/Applications/Slack.app"
+    pid = 1004 type="Foreground"
+ 5) "RandomDaemon" ASN:0x0-0x5555:
+    bundleID="com.example.daemon"
+    bundle path="/Library/PrivilegedHelperTools/daemon"
+    pid = 1005 type="BackgroundOnly"
+"""
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value.returncode = 0
+            mock_run.return_value.stdout = sample_lsappinfo
+            with patch.object(clear_caches, "get_protected_pids", return_value={9999}):
+                apps = clear_caches.get_running_applications()
+                app_names = [a.name for a in apps]
+                self.assertIn("Google Chrome", app_names)
+                self.assertIn("Slack", app_names)
+                self.assertNotIn("Finder", app_names)
+                self.assertNotIn("Terminal", app_names)
+                self.assertNotIn("RandomDaemon", app_names)
+
+    def test_close_running_applications_dry_run_does_not_kill(self) -> None:
+        apps = [clear_caches.RunningApp(name="TestApp", pid=55555)]
+        output = io.StringIO()
+        with patch("os.kill") as mock_kill:
+            with contextlib.redirect_stdout(output):
+                lines = clear_caches.close_running_applications(apps, dry_run=True)
+            mock_kill.assert_not_called()
+            self.assertTrue(any("[dry-run] would force quit" in line for line in lines))
+
+    def test_close_running_applications_kills_process(self) -> None:
+        apps = [clear_caches.RunningApp(name="TestApp", pid=55555)]
+        output = io.StringIO()
+        with patch("os.kill") as mock_kill, patch("time.sleep"):
+            # First os.kill is SIGTERM, second is os.kill(pid, 0) which raises ProcessLookupError (exited)
+            mock_kill.side_effect = [None, ProcessLookupError()]
+            with contextlib.redirect_stdout(output):
+                lines = clear_caches.close_running_applications(apps, dry_run=False)
+            self.assertTrue(mock_kill.called)
+            self.assertTrue(any("Closed: TestApp" in line for line in lines))
+
+    def test_confirm_includes_apps_warning(self) -> None:
+        output = io.StringIO()
+        with patch("builtins.input", return_value="y") as mock_input, contextlib.redirect_stdout(output):
+            res = clear_caches.confirm(1024, to_trash=False, apps_count=5)
+            self.assertTrue(res)
+            mock_input.assert_called_with("This will force-quit 5 running application(s) and permanently delete the listed items. Continue? [y/N]: ")
+
 
 if __name__ == "__main__":
     unittest.main()

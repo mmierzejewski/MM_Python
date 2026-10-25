@@ -5,7 +5,9 @@ import argparse
 import json
 import os
 import plistlib
+import re
 import shutil
+import signal
 import stat
 import subprocess
 import sys
@@ -671,10 +673,14 @@ def resolve_targets(targets: list[Target]) -> list[Target]:
     return result
 
 
-def confirm(total_size: int, to_trash: bool) -> bool:
+def confirm(total_size: int, to_trash: bool, apps_count: int = 0) -> bool:
     print(f"\nEstimated space to reclaim: {format_size(total_size)}")
     action = "move the listed items to Trash" if to_trash else "permanently delete the listed items"
-    reply = input(f"This will {action}. Continue? [y/N]: ")
+    if apps_count > 0:
+        warning = f"This will force-quit {apps_count} running application(s) and {action}."
+    else:
+        warning = f"This will {action}."
+    reply = input(f"{warning} Continue? [y/N]: ")
     return reply.strip().lower() in {"y", "yes"}
 
 
@@ -862,6 +868,277 @@ def run_reindex(dry_run: bool) -> None:
             print(f"Warning – {exc}")
 
 
+# ---------------------------------------------------------------------------
+# Running Applications Management
+# ---------------------------------------------------------------------------
+
+@dataclass
+class RunningApp:
+    name: str
+    pid: int
+    bundle_id: str = ""
+    bundle_path: str = ""
+    app_type: str = ""
+
+
+PROTECTED_BUNDLE_IDS: set[str] = {
+    # System desktop services & WindowServer
+    "com.apple.finder",
+    "com.apple.dock",
+    "com.apple.loginwindow",
+    "com.apple.WindowManager",
+    "com.apple.systemuiserver",
+    "com.apple.controlcenter",
+    "com.apple.notificationcenterui",
+    "com.apple.CoreServicesUIAgent",
+    "com.apple.talagent",
+    "com.apple.Spotlight",
+    # Terminal emulators (never terminate the user's terminal window)
+    "com.apple.Terminal",
+    "com.googlecode.iterm2",
+    "org.alacritty",
+    "net.kovidgoyal.kitty",
+    "dev.warp.Warp-Stable",
+    "com.mitchellh.ghostty",
+    "co.zeit.hyper",
+}
+
+PROTECTED_APP_NAMES: set[str] = {
+    "Finder",
+    "Dock",
+    "loginwindow",
+    "WindowManager",
+    "SystemUIServer",
+    "ControlCenter",
+    "Centrum sterowania",
+    "NotificationCenter",
+    "Spotlight",
+    "Terminal",
+    "iTerm2",
+    "iTerm",
+    "Alacritty",
+    "kitty",
+    "Warp",
+    "Ghostty",
+    "Hyper",
+    "launchd",
+    "kernel_task",
+    "WindowServer",
+}
+
+TARGET_BUNDLE_PREFIXES: tuple[str, ...] = (
+    "com.google.Chrome",
+    "org.mozilla.firefox",
+    "com.apple.Safari",
+    "com.microsoft.edgemac",
+    "com.brave.Browser",
+    "com.operasoftware.Opera",
+    "com.vivaldi.Vivaldi",
+    "company.thebrowser.Browser",
+    "com.tinyspeck.slackmacgap",
+    "com.spotify.client",
+    "com.microsoft.teams",
+    "com.microsoft.teams2",
+    "com.skype.skype",
+    "com.hnc.discord",
+    "com.valvesoftware.steam",
+    "net.whatsapp.WhatsApp",
+    "ru.keepcoder.Telegram",
+    "com.github.GitHubClient",
+    "com.bitwarden.desktop",
+    "io.balena.etcher",
+    "com.google.drivefs",
+    "com.microsoft.OneDrive",
+    "com.apple.mail",
+    "com.apple.dt.Xcode",
+)
+
+TARGET_APP_NAMES: set[str] = {
+    "google chrome",
+    "firefox",
+    "safari",
+    "microsoft edge",
+    "brave browser",
+    "opera",
+    "vivaldi",
+    "arc",
+    "slack",
+    "spotify",
+    "microsoft teams",
+    "teams",
+    "skype",
+    "discord",
+    "steam",
+    "whatsapp",
+    "telegram",
+    "github desktop",
+    "bitwarden",
+    "balenaetcher",
+    "google drive",
+    "onedrive",
+    "mail",
+    "xcode",
+}
+
+
+def get_protected_pids() -> set[int]:
+    """Identify PIDs that must never be terminated (self, parents, host IDE)."""
+    pids = {os.getpid(), os.getppid()}
+    vscode_pid = os.environ.get("VSCODE_PID")
+    if vscode_pid and vscode_pid.isdigit():
+        pids.add(int(vscode_pid))
+
+    curr = os.getppid()
+    while curr > 1:
+        try:
+            res = subprocess.run(
+                ["ps", "-o", "ppid=", "-p", str(curr)],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+            if res.returncode == 0 and res.stdout.strip().isdigit():
+                curr = int(res.stdout.strip())
+                pids.add(curr)
+            else:
+                break
+        except Exception:
+            break
+    return pids
+
+
+def get_running_applications() -> list[RunningApp]:
+    """Discover running user and target applications to close before cache cleanup."""
+    protected_pids = get_protected_pids()
+    host_term = os.environ.get("TERM_PROGRAM", "").lower()
+    apps: list[RunningApp] = []
+    seen_pids: set[int] = set()
+
+    try:
+        res = subprocess.run(
+            ["/usr/bin/lsappinfo", "list"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if res.returncode == 0:
+            blocks = re.split(r"(?=^\s*\d+\)\s+\")", res.stdout, flags=re.MULTILINE)
+            for block in blocks:
+                m_name = re.search(r"^\s*\d+\)\s+\"([^\"]+)\"", block, re.MULTILINE)
+                m_pid = re.search(r"\bpid\s*=\s*(\d+)", block)
+                if not (m_name and m_pid):
+                    continue
+                pid = int(m_pid.group(1))
+                if pid in seen_pids or pid in protected_pids:
+                    continue
+
+                m_bundle = re.search(r"bundleID=\"([^\"]+)\"", block)
+                m_type = re.search(r"type=\"([^\"]+)\"", block)
+                m_path = re.search(r"bundle path=\"([^\"]+)\"", block)
+
+                name = m_name.group(1)
+                bundle_id = m_bundle.group(1) if m_bundle else ""
+                app_type = m_type.group(1) if m_type else ""
+                bundle_path = m_path.group(1) if m_path else ""
+
+                if bundle_id in PROTECTED_BUNDLE_IDS or name in PROTECTED_APP_NAMES:
+                    continue
+
+                lower_name = name.lower()
+                lower_bundle = bundle_id.lower()
+                if "vscode" in host_term or "code" in host_term or os.environ.get("VSCODE_PID"):
+                    if "code" in lower_name or "vscode" in lower_bundle:
+                        continue
+
+                is_foreground = (app_type == "Foreground")
+                matches_target = (
+                    lower_name in TARGET_APP_NAMES
+                    or any(bundle_id.startswith(p) for p in TARGET_BUNDLE_PREFIXES)
+                )
+                is_user_app = (
+                    bundle_path.startswith("/Applications")
+                    or bundle_path.startswith(str(Path.home() / "Applications"))
+                ) and app_type == "Foreground"
+
+                if is_foreground or matches_target or is_user_app:
+                    seen_pids.add(pid)
+                    apps.append(
+                        RunningApp(
+                            name=name,
+                            pid=pid,
+                            bundle_id=bundle_id,
+                            bundle_path=bundle_path,
+                            app_type=app_type,
+                        )
+                    )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as exc:
+        print(f"  [info] Could not query running applications via lsappinfo: {exc}")
+
+    return apps
+
+
+def close_running_applications(
+    apps: list[RunningApp],
+    dry_run: bool = False,
+) -> list[str]:
+    """Force close running applications so cache files can be safely and completely deleted."""
+    if not apps:
+        return []
+
+    lines: list[str] = []
+    print(f"\n[Wymuszenie zamknięcia programów / Force-Closing Applications ({len(apps)})]")
+
+    if dry_run:
+        for app in apps:
+            line = f"  [dry-run] would force quit: {app.name} (PID {app.pid})"
+            print(line)
+            lines.append(line)
+        return lines
+
+    # Step 1: Send SIGTERM for quick graceful flush
+    for app in apps:
+        try:
+            os.kill(app.pid, signal.SIGTERM)
+        except (ProcessLookupError, PermissionError):
+            pass
+
+    # Wait briefly up to 0.5s
+    time.sleep(0.5)
+
+    # Step 2: Force kill (SIGKILL) any processes still running
+    closed_count = 0
+    for app in apps:
+        print(f"  ▶ {app.name} (PID {app.pid}) … ", end="", flush=True)
+        still_running = True
+        try:
+            os.kill(app.pid, 0)
+        except ProcessLookupError:
+            still_running = False
+        except PermissionError:
+            still_running = True
+
+        if still_running:
+            try:
+                os.kill(app.pid, signal.SIGKILL)
+                print("Force Quit (SIGKILL)")
+                lines.append(f"  Force-closed: {app.name} (PID {app.pid})")
+                closed_count += 1
+            except ProcessLookupError:
+                print("OK")
+                lines.append(f"  Closed: {app.name} (PID {app.pid})")
+                closed_count += 1
+            except PermissionError as exc:
+                print(f"Warning – permission denied: {exc}")
+                lines.append(f"  Warning – could not close {app.name}: {exc}")
+        else:
+            print("OK")
+            lines.append(f"  Closed: {app.name} (PID {app.pid})")
+            closed_count += 1
+
+    print(f"Zakończono zamykanie programów ({closed_count}/{len(apps)}).\n")
+    return lines
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
@@ -940,6 +1217,11 @@ def main() -> int:
         help="Ask for confirmation before cleaning each category.",
     )
     parser.add_argument(
+        "--no-kill-apps",
+        action="store_true",
+        help="Do not force-quit running applications before cleaning caches.",
+    )
+    parser.add_argument(
         "--no-log",
         action="store_true",
         help="Do not write a JSON summary log to ~/Library/Logs/clear_caches/.",
@@ -992,6 +1274,7 @@ def main() -> int:
 
     # Compute and cache sizes up-front in parallel (avoids double disk scan)
     size_cache: dict[Path, int] = sizes_in_parallel([t.path for t in active_targets])
+    apps_to_close = get_running_applications() if not args.no_kill_apps else []
 
     # Print plan grouped by category
     for cat in sorted(active_categories):
@@ -1003,11 +1286,19 @@ def main() -> int:
             exists = "✓" if t.path.exists() else "–"
             print(f"  {exists} {t.label}  ({format_size(size_cache[t.path])})")
 
+    if apps_to_close:
+        print(f"\n[Running Applications to Force-Quit ({len(apps_to_close)})]")
+        for app in apps_to_close:
+            print(f"  ▶ {app.name} (PID: {app.pid})")
+
     total_size = sum(size_cache.values())
 
-    if not args.dry_run and not args.yes and not confirm(total_size, args.to_trash):
+    if not args.dry_run and not args.yes and not confirm(total_size, args.to_trash, apps_count=len(apps_to_close)):
         print("Cancelled.")
         return 1
+
+    if not args.no_kill_apps and apps_to_close:
+        close_running_applications(apps_to_close, dry_run=args.dry_run)
 
     disk_before = shutil.disk_usage(Path.home()).free if not args.dry_run else None
 
@@ -1066,6 +1357,7 @@ def main() -> int:
             "timestamp": datetime.now().isoformat(),
             "dry_run": args.dry_run,
             "to_trash": args.to_trash,
+            "closed_apps": [a.name for a in apps_to_close] if not args.dry_run else [],
             "total_entries": grand_entries,
             "total_bytes": grand_bytes,
             "categories": category_summary,
