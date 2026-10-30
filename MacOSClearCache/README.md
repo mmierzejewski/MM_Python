@@ -99,6 +99,9 @@ python3 clear_caches.py --all --exclude ios_backups
 # Remove stale leftovers and run Homebrew cleanup/autoremove (preview first)
 python3 clear_caches.py --categories stale maintenance --dry-run
 
+# Run with elevated privileges via sudo (e.g. for stale root symlinks or full reindexing)
+python3 clear_caches.py --sudo --categories stale
+
 # Clean caches without closing running applications
 python3 clear_caches.py --no-kill-apps
 
@@ -121,6 +124,7 @@ python3 clear_caches.py --uninstall-schedule
 | --- | --- |
 | `--dry-run` | Show what would be removed without deleting anything. |
 | `--yes` | Skip the confirmation prompt. |
+| `--sudo` | Re-execute script with root privileges via `sudo` if not already root. |
 | `--all` | Enable all categories. |
 | `--categories CAT [CAT ...]` | Space-separated list of categories to clean (default: `apps browsers crashreports quicklook system`). |
 | `--exclude CAT [CAT ...]` | Space-separated list of categories to exclude. |

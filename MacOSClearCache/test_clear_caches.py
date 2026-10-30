@@ -242,6 +242,44 @@ class ClearCachesTests(unittest.TestCase):
             self.assertTrue(res)
             mock_input.assert_called_with("This will force-quit 5 running application(s) and permanently delete the listed items. Continue? [y/N]: ")
 
+    def test_is_root_user(self) -> None:
+        with patch("os.geteuid", return_value=0):
+            self.assertTrue(clear_caches.is_root_user())
+        with patch("os.geteuid", return_value=501):
+            self.assertFalse(clear_caches.is_root_user())
+
+    def test_elevate_with_sudo_noop_when_root(self) -> None:
+        with patch("clear_caches.is_root_user", return_value=True):
+            with patch("os.execvp") as mock_exec:
+                clear_caches.elevate_with_sudo()
+                mock_exec.assert_not_called()
+
+    def test_elevate_with_sudo_executes_when_not_root(self) -> None:
+        with patch("clear_caches.is_root_user", return_value=False):
+            with patch("os.path.exists", return_value=True):
+                with patch("shutil.which", return_value="/usr/bin/sudo"):
+                    with patch("os.execvp") as mock_exec:
+                        clear_caches.elevate_with_sudo()
+                        mock_exec.assert_called_once()
+                        args = mock_exec.call_args[0]
+                        self.assertEqual(args[0], "/usr/bin/sudo")
+                        self.assertIn("-E", args[1])
+                        self.assertIn("--sudo", args[1])
+
+    def test_main_calls_elevate_with_sudo_flag(self) -> None:
+        output = io.StringIO()
+        with patch("sys.argv", ["clear_caches.py", "--sudo", "--dry-run", "--categories", "trash"]):
+            with patch("clear_caches.elevate_with_sudo") as mock_elevate, contextlib.redirect_stdout(output):
+                clear_caches.main()
+                mock_elevate.assert_called_once()
+
+    def test_main_does_not_call_elevate_without_sudo_flag(self) -> None:
+        output = io.StringIO()
+        with patch("sys.argv", ["clear_caches.py", "--dry-run", "--categories", "trash"]):
+            with patch("clear_caches.elevate_with_sudo") as mock_elevate, contextlib.redirect_stdout(output):
+                clear_caches.main()
+                mock_elevate.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

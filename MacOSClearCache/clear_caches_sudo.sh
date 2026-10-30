@@ -3,4 +3,9 @@
 # Extra arguments are passed through, e.g.: ./clear_caches_sudo.sh --dry-run
 set -e
 DIR="$(cd "$(dirname "$0")" && pwd)"
-exec sudo "$DIR/dist/clear_caches" --categories stale --no-kill-apps "$@"
+
+if [ -x "$DIR/dist/clear_caches" ]; then
+    exec sudo "$DIR/dist/clear_caches" --categories stale --no-kill-apps "$@"
+else
+    exec sudo python3 "$DIR/clear_caches.py" --categories stale --no-kill-apps "$@"
+fi

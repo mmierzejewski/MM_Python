@@ -747,7 +747,7 @@ def remove_path(
             path.unlink()
         return [f"  Removed: {path}"], 1, size
     except PermissionError as exc:
-        return [f"  Warning – could not remove {path}: {exc} (try sudo)"], 0, 0
+        return [f"  Warning – could not remove {path}: {exc} (try --sudo)"], 0, 0
     except OSError as exc:
         return [f"  Warning – could not remove {path}: {exc}"], 0, 0
 
@@ -871,6 +871,39 @@ def uninstall_schedule() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Privilege elevation & root utilities
+# ---------------------------------------------------------------------------
+
+def is_root_user() -> bool:
+    """Return True if running with root privileges (UID 0)."""
+    return hasattr(os, "geteuid") and os.geteuid() == 0
+
+
+def elevate_with_sudo() -> None:
+    """Re-executes the current script with sudo if not already running as root."""
+    if is_root_user():
+        return
+
+    sudo_bin = shutil.which("sudo") or "/usr/bin/sudo"
+    if not os.path.exists(sudo_bin):
+        sys.exit("Błąd: polecenie 'sudo' nie jest dostępne w tym systemie.")
+
+    args_to_pass = list(sys.argv[1:])
+    if "--sudo" not in args_to_pass:
+        args_to_pass.insert(0, "--sudo")
+
+    if getattr(sys, "frozen", False):
+        exec_args = [sudo_bin, "-E", sys.executable] + args_to_pass
+    else:
+        exec_args = [sudo_bin, "-E", sys.executable, str(Path(__file__).resolve())] + args_to_pass
+
+    try:
+        os.execvp(sudo_bin, exec_args)
+    except OSError as exc:
+        sys.exit(f"Nie udało się podnieść uprawnień przez sudo: {exc}")
+
+
+# ---------------------------------------------------------------------------
 # Reindexing
 # ---------------------------------------------------------------------------
 
@@ -939,14 +972,14 @@ REINDEX_TASKS: list[ReindexTask] = [
 
 def run_reindex(dry_run: bool) -> None:
     print("\n[Reindexing & Service Restart]")
-    is_root = hasattr(os, "geteuid") and os.geteuid() == 0
+    is_root = is_root_user()
     for task in REINDEX_TASKS:
         note = f"  ({task.note})" if task.note else ""
         if dry_run:
             print(f"  [dry-run] would run: {' '.join(task.cmd)}{note}")
             continue
         if task.requires_sudo and not is_root:
-            print(f"  ▶ {task.label}{note} … Skipped (wymaga uprawnień root / sudo)")
+            print(f"  ▶ {task.label}{note} … Skipped (wymaga uprawnień root / sudo) [użyj --sudo]")
             continue
         print(f"  ▶ {task.label}{note} … ", end="", flush=True)
         try:
@@ -1005,7 +1038,7 @@ def run_maintenance(tasks: list[MaintenanceTask], dry_run: bool) -> None:
     if not tasks:
         print("  Skipped (Homebrew not found)")
         return
-    if hasattr(os, "geteuid") and os.geteuid() == 0:
+    if is_root_user():
         print("  Skipped (Homebrew must not be run as root)")
         return
     for task in tasks:
@@ -1315,6 +1348,11 @@ def main() -> int:
         action="store_true",
         help="Skip confirmation prompt.",
     )
+    parser.add_argument(
+        "--sudo",
+        action="store_true",
+        help="Re-execute with root privileges via sudo (automatyczne podniesienie uprawnień).",
+    )
     cat_group = parser.add_mutually_exclusive_group()
     cat_group.add_argument(
         "--all",
@@ -1398,6 +1436,9 @@ def main() -> int:
         help="Remove the previously installed launchd agent.",
     )
     args = parser.parse_args()
+
+    if args.sudo:
+        elevate_with_sudo()
 
     if args.install_schedule:
         install_schedule(args.install_schedule)
