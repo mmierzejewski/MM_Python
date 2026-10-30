@@ -23,6 +23,7 @@ class Target:
     path: Path
     label: str
     category: str
+    remove_self: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -40,6 +41,8 @@ class Target:
 # "developer"   – Xcode / CoreSimulator artefacts (large but re-generatable)
 # "packages"    – package-manager caches (re-downloadable)
 # "logs"        – log files and crash reports
+# "stale"       – leftovers: old JetBrains IDE settings, broken symlinks in bin dirs
+# "maintenance" – Homebrew cleanup/autoremove commands
 # ---------------------------------------------------------------------------
 
 TARGETS: list[Target] = [
@@ -310,7 +313,68 @@ TARGETS: list[Target] = [
            "JetBrains IDE Caches", "developer"),
     Target(Path.home() / "Library" / "Logs" / "JetBrains",
            "JetBrains IDE Logs", "logs"),
+
+    # --- Updater downloads & tool caches --------------------------------------
+    Target(
+        Path.home() / "Library" / "Application Support" / "Foxit Software" / "Continuous" / "updater",
+        "Foxit Updater Downloads", "apps",
+    ),
+    Target(Path.home() / "Library" / "Application Support" / "virtualenv",
+           "virtualenv Seed/Wheel Cache", "packages"),
 ]
+
+
+# ---------------------------------------------------------------------------
+# Stale leftovers (removed as whole items, not emptied)
+# ---------------------------------------------------------------------------
+
+JETBRAINS_CONFIG_RE = re.compile(r"^([A-Za-z]+)(\d{4}(?:\.\d+)+)$")
+BROKEN_SYMLINK_DIRS = (Path("/usr/local/bin"), Path("/opt/homebrew/bin"))
+
+
+def stale_jetbrains_config_dirs(root: Path | None = None) -> list[Path]:
+    """Return per-version JetBrains settings dirs (e.g. PyCharm2025.2) except
+    the newest version of each product."""
+    root = root or Path.home() / "Library" / "Application Support" / "JetBrains"
+    groups: dict[str, list[tuple[tuple[int, ...], Path]]] = {}
+    try:
+        entries = list(root.iterdir())
+    except OSError:
+        return []
+    for entry in entries:
+        match = JETBRAINS_CONFIG_RE.match(entry.name)
+        if not match or not entry.is_dir() or entry.is_symlink():
+            continue
+        version = tuple(int(part) for part in match.group(2).split("."))
+        groups.setdefault(match.group(1).lower(), []).append((version, entry))
+    stale: list[Path] = []
+    for versions in groups.values():
+        versions.sort()
+        stale.extend(path for _, path in versions[:-1])
+    return sorted(stale)
+
+
+def broken_symlinks(directories: tuple[Path, ...] = BROKEN_SYMLINK_DIRS) -> list[Path]:
+    found: list[Path] = []
+    for directory in directories:
+        try:
+            entries = list(directory.iterdir())
+        except OSError:
+            continue
+        found.extend(e for e in entries if e.is_symlink() and not e.exists())
+    return sorted(found)
+
+
+def stale_targets() -> list[Target]:
+    targets = [
+        Target(path, f"Old JetBrains settings ({path.name})", "stale", remove_self=True)
+        for path in stale_jetbrains_config_dirs()
+    ]
+    targets.extend(
+        Target(path, f"Broken symlink ({path} -> {os.readlink(path)})", "stale", remove_self=True)
+        for path in broken_symlinks()
+    )
+    return targets
 
 
 def browser_profile_targets(cache_root: Path, browser_name: str) -> list[Target]:
@@ -506,6 +570,7 @@ def get_all_targets() -> list[Target]:
     targets.extend(application_support_cache_targets(known_paths=known))
     known = {t.path for t in targets}
     targets.extend(sandboxed_app_cache_targets(known_paths=known))
+    targets.extend(stale_targets())
     targets.extend(load_external_targets())
     return targets
 
@@ -522,6 +587,8 @@ CATEGORY_LABELS: dict[str, str] = {
     "developer":    "Developer Tools",
     "packages":     "Package Managers",
     "logs":         "Logs & Diagnostics",
+    "stale":        "Stale Leftovers (old IDE settings, broken symlinks)",
+    "maintenance":  "Homebrew Maintenance (cleanup, autoremove)",
 }
 
 DEFAULT_CATEGORIES = {"system", "browsers", "apps", "quicklook", "crashreports"}
@@ -649,6 +716,40 @@ def clear_directory(
             reclaimed_bytes -= item_size
 
     return lines, removed_entries, reclaimed_bytes
+
+
+def remove_path(
+    path: Path,
+    dry_run: bool,
+    older_than_days: float | None = None,
+    to_trash: bool = False,
+) -> tuple[list[str], int, int]:
+    """Remove the item itself (dir, file, or broken symlink).
+    Returns (output_lines, removed_entries, reclaimed_bytes)."""
+    if not os.path.lexists(path):
+        return [], 0, 0
+    if older_than_days is not None and not tree_is_older_than(
+        path, time.time() - older_than_days * 86400
+    ):
+        return [f"  [skipped-age] recent or age unavailable: {path}"], 0, 0
+
+    size = path_size(path)
+    if dry_run:
+        verb = "would move to Trash" if to_trash else "would remove"
+        return [f"  [dry-run] {verb}: {path}"], 1, size
+    try:
+        if to_trash:
+            move_to_trash(path)
+            return [f"  Moved to Trash: {path}"], 1, size
+        if path.is_dir() and not path.is_symlink():
+            shutil.rmtree(path)
+        else:
+            path.unlink()
+        return [f"  Removed: {path}"], 1, size
+    except PermissionError as exc:
+        return [f"  Warning – could not remove {path}: {exc} (try sudo)"], 0, 0
+    except OSError as exc:
+        return [f"  Warning – could not remove {path}: {exc}"], 0, 0
 
 
 def resolve_targets(targets: list[Target]) -> list[Target]:
@@ -866,6 +967,60 @@ def run_reindex(dry_run: bool) -> None:
             print("Warning – timed out")
         except OSError as exc:
             print(f"Warning – {exc}")
+
+
+# ---------------------------------------------------------------------------
+# Homebrew maintenance
+# ---------------------------------------------------------------------------
+
+@dataclass
+class MaintenanceTask:
+    label: str
+    cmd: list[str]
+    dry_run_cmd: list[str]
+
+
+def maintenance_tasks() -> list[MaintenanceTask]:
+    brew = shutil.which("brew") or next(
+        (p for p in ("/opt/homebrew/bin/brew", "/usr/local/bin/brew") if Path(p).exists()), None
+    )
+    if not brew:
+        return []
+    return [
+        MaintenanceTask(
+            "Homebrew – remove unused dependencies (autoremove)",
+            [brew, "autoremove"],
+            [brew, "autoremove", "--dry-run"],
+        ),
+        MaintenanceTask(
+            "Homebrew – remove old versions & all downloads (cleanup --prune=all -s)",
+            [brew, "cleanup", "--prune=all", "-s"],
+            [brew, "cleanup", "--prune=all", "-s", "-n"],
+        ),
+    ]
+
+
+def run_maintenance(tasks: list[MaintenanceTask], dry_run: bool) -> None:
+    print(f"\n[{CATEGORY_LABELS['maintenance']}]")
+    if not tasks:
+        print("  Skipped (Homebrew not found)")
+        return
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        print("  Skipped (Homebrew must not be run as root)")
+        return
+    for task in tasks:
+        cmd = task.dry_run_cmd if dry_run else task.cmd
+        prefix = "[dry-run] " if dry_run else ""
+        print(f"  ▶ {prefix}{task.label} … ", end="", flush=True)
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            print(f"Warning – {exc}")
+            continue
+        print("OK" if result.returncode == 0 else "Warning – non-zero exit")
+        output = (result.stdout + result.stderr).strip().splitlines()
+        for line in output[-5:]:
+            print(f"      {line}")
 
 
 # ---------------------------------------------------------------------------
@@ -1283,8 +1438,14 @@ def main() -> int:
             continue
         print(f"\n[{CATEGORY_LABELS[cat]}]")
         for t in cat_targets:
-            exists = "✓" if t.path.exists() else "–"
+            exists = "✓" if os.path.lexists(t.path) else "–"
             print(f"  {exists} {t.label}  ({format_size(size_cache[t.path])})")
+
+    brew_tasks = maintenance_tasks() if "maintenance" in active_categories else []
+    if brew_tasks:
+        print(f"\n[{CATEGORY_LABELS['maintenance']}]")
+        for task in brew_tasks:
+            print(f"  ▶ {task.label}")
 
     if apps_to_close:
         print(f"\n[Running Applications to Force-Quit ({len(apps_to_close)})]")
@@ -1318,7 +1479,8 @@ def main() -> int:
         cat_entries = 0
         cat_bytes = 0
         for t in cat_targets:
-            lines, entries, size_bytes = clear_directory(
+            cleaner = remove_path if t.remove_self else clear_directory
+            lines, entries, size_bytes = cleaner(
                 t.path, args.dry_run, older_than_days=args.older_than, to_trash=args.to_trash
             )
             grand_entries += entries
@@ -1343,6 +1505,11 @@ def main() -> int:
     print(
         f"Done. {verb} ~{format_size(grand_bytes)} across {grand_entries} item(s)."
     )
+
+    if "maintenance" in active_categories and not (
+        args.interactive and not confirm_category(CATEGORY_LABELS["maintenance"])
+    ):
+        run_maintenance(brew_tasks, args.dry_run)
 
     if disk_before is not None:
         disk_after = shutil.disk_usage(Path.home()).free

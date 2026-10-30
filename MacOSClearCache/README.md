@@ -7,9 +7,9 @@ preview, and optional post-clean system reindexing.
 ## Features
 
 - **Category-based targets** – dozens of well-known cache/log locations grouped
-  into 12 categories: `system`, `trash`, `browsers`, `apps`, `mail`,
+  into 14 categories: `system`, `trash`, `browsers`, `apps`, `mail`,
   `ios_backups`, `quicklook`, `crashreports`, `tmp`, `developer`, `packages`,
-  `logs`.
+  `logs`, `stale`, `maintenance`.
 - **Safe by default** – only a curated subset of low-risk categories runs
   unless you opt in with `--all` or `--categories`.
 - **Dry-run mode** – preview exactly what would be removed before deleting
@@ -96,6 +96,9 @@ python3 clear_caches.py --categories browsers packages
 # Clean all categories except iOS backups
 python3 clear_caches.py --all --exclude ios_backups
 
+# Remove stale leftovers and run Homebrew cleanup/autoremove (preview first)
+python3 clear_caches.py --categories stale maintenance --dry-run
+
 # Clean caches without closing running applications
 python3 clear_caches.py --no-kill-apps
 
@@ -138,15 +141,17 @@ python3 clear_caches.py --uninstall-schedule
 | `system` | Generic OS-level caches (`~/Library/Caches`, `~/.cache`) | ✓ |
 | `trash` | Kosz / Trash (`~/.Trash`) | – |
 | `browsers` | Web browser caches (Chrome, Firefox, Safari, Edge, Brave, Opera, Vivaldi, Arc, Slack) | ✓ |
-| `apps` | Popular app caches (Spotify, Zoom, Teams, Discord, Steam, WhatsApp, Telegram) | ✓ |
+| `apps` | Popular app caches (Spotify, Zoom, Teams, Discord, Steam, WhatsApp, Telegram, Foxit updater downloads) | ✓ |
 | `quicklook` | QuickLook thumbnail cache | ✓ |
 | `crashreports` | Crash & diagnostic reports | ✓ |
 | `tmp` | System `/tmp` directory | – |
 | `mail` | Mail.app cache | – |
 | `ios_backups` | iOS/iPadOS backups (MobileSync) ⚠ large & destructive | – |
 | `developer` | Xcode/CoreSimulator artefacts, VS Code caches, JetBrains caches (re-generatable) | – |
-| `packages` | Package-manager caches: npm, Yarn, pnpm, Gradle, pip, Poetry, Cargo, CocoaPods, Composer, uv, Gem, Bundler, Go modules, Maven, Homebrew (re-downloadable) | – |
+| `packages` | Package-manager caches: npm, Yarn, pnpm, Gradle, pip, Poetry, Cargo, CocoaPods, Composer, uv, Gem, Bundler, Go modules, Maven, Homebrew, virtualenv (re-downloadable) | – |
 | `logs` | Log files, including JetBrains logs | – |
+| `stale` | Leftovers removed as whole items: old per-version JetBrains IDE settings (newest per product is kept) and broken symlinks in `/usr/local/bin` and `/opt/homebrew/bin` (`/usr/local/bin` needs sudo) | – |
+| `maintenance` | Runs `brew autoremove` and `brew cleanup --prune=all -s` (Homebrew's own dry-run with `--dry-run`; skipped as root) | – |
 
 ## Custom targets
 

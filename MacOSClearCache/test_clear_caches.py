@@ -205,6 +205,36 @@ class ClearCachesTests(unittest.TestCase):
             self.assertTrue(mock_kill.called)
             self.assertTrue(any("Closed: TestApp" in line for line in lines))
 
+    def test_stale_jetbrains_keeps_newest_version_per_product(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            for name in ("PyCharm2025.2", "PyCharm2026.10", "PyCharm2026.2",
+                         "IntelliJIdea2025.3", "Pycharm", "consentOptions"):
+                (root / name).mkdir()
+
+            stale = {p.name for p in clear_caches.stale_jetbrains_config_dirs(root)}
+
+            self.assertEqual(stale, {"PyCharm2025.2", "PyCharm2026.2"})
+
+    def test_broken_symlinks_and_remove_path(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            bin_dir = Path(temporary_directory)
+            (bin_dir / "real").write_text("x")
+            (bin_dir / "ok").symlink_to(bin_dir / "real")
+            (bin_dir / "dead").symlink_to(bin_dir / "missing")
+
+            found = clear_caches.broken_symlinks((bin_dir,))
+            self.assertEqual(found, [bin_dir / "dead"])
+
+            _, entries, _ = clear_caches.remove_path(found[0], dry_run=True)
+            self.assertEqual(entries, 1)
+            self.assertTrue((bin_dir / "dead").is_symlink())
+
+            _, entries, _ = clear_caches.remove_path(found[0], dry_run=False)
+            self.assertEqual(entries, 1)
+            self.assertFalse(os.path.lexists(bin_dir / "dead"))
+            self.assertTrue((bin_dir / "ok").exists())
+
     def test_confirm_includes_apps_warning(self) -> None:
         output = io.StringIO()
         with patch("builtins.input", return_value="y") as mock_input, contextlib.redirect_stdout(output):
