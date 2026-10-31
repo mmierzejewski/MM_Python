@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 import os
 import tempfile
 import time
@@ -63,6 +64,50 @@ class ClearCachesTests(unittest.TestCase):
             self.assertEqual(targets, [])
             self.assertIn("Could not scan browser profiles", output.getvalue())
 
+    def test_load_external_targets_validates_entries_and_rejects_home_roots(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            app_dir = root / "app"
+            home = root / "home"
+            target = home / "Library" / "Caches" / "Example"
+            app_dir.mkdir()
+            target.mkdir(parents=True)
+            config = [
+                {"path": str(target), "label": "Example Cache", "category": "apps"},
+                {"path": "~", "label": "Home", "category": "apps"},
+                {"path": "/", "label": "Filesystem", "category": "apps"},
+                {"path": str(target), "label": "Unknown", "category": "unknown"},
+                {"path": str(target), "category": "apps"},
+                "not an object",
+            ]
+            (app_dir / "targets.json").write_text(json.dumps(config))
+            output = io.StringIO()
+
+            with patch.object(clear_caches, "application_directory", return_value=app_dir):
+                with patch.dict(os.environ, {"HOME": str(home)}):
+                    with contextlib.redirect_stdout(output):
+                        targets = clear_caches.load_external_targets()
+
+            self.assertEqual(
+                targets,
+                [clear_caches.Target(target.resolve(), "Example Cache", "apps")],
+            )
+            self.assertIn("home directory or one of its parents", output.getvalue())
+            self.assertIn("invalid category", output.getvalue())
+
+    def test_load_external_targets_skips_non_list_json(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            app_dir = Path(temporary_directory)
+            (app_dir / "targets.json").write_text('{"path": "/tmp/cache"}')
+            output = io.StringIO()
+
+            with patch.object(clear_caches, "application_directory", return_value=app_dir):
+                with contextlib.redirect_stdout(output):
+                    targets = clear_caches.load_external_targets()
+
+            self.assertEqual(targets, [])
+            self.assertIn("expected a JSON list", output.getvalue())
+
     def test_application_support_scan_adds_known_caches_but_not_data_stores(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
@@ -109,8 +154,60 @@ class ClearCachesTests(unittest.TestCase):
                 )
                 self.assertEqual(
                     clear_caches.schedule_program_arguments(),
-                    [executable, "--yes", "--no-reindex"],
+                    [executable, "--yes", "--no-reindex", "--no-kill-apps"],
                 )
+
+    def test_scan_tree_counts_unreadable_entries_without_raising(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            (root / "file.dat").write_text("abc")
+            with patch.object(Path, "lstat", side_effect=PermissionError("denied")):
+                scan = clear_caches.scan_tree(root)
+
+        self.assertEqual((scan.size, scan.is_old, scan.errors), (0, False, 1))
+
+    def test_cleaning_reuses_planned_sizes_without_rescanning(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            target_dir = Path(temporary_directory) / "cache"
+            target_dir.mkdir()
+            (target_dir / "a.dat").write_text("12345")
+            plan = clear_caches.plan_target(clear_caches.Target(target_dir, "Cache", "apps"), None)
+
+            with patch.object(clear_caches, "scan_tree", side_effect=AssertionError("rescanned")):
+                clear_caches.refresh_plan(plan, None)
+                lines, entries, size = clear_caches.execute_plan(plan, dry_run=False)
+
+            self.assertEqual((entries, size), (1, 5))
+            self.assertEqual(list(target_dir.iterdir()), [])
+
+    def test_refresh_plan_adds_children_created_after_planning(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            target_dir = Path(temporary_directory)
+            plan = clear_caches.plan_target(clear_caches.Target(target_dir, "Cache", "apps"), None)
+            (target_dir / "late.dat").write_text("late")
+
+            clear_caches.refresh_plan(plan, None)
+
+            self.assertEqual([item.path.name for item in plan.items], ["late.dat"])
+
+    def test_move_to_trash_keeps_same_named_items_distinct(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            first = root / "first" / "cache"
+            second = root / "second" / "cache"
+            first.parent.mkdir()
+            second.parent.mkdir()
+            first.write_text("first")
+            second.write_text("second")
+
+            with patch.object(Path, "home", return_value=root):
+                with patch.object(clear_caches.time, "time_ns", return_value=123):
+                    clear_caches.move_to_trash(first)
+                    clear_caches.move_to_trash(second)
+
+            trashed_items = sorted((root / ".Trash").iterdir())
+            self.assertEqual(len(trashed_items), 2)
+            self.assertEqual({item.read_text() for item in trashed_items}, {"first", "second"})
 
     def test_parse_schedule_time_valid(self) -> None:
         self.assertEqual(clear_caches.parse_schedule_time("03:30"), (3, 30))
@@ -133,6 +230,27 @@ class ClearCachesTests(unittest.TestCase):
         for static in clear_caches.TARGETS:
             self.assertIn(static.path, paths)
 
+    def test_cleanup_targets_skip_shared_tmp_and_the_run_log_directory(self) -> None:
+        self.assertNotIn("tmp", clear_caches.ALL_CATEGORIES)
+        self.assertFalse(any(target.path == Path("/private/tmp") for target in clear_caches.TARGETS))
+
+        log_targets = [target for target in clear_caches.TARGETS if target.category == "logs"]
+        self.assertTrue(log_targets)
+        self.assertFalse(any(clear_caches.LOG_DIR.is_relative_to(t.path) for t in log_targets))
+
+    def test_write_log_skips_root_runs(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            log_dir = Path(temporary_directory) / "logs"
+            output = io.StringIO()
+            with patch.object(clear_caches, "LOG_DIR", log_dir):
+                with patch.object(clear_caches, "is_root_user", return_value=True):
+                    with contextlib.redirect_stdout(output):
+                        log_path = clear_caches.write_log({})
+
+            self.assertIsNone(log_path)
+            self.assertFalse(log_dir.exists())
+            self.assertIn("Skipping JSON log", output.getvalue())
+
     def test_reindex_skips_sudo_tasks_when_not_root(self) -> None:
         output = io.StringIO()
         with patch("os.geteuid", return_value=1000, create=True):
@@ -141,7 +259,7 @@ class ClearCachesTests(unittest.TestCase):
                 with contextlib.redirect_stdout(output):
                     clear_caches.run_reindex(dry_run=False)
         stdout = output.getvalue()
-        self.assertIn("Skipped (wymaga uprawnień root / sudo)", stdout)
+        self.assertIn("Skipped (requires root; use --sudo)", stdout)
 
     def test_get_protected_pids_includes_self_and_vscode_pid(self) -> None:
         with patch.dict(os.environ, {"VSCODE_PID": "99999"}):
@@ -168,10 +286,14 @@ class ClearCachesTests(unittest.TestCase):
     bundleID="com.tinyspeck.slackmacgap"
     bundle path="/Applications/Slack.app"
     pid = 1004 type="Foreground"
- 5) "RandomDaemon" ASN:0x0-0x5555:
+ 5) "TextEdit" ASN:0x0-0x5555:
+    bundleID="com.apple.TextEdit"
+    bundle path="/Applications/TextEdit.app"
+    pid = 1005 type="Foreground"
+ 6) "RandomDaemon" ASN:0x0-0x6666:
     bundleID="com.example.daemon"
     bundle path="/Library/PrivilegedHelperTools/daemon"
-    pid = 1005 type="BackgroundOnly"
+    pid = 1006 type="BackgroundOnly"
 """
         with patch("subprocess.run") as mock_run:
             mock_run.return_value.returncode = 0
@@ -183,7 +305,87 @@ class ClearCachesTests(unittest.TestCase):
                 self.assertIn("Slack", app_names)
                 self.assertNotIn("Finder", app_names)
                 self.assertNotIn("Terminal", app_names)
+                self.assertNotIn("TextEdit", app_names)
                 self.assertNotIn("RandomDaemon", app_names)
+
+    def test_still_running_apps_drops_reused_pids(self) -> None:
+        chrome = clear_caches.RunningApp("Google Chrome", 1003, "com.google.Chrome")
+        slack = clear_caches.RunningApp("Slack", 1004, "com.tinyspeck.slackmacgap")
+        reused = clear_caches.RunningApp("Spotify", 1004, "com.spotify.client")
+        with patch.object(clear_caches, "get_running_applications", return_value=[chrome, reused]):
+            self.assertEqual(clear_caches.still_running_apps([chrome, slack]), [chrome])
+
+    def test_application_support_scan_skips_private_roots_and_service_workers(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            (root / "MobileSync" / "Backup" / "Cache").mkdir(parents=True)
+            (root / "PWA" / "Service Worker" / "CacheStorage").mkdir(parents=True)
+            (root / "PWA" / "Service Worker" / "Cache").mkdir(parents=True)
+
+            targets = clear_caches.application_support_cache_targets(root, known_paths=set())
+
+            self.assertEqual(targets, [])
+
+    def test_install_schedule_reloads_agent_and_fails_on_bootstrap_error(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            plist_path = root / "agent.plist"
+            calls: list[tuple[str, ...]] = []
+
+            def fake_launchctl(*arguments: str):
+                calls.append(arguments)
+                code = 5 if arguments[0] == "bootstrap" else 0
+                return clear_caches.subprocess.CompletedProcess(arguments, code, "", "boom")
+
+            with patch.object(clear_caches, "LAUNCH_AGENT_PATH", plist_path), \
+                    patch.object(clear_caches, "LOG_DIR", root / "logs"), \
+                    patch.object(clear_caches, "run_launchctl", side_effect=fake_launchctl), \
+                    contextlib.redirect_stderr(io.StringIO()) as error_output:
+                with self.assertRaises(SystemExit) as raised:
+                    clear_caches.install_schedule("03:00")
+
+            self.assertEqual(raised.exception.code, 1)
+            self.assertEqual([call[0] for call in calls], ["bootout", "bootstrap"])
+            self.assertIn("boom", error_output.getvalue())
+
+    def test_main_rejects_negative_older_than(self) -> None:
+        with patch("sys.argv", ["clear_caches.py", "--older-than", "-1"]):
+            with contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as raised:
+                    clear_caches.main()
+        self.assertEqual(raised.exception.code, 2)
+
+    def test_format_signed_size_handles_negative_delta(self) -> None:
+        self.assertEqual(clear_caches.format_signed_size(-2048), "-2.0KB")
+        self.assertEqual(clear_caches.format_signed_size(512), "+512B")
+
+    def test_send_notification_escapes_applescript_strings(self) -> None:
+        with patch("subprocess.run") as mock_run:
+            clear_caches.send_notification('Title "x"', 'a\\b "c"')
+        script = mock_run.call_args[0][0][2]
+        self.assertEqual(
+            script, 'display notification "a\\\\b \\"c\\"" with title "Title \\"x\\""'
+        )
+
+    def test_main_exclusions_do_not_mutate_category_constants(self) -> None:
+        all_categories = set(clear_caches.ALL_CATEGORIES)
+        default_categories = set(clear_caches.DEFAULT_CATEGORIES)
+        invocations = (
+            ["--exclude", "system"],
+            ["--all", "--exclude", "system"],
+        )
+
+        for arguments in invocations:
+            with self.subTest(arguments=arguments):
+                with patch("sys.argv", ["clear_caches.py", *arguments, "--dry-run", "--no-log"]):
+                    with patch.object(clear_caches, "get_all_targets", return_value=[]):
+                        with patch.object(clear_caches, "get_running_applications", return_value=[]):
+                            with patch.object(clear_caches, "maintenance_tasks", return_value=[]):
+                                with patch.object(clear_caches, "run_maintenance"):
+                                    clear_caches.main()
+
+        self.assertEqual(clear_caches.ALL_CATEGORIES, all_categories)
+        self.assertEqual(clear_caches.DEFAULT_CATEGORIES, default_categories)
 
     def test_close_running_applications_dry_run_does_not_kill(self) -> None:
         apps = [clear_caches.RunningApp(name="TestApp", pid=55555)]
@@ -278,6 +480,26 @@ class ClearCachesTests(unittest.TestCase):
         with patch("sys.argv", ["clear_caches.py", "--dry-run", "--categories", "trash"]):
             with patch("clear_caches.elevate_with_sudo") as mock_elevate, contextlib.redirect_stdout(output):
                 clear_caches.main()
+                mock_elevate.assert_not_called()
+
+    def test_main_rejects_root_trash_and_schedule_operations(self) -> None:
+        invocations = (
+            ["--sudo", "--to-trash"],
+            ["--to-trash"],
+            ["--sudo", "--install-schedule", "03:00"],
+            ["--install-schedule", "03:00"],
+        )
+        for arguments in invocations:
+            with self.subTest(arguments=arguments):
+                error_output = io.StringIO()
+                with patch("sys.argv", ["clear_caches.py", *arguments]):
+                    with patch.object(clear_caches, "is_root_user", return_value=True):
+                        with patch.object(clear_caches, "elevate_with_sudo") as mock_elevate:
+                            with contextlib.redirect_stderr(error_output):
+                                with self.assertRaises(SystemExit) as raised:
+                                    clear_caches.main()
+
+                self.assertEqual(raised.exception.code, 2)
                 mock_elevate.assert_not_called()
 
 

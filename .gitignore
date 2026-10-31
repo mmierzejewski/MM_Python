@@ -70,4 +70,3 @@ Thumbs.db
 # MacOSClearCache build artifacts
 MacOSClearCache/dist/
 MacOSClearCache/build/
-MacOSClearCache/*.spec

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import plistlib
 import re
@@ -29,18 +30,19 @@ class Target:
 # ---------------------------------------------------------------------------
 # Targets organised by category
 # ---------------------------------------------------------------------------
-# "system"      – generic OS-level caches (safe, enabled by default)
-# "trash"       – Kosz / Trash (safe, enabled by default)
-# "browsers"    – web browser caches (enabled by default)
-# "apps"        – popular app caches (Spotify, Zoom, Teams, Discord…)
+# Enabled by default: system, browsers, apps, quicklook, crashreports.
+#
+# "system"      – generic OS-level caches
+# "trash"       – Trash (~/.Trash)
+# "browsers"    – web browser caches
+# "apps"        – popular app caches (Slack, Spotify, Teams, Discord…)
 # "mail"        – Mail.app cache
 # "ios_backups" – iOS/iPadOS backups stored by iTunes/Finder (⚠ large, destructive)
 # "quicklook"   – QuickLook thumbnail cache
 # "crashreports"– crash & diagnostic reports
-# "tmp"         – system /tmp directory
 # "developer"   – Xcode / CoreSimulator artefacts (large but re-generatable)
 # "packages"    – package-manager caches (re-downloadable)
-# "logs"        – log files and crash reports
+# "logs"        – JetBrains IDE logs
 # "stale"       – leftovers: old JetBrains IDE settings, broken symlinks in bin dirs
 # "maintenance" – Homebrew cleanup/autoremove commands
 # ---------------------------------------------------------------------------
@@ -52,9 +54,9 @@ TARGETS: list[Target] = [
     Target(Path.home() / ".cache",
            "User Cache (~/.cache)", "system"),
 
-    # --- Kosz / Trash -------------------------------------------------------
+    # --- Trash ---------------------------------------------------------------
     Target(Path.home() / ".Trash",
-           "Kosz (Trash) (~/.Trash)", "trash"),
+           "Trash (~/.Trash)", "trash"),
 
     # --- Developer tools ----------------------------------------------------
     Target(Path.home() / "Library" / "Developer" / "Xcode" / "DerivedData",
@@ -106,11 +108,11 @@ TARGETS: list[Target] = [
     Target(Path.home() / "Library" / "Caches" / "pip",
            "pip Cache (macOS)", "packages"),
     Target(Path.home() / ".cache" / "pip",
-           "pip Cache (Linux/~/.cache/pip)", "packages"),
+           "pip Cache (~/.cache/pip)", "packages"),
     Target(Path.home() / "Library" / "Caches" / "pypoetry",
            "Poetry Cache (macOS)", "packages"),
     Target(Path.home() / ".cache" / "pypoetry",
-           "Poetry Cache (Linux)", "packages"),
+           "Poetry Cache (~/.cache/pypoetry)", "packages"),
     Target(Path.home() / ".cargo" / "registry" / "cache",
            "Cargo Registry Cache", "packages"),
     Target(Path.home() / "Library" / "Caches" / "CocoaPods",
@@ -149,10 +151,10 @@ TARGETS: list[Target] = [
            "Vivaldi Cache", "browsers"),
     Target(Path.home() / "Library" / "Caches" / "company.thebrowser.Browser",
            "Arc Browser Cache", "browsers"),
-    Target(Path.home() / "Library" / "Caches" / "com.tinyspeck.slackmacgap",
-           "Slack Cache", "browsers"),
 
     # --- Applications --------------------------------------------------------
+    Target(Path.home() / "Library" / "Caches" / "com.tinyspeck.slackmacgap",
+           "Slack Cache", "apps"),
     Target(
         Path.home() / "Library" / "Application Support" / "Spotify" / "PersistentCache",
         "Spotify Cache", "apps",
@@ -296,14 +298,6 @@ TARGETS: list[Target] = [
         "CrashReporter Logs", "crashreports",
     ),
 
-    # --- System /tmp --------------------------------------------------------
-    Target(Path("/private/tmp"),
-           "System Temporary Files (/tmp)", "tmp"),
-
-    # --- Logs & diagnostics -------------------------------------------------
-    Target(Path.home() / "Library" / "Logs",
-           "User Logs (~/Library/Logs)", "logs"),
-
     # --- Homebrew -------------------------------------------------------------
     Target(Path.home() / "Library" / "Caches" / "Homebrew",
            "Homebrew Download Cache", "packages"),
@@ -427,11 +421,25 @@ APPLICATION_SUPPORT_CACHE_NAMES = {
     "GraphiteDawnCache",
     "GrShaderCache",
     "ShaderCache",
-    "CacheStorage",
     "ScriptCache",
     "crx_cache",
 }
-NON_CACHE_DATA_DIRS = {"blob_storage", "content_cache", "thumbnails_cache", "indexeddb", "local storage"}
+# Persistent stores that may hold user data (offline content, PWA storage).
+NON_CACHE_DATA_DIRS = {
+    "blob_storage", "content_cache", "thumbnails_cache", "indexeddb", "local storage",
+    "service worker",
+}
+# Large or private top-level Application Support folders that never contain
+# regenerable caches; skipping them keeps the discovery scan fast.
+SKIPPED_APPLICATION_SUPPORT_ROOTS = {"MobileSync", "CloudDocs", "FileProvider", "CallHistoryDB", "Knowledge"}
+
+
+BROWSER_SUPPORT_ROOTS = (
+    ("Google", "Chrome"),
+    ("Microsoft Edge",),
+    ("BraveSoftware", "Brave-Browser"),
+    ("Chromium",),
+)
 
 
 def application_support_cache_targets(
@@ -455,6 +463,9 @@ def application_support_cache_targets(
             continue
         for name in tuple(directories):
             lowered_name = name.lower()
+            if depth == 0 and name in SKIPPED_APPLICATION_SUPPORT_ROOTS:
+                directories.remove(name)
+                continue
             if name.startswith(".") or lowered_name in NON_CACHE_DATA_DIRS:
                 directories.remove(name)
                 continue
@@ -471,13 +482,7 @@ def application_support_cache_targets(
             if relative.parts[0].startswith("com.apple.") or candidate in known_paths:
                 continue
 
-            browser_roots = {
-                ("Google", "Chrome"),
-                ("Microsoft Edge",),
-                ("BraveSoftware", "Brave-Browser"),
-                ("Chromium",),
-            }
-            if any(relative.parts[:len(prefix)] == prefix for prefix in browser_roots):
+            if any(relative.parts[:len(prefix)] == prefix for prefix in BROWSER_SUPPORT_ROOTS):
                 category = "browsers"
             elif relative.parts[0] == "Code":
                 category = "developer"
@@ -542,16 +547,51 @@ def load_external_targets() -> list[Target]:
             continue
         try:
             entries = json.loads(config_path.read_text())
-        except (OSError, json.JSONDecodeError) as exc:
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
             print(f"  [info] Could not read {config_path}: {exc}")
             continue
-        for entry in entries:
+        if not isinstance(entries, list):
+            print(f"  [info] Skipping malformed config {config_path}: expected a JSON list")
+            continue
+        for index, entry in enumerate(entries, start=1):
+            if not isinstance(entry, dict):
+                print(f"  [info] Skipping malformed entry {index} in {config_path}: expected an object")
+                continue
+
+            path_value = entry.get("path")
+            label = entry.get("label")
+            category = entry.get("category")
+            if not isinstance(path_value, str) or not path_value.strip():
+                print(f"  [info] Skipping malformed entry {index} in {config_path}: invalid path")
+                continue
+            if not isinstance(label, str) or not label.strip():
+                print(f"  [info] Skipping malformed entry {index} in {config_path}: invalid label")
+                continue
+            if not isinstance(category, str) or category not in ALL_CATEGORIES:
+                print(f"  [info] Skipping malformed entry {index} in {config_path}: invalid category")
+                continue
+
             try:
-                extra.append(
-                    Target(Path(entry["path"]).expanduser(), entry["label"], entry["category"])
+                path = Path(path_value).expanduser()
+                if not path.is_absolute():
+                    raise ValueError("path must be absolute")
+                path = path.resolve()
+                home = Path.home().resolve()
+            except (OSError, RuntimeError, ValueError) as exc:
+                print(f"  [info] Skipping malformed entry {index} in {config_path}: {exc}")
+                continue
+
+            if home.is_relative_to(path):
+                print(
+                    f"  [info] Skipping unsafe entry {index} in {config_path}: "
+                    "path is the home directory or one of its parents"
                 )
-            except KeyError as exc:
-                print(f"  [info] Skipping malformed entry in {config_path}: missing {exc}")
+                continue
+            if path.exists() and not path.is_dir():
+                print(f"  [info] Skipping malformed entry {index} in {config_path}: not a directory")
+                continue
+
+            extra.append(Target(path, label.strip(), category))
     return extra
 
 
@@ -576,17 +616,16 @@ def get_all_targets() -> list[Target]:
 
 CATEGORY_LABELS: dict[str, str] = {
     "system":       "System Caches",
-    "trash":        "Kosz (Trash)",
+    "trash":        "Trash",
     "browsers":     "Browser Caches",
     "apps":         "Application Caches",
     "mail":         "Mail Cache",
     "ios_backups":  "iOS/iPadOS Backups ⚠",
     "quicklook":    "QuickLook Cache",
     "crashreports": "Crash & Diagnostic Reports",
-    "tmp":          "System /tmp",
     "developer":    "Developer Tools",
     "packages":     "Package Managers",
-    "logs":         "Logs & Diagnostics",
+    "logs":         "JetBrains IDE Logs",
     "stale":        "Stale Leftovers (old IDE settings, broken symlinks)",
     "maintenance":  "Homebrew Maintenance (cleanup, autoremove)",
 }
@@ -609,56 +648,187 @@ def format_size(size_bytes: int) -> str:
     return f"{size_bytes}B"  # unreachable; satisfies type-checkers
 
 
-def path_size(path: Path) -> int:
-    if not path.exists():
-        return 0
-    if path.is_file():
-        return path.stat().st_size
-    total = 0
-    for item in path.rglob("*"):
-        try:
-            if item.is_file():
-                total += item.stat().st_size
-        except OSError:
-            continue
-    return total
+@dataclass
+class TreeScan:
+    size: int = 0
+    is_old: bool = True
+    errors: int = 0
 
 
-def sizes_in_parallel(paths: list[Path]) -> dict[Path, int]:
-    """Compute path_size for many top-level paths concurrently (I/O bound)."""
-    if not paths:
-        return {}
-    with ThreadPoolExecutor(max_workers=min(16, len(paths))) as pool:
-        results = pool.map(path_size, paths)
-    return dict(zip(paths, results))
+def scan_tree(path: Path, cutoff: float | None = None) -> TreeScan:
+    """Walk a tree once without following symlinks, summing regular-file sizes
+    and checking whether every entry is older than ``cutoff``.
 
-
-def move_to_trash(item: Path) -> None:
-    trash_dir = Path.home() / ".Trash"
-    trash_dir.mkdir(exist_ok=True)
-    destination = trash_dir / item.name
-    if destination.exists():
-        destination = trash_dir / f"{item.name}.{int(time.time())}"
-    shutil.move(str(item), str(destination))
-
-
-def tree_is_older_than(path: Path, cutoff: float) -> bool:
+    Any entry that cannot be inspected makes the tree count as "not old", so
+    age-filtered runs never remove something whose age is unknown.
+    """
+    result = TreeScan()
     pending = [path]
     while pending:
         current = pending.pop()
         try:
             metadata = current.lstat()
         except OSError:
-            return False
-        if metadata.st_mtime > cutoff:
-            return False
-        if stat.S_ISDIR(metadata.st_mode):
+            result.errors += 1
+            result.is_old = False
+            continue
+        if cutoff is not None and metadata.st_mtime > cutoff:
+            result.is_old = False
+        if stat.S_ISREG(metadata.st_mode):
+            result.size += metadata.st_size
+        elif stat.S_ISDIR(metadata.st_mode):
             try:
                 with os.scandir(current) as children:
                     pending.extend(Path(child.path) for child in children)
             except OSError:
-                return False
-    return True
+                result.errors += 1
+                result.is_old = False
+    return result
+
+
+def path_size(path: Path) -> int:
+    if not os.path.lexists(path):
+        return 0
+    return scan_tree(path).size
+
+
+def age_cutoff(older_than_days: float | None) -> float | None:
+    return time.time() - older_than_days * 86400 if older_than_days is not None else None
+
+
+@dataclass
+class PlannedItem:
+    path: Path
+    size: int
+    eligible: bool
+
+
+@dataclass
+class TargetPlan:
+    target: Target
+    items: list[PlannedItem]
+    warnings: list[str]
+    scan_errors: int = 0
+
+    @property
+    def size(self) -> int:
+        return sum(item.size for item in self.items if item.eligible)
+
+
+def plan_item(path: Path, cutoff: float | None) -> tuple[PlannedItem, int]:
+    scan = scan_tree(path, cutoff)
+    return PlannedItem(path, scan.size, cutoff is None or scan.is_old), scan.errors
+
+
+def list_children(path: Path) -> tuple[list[Path], list[str]]:
+    try:
+        return list(path.iterdir()), []
+    except (FileNotFoundError, NotADirectoryError):
+        return [], []
+    except PermissionError as exc:
+        return [], [
+            f"  Warning – no permission to read {path}: {exc}",
+            "  Tip: grant Full Disk Access to Terminal in System Settings → Privacy & Security.",
+        ]
+    except OSError as exc:
+        return [], [f"  Warning – could not read {path}: {exc}"]
+
+
+def plan_target(target: Target, cutoff: float | None) -> TargetPlan:
+    """Scan a target once and record each removable item with its size and
+    age eligibility."""
+    plan = TargetPlan(target, [], [])
+    if target.remove_self:
+        candidates = [target.path] if os.path.lexists(target.path) else []
+    else:
+        candidates, plan.warnings = list_children(target.path)
+    for candidate in candidates:
+        item, errors = plan_item(candidate, cutoff)
+        plan.items.append(item)
+        plan.scan_errors += errors
+    return plan
+
+
+def plan_targets_in_parallel(targets: list[Target], cutoff: float | None) -> dict[Path, TargetPlan]:
+    """Plan many targets concurrently (I/O bound)."""
+    if not targets:
+        return {}
+    with ThreadPoolExecutor(max_workers=min(16, len(targets))) as pool:
+        plans = list(pool.map(lambda target: plan_target(target, cutoff), targets))
+    return {plan.target.path: plan for plan in plans}
+
+
+def refresh_plan(plan: TargetPlan, cutoff: float | None) -> None:
+    """Add children created since planning (e.g. by apps that were just closed)."""
+    if plan.target.remove_self:
+        return
+    known = {item.path for item in plan.items}
+    children, _ = list_children(plan.target.path)
+    for child in children:
+        if child not in known:
+            item, errors = plan_item(child, cutoff)
+            plan.items.append(item)
+            plan.scan_errors += errors
+
+
+def move_to_trash(item: Path) -> None:
+    trash_dir = Path.home() / ".Trash"
+    trash_dir.mkdir(exist_ok=True)
+    destination = trash_dir / item.name
+    if os.path.lexists(destination):
+        timestamp = time.time_ns()
+        suffix = 0
+        while True:
+            candidate = trash_dir / f"{item.name}.{timestamp}.{suffix}"
+            if not os.path.lexists(candidate):
+                destination = candidate
+                break
+            suffix += 1
+    shutil.move(str(item), str(destination))
+
+
+def remove_item(path: Path, to_trash: bool) -> str:
+    if to_trash:
+        move_to_trash(path)
+        return f"  Moved to Trash: {path}"
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path)
+    else:
+        path.unlink()
+    return f"  Removed: {path}"
+
+
+def execute_plan(
+    plan: TargetPlan,
+    dry_run: bool,
+    to_trash: bool = False,
+) -> tuple[list[str], int, int]:
+    """Returns (output_lines, removed_entries, reclaimed_bytes)."""
+    lines = list(plan.warnings)
+    removed_entries = 0
+    reclaimed_bytes = 0
+    for item in plan.items:
+        if not item.eligible:
+            lines.append(f"  [skipped-age] recent or age unavailable: {item.path}")
+            continue
+        if dry_run:
+            verb = "would move to Trash" if to_trash else "would remove"
+            lines.append(f"  [dry-run] {verb}: {item.path}")
+        else:
+            if not os.path.lexists(item.path):
+                continue
+            try:
+                lines.append(remove_item(item.path, to_trash))
+            except PermissionError as exc:
+                hint = " (try --sudo)" if plan.target.remove_self else ""
+                lines.append(f"  Warning – could not remove {item.path}: {exc}{hint}")
+                continue
+            except OSError as exc:
+                lines.append(f"  Warning – could not remove {item.path}: {exc}")
+                continue
+        removed_entries += 1
+        reclaimed_bytes += item.size
+    return lines, removed_entries, reclaimed_bytes
 
 
 def clear_directory(
@@ -667,55 +837,9 @@ def clear_directory(
     older_than_days: float | None = None,
     to_trash: bool = False,
 ) -> tuple[list[str], int, int]:
-    """Returns (output_lines, removed_entries, reclaimed_bytes)."""
-    if not path.exists():
-        return [], 0, 0
-
-    removed_entries = 0
-    reclaimed_bytes = 0
-    lines: list[str] = []
-
-    try:
-        children = list(path.iterdir())
-    except PermissionError as exc:
-        lines.append(f"  Warning – no permission to read {path}: {exc}")
-        lines.append(
-            "  Tip: grant Full Disk Access to Terminal in System Settings → Privacy & Security."
-        )
-        return lines, 0, 0
-
-    cutoff = time.time() - older_than_days * 86400 if older_than_days is not None else None
-
-    for item in children:
-        if cutoff is not None and not tree_is_older_than(item, cutoff):
-            lines.append(f"  [skipped-age] recent or age unavailable: {item}")
-            continue
-
-        item_size = path_size(item)
-        removed_entries += 1
-        reclaimed_bytes += item_size
-
-        if dry_run:
-            verb = "would move to Trash" if to_trash else "would remove"
-            lines.append(f"  [dry-run] {verb}: {item}")
-            continue
-
-        try:
-            if to_trash:
-                move_to_trash(item)
-                lines.append(f"  Moved to Trash: {item}")
-            else:
-                if item.is_dir() and not item.is_symlink():
-                    shutil.rmtree(item)
-                else:
-                    item.unlink()
-                lines.append(f"  Removed: {item}")
-        except OSError as exc:
-            lines.append(f"  Warning – could not remove {item}: {exc}")
-            removed_entries -= 1
-            reclaimed_bytes -= item_size
-
-    return lines, removed_entries, reclaimed_bytes
+    """Empty a directory. Returns (output_lines, removed_entries, reclaimed_bytes)."""
+    plan = plan_target(Target(path, str(path), ""), age_cutoff(older_than_days))
+    return execute_plan(plan, dry_run, to_trash)
 
 
 def remove_path(
@@ -726,30 +850,8 @@ def remove_path(
 ) -> tuple[list[str], int, int]:
     """Remove the item itself (dir, file, or broken symlink).
     Returns (output_lines, removed_entries, reclaimed_bytes)."""
-    if not os.path.lexists(path):
-        return [], 0, 0
-    if older_than_days is not None and not tree_is_older_than(
-        path, time.time() - older_than_days * 86400
-    ):
-        return [f"  [skipped-age] recent or age unavailable: {path}"], 0, 0
-
-    size = path_size(path)
-    if dry_run:
-        verb = "would move to Trash" if to_trash else "would remove"
-        return [f"  [dry-run] {verb}: {path}"], 1, size
-    try:
-        if to_trash:
-            move_to_trash(path)
-            return [f"  Moved to Trash: {path}"], 1, size
-        if path.is_dir() and not path.is_symlink():
-            shutil.rmtree(path)
-        else:
-            path.unlink()
-        return [f"  Removed: {path}"], 1, size
-    except PermissionError as exc:
-        return [f"  Warning – could not remove {path}: {exc} (try --sudo)"], 0, 0
-    except OSError as exc:
-        return [f"  Warning – could not remove {path}: {exc}"], 0, 0
+    plan = plan_target(Target(path, str(path), "", remove_self=True), age_cutoff(older_than_days))
+    return execute_plan(plan, dry_run, to_trash)
 
 
 def resolve_targets(targets: list[Target]) -> list[Target]:
@@ -775,7 +877,10 @@ def resolve_targets(targets: list[Target]) -> list[Target]:
 
 
 def confirm(total_size: int, to_trash: bool, apps_count: int = 0) -> bool:
-    print(f"\nEstimated space to reclaim: {format_size(total_size)}")
+    if to_trash:
+        print(f"\nEstimated size to move to Trash: {format_size(total_size)}")
+    else:
+        print(f"\nEstimated space to reclaim: {format_size(total_size)}")
     action = "move the listed items to Trash" if to_trash else "permanently delete the listed items"
     if apps_count > 0:
         warning = f"This will force-quit {apps_count} running application(s) and {action}."
@@ -790,8 +895,15 @@ def confirm_category(category_label: str) -> bool:
     return reply.strip().lower() in {"y", "yes"}
 
 
+def applescript_string(value: str) -> str:
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
 def send_notification(title: str, message: str) -> None:
-    script = f'display notification "{message}" with title "{title}"'
+    script = (
+        f"display notification {applescript_string(message)} "
+        f"with title {applescript_string(title)}"
+    )
     try:
         subprocess.run(["osascript", "-e", script], capture_output=True, timeout=5)
     except (OSError, subprocess.TimeoutExpired):
@@ -802,6 +914,9 @@ LOG_DIR = Path.home() / "Library" / "Logs" / "clear_caches"
 
 
 def write_log(summary: dict) -> Path | None:
+    if is_root_user():
+        print("  [info] Skipping JSON log while running as root")
+        return None
     try:
         LOG_DIR.mkdir(parents=True, exist_ok=True)
         log_path = LOG_DIR / f"clear_caches_{datetime.now():%Y%m%d_%H%M%S}.json"
@@ -820,7 +935,7 @@ def schedule_program_arguments() -> list[str]:
     arguments = [sys.executable]
     if not getattr(sys, "frozen", False):
         arguments.append(str(Path(__file__).resolve()))
-    arguments.extend(["--yes", "--no-reindex"])
+    arguments.extend(["--yes", "--no-reindex", "--no-kill-apps"])
     return arguments
 
 
@@ -829,12 +944,12 @@ def parse_schedule_time(time_str: str) -> tuple[int, int]:
     parts = time_str.strip().split(":")
     if len(parts) != 2 or not (parts[0].isdigit() and parts[1].isdigit()):
         raise ValueError(
-            f"Nieprawidłowy format czasu '{time_str}'. Oczekiwano HH:MM (np. 03:00 lub 14:30)."
+            f"Invalid time format '{time_str}'. Expected HH:MM (e.g. 03:00 or 14:30)."
         )
     hour, minute = int(parts[0]), int(parts[1])
     if not (0 <= hour <= 23 and 0 <= minute <= 59):
         raise ValueError(
-            f"Wartość czasu poza zakresem '{time_str}'. Godzina musi być w zakresie 0-23, a minuty 0-59."
+            f"Time out of range '{time_str}'. Hour must be 0-23 and minute 0-59."
         )
     return hour, minute
 
@@ -843,7 +958,7 @@ def install_schedule(time_str: str) -> None:
     try:
         hour, minute = parse_schedule_time(time_str)
     except ValueError as exc:
-        print(f"Błąd: {exc}", file=sys.stderr)
+        print(f"Error: {exc}", file=sys.stderr)
         sys.exit(1)
 
     plist = {
@@ -858,16 +973,44 @@ def install_schedule(time_str: str) -> None:
     }
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     LAUNCH_AGENT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    # Unload any previous version first so reinstalling picks up the new plist.
+    run_launchctl("bootout", f"{launchd_domain()}/{LAUNCH_AGENT_LABEL}")
     LAUNCH_AGENT_PATH.write_bytes(plistlib.dumps(plist, fmt=plistlib.FMT_XML, sort_keys=False))
-    subprocess.run(["launchctl", "load", "-w", str(LAUNCH_AGENT_PATH)], capture_output=True)
-    print(f"Zaplanowano codzienne uruchamianie o {hour:02d}:{minute:02d} -> {LAUNCH_AGENT_PATH}")
+    result = run_launchctl("bootstrap", launchd_domain(), str(LAUNCH_AGENT_PATH))
+    if result.returncode != 0:
+        print(
+            f"Error: launchctl bootstrap failed: {launchctl_error(result)}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    print(f"Scheduled daily run at {hour:02d}:{minute:02d} -> {LAUNCH_AGENT_PATH}")
 
 
 def uninstall_schedule() -> None:
-    subprocess.run(["launchctl", "unload", str(LAUNCH_AGENT_PATH)], capture_output=True)
+    result = run_launchctl("bootout", f"{launchd_domain()}/{LAUNCH_AGENT_LABEL}")
+    if result.returncode != 0 and LAUNCH_AGENT_PATH.exists():
+        print(f"  [info] launchctl bootout: {launchctl_error(result)}")
     if LAUNCH_AGENT_PATH.exists():
         LAUNCH_AGENT_PATH.unlink()
-    print(f"Usunięto harmonogram: {LAUNCH_AGENT_PATH}")
+    print(f"Removed schedule: {LAUNCH_AGENT_PATH}")
+
+
+def launchd_domain() -> str:
+    return f"gui/{os.getuid()}"
+
+
+def run_launchctl(*arguments: str) -> subprocess.CompletedProcess[str]:
+    try:
+        return subprocess.run(
+            ["launchctl", *arguments], capture_output=True, text=True, timeout=30
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return subprocess.CompletedProcess(["launchctl", *arguments], 1, "", str(exc))
+
+
+def launchctl_error(result: subprocess.CompletedProcess[str]) -> str:
+    output = (result.stderr or result.stdout or "").strip()
+    return output.splitlines()[0] if output else f"exit code {result.returncode}"
 
 
 # ---------------------------------------------------------------------------
@@ -886,7 +1029,7 @@ def elevate_with_sudo() -> None:
 
     sudo_bin = shutil.which("sudo") or "/usr/bin/sudo"
     if not os.path.exists(sudo_bin):
-        sys.exit("Błąd: polecenie 'sudo' nie jest dostępne w tym systemie.")
+        sys.exit("Error: the 'sudo' command is not available on this system.")
 
     args_to_pass = list(sys.argv[1:])
     if "--sudo" not in args_to_pass:
@@ -900,7 +1043,7 @@ def elevate_with_sudo() -> None:
     try:
         os.execvp(sudo_bin, exec_args)
     except OSError as exc:
-        sys.exit(f"Nie udało się podnieść uprawnień przez sudo: {exc}")
+        sys.exit(f"Could not elevate privileges with sudo: {exc}")
 
 
 # ---------------------------------------------------------------------------
@@ -917,14 +1060,8 @@ class ReindexTask:
 
 REINDEX_TASKS: list[ReindexTask] = [
     ReindexTask(
-        label="Spotlight – disable index (flush)",
-        cmd=["mdutil", "-i", "off", "/"],
-        note="Requires sudo",
-        requires_sudo=True,
-    ),
-    ReindexTask(
-        label="Spotlight – enable & rebuild index",
-        cmd=["mdutil", "-i", "on", "/"],
+        label="Spotlight – erase & rebuild index",
+        cmd=["mdutil", "-E", "/"],
         note="Requires sudo",
         requires_sudo=True,
     ),
@@ -933,7 +1070,7 @@ REINDEX_TASKS: list[ReindexTask] = [
         cmd=[
             "/System/Library/Frameworks/CoreServices.framework"
             "/Frameworks/LaunchServices.framework/Support/lsregister",
-            "-kill", "-r",
+            "-r",
             "-domain", "local",
             "-domain", "system",
             "-domain", "user",
@@ -979,7 +1116,7 @@ def run_reindex(dry_run: bool) -> None:
             print(f"  [dry-run] would run: {' '.join(task.cmd)}{note}")
             continue
         if task.requires_sudo and not is_root:
-            print(f"  ▶ {task.label}{note} … Skipped (wymaga uprawnień root / sudo) [użyj --sudo]")
+            print(f"  ▶ {task.label}{note} … Skipped (requires root; use --sudo)")
             continue
         print(f"  ▶ {task.label}{note} … ", end="", flush=True)
         try:
@@ -1238,17 +1375,12 @@ def get_running_applications() -> list[RunningApp]:
                     if "code" in lower_name or "vscode" in lower_bundle:
                         continue
 
-                is_foreground = (app_type == "Foreground")
                 matches_target = (
                     lower_name in TARGET_APP_NAMES
                     or any(bundle_id.startswith(p) for p in TARGET_BUNDLE_PREFIXES)
                 )
-                is_user_app = (
-                    bundle_path.startswith("/Applications")
-                    or bundle_path.startswith(str(Path.home() / "Applications"))
-                ) and app_type == "Foreground"
 
-                if is_foreground or matches_target or is_user_app:
+                if matches_target:
                     seen_pids.add(pid)
                     apps.append(
                         RunningApp(
@@ -1265,6 +1397,17 @@ def get_running_applications() -> list[RunningApp]:
     return apps
 
 
+def still_running_apps(apps: list[RunningApp]) -> list[RunningApp]:
+    """Keep only apps whose PID still belongs to the same application.
+
+    This narrows, but cannot close, the window in which a PID reused after
+    confirmation could be signalled, because the check and kill are separate."""
+    if not apps:
+        return []
+    current = {(app.pid, app.name, app.bundle_id) for app in get_running_applications()}
+    return [app for app in apps if (app.pid, app.name, app.bundle_id) in current]
+
+
 def close_running_applications(
     apps: list[RunningApp],
     dry_run: bool = False,
@@ -1274,7 +1417,7 @@ def close_running_applications(
         return []
 
     lines: list[str] = []
-    print(f"\n[Wymuszenie zamknięcia programów / Force-Closing Applications ({len(apps)})]")
+    print(f"\n[Force-Closing Applications ({len(apps)})]")
 
     if dry_run:
         for app in apps:
@@ -1323,14 +1466,29 @@ def close_running_applications(
             lines.append(f"  Closed: {app.name} (PID {app.pid})")
             closed_count += 1
 
-    print(f"Zakończono zamykanie programów ({closed_count}/{len(apps)}).\n")
+    print(f"Finished closing applications ({closed_count}/{len(apps)}).\n")
     return lines
+
+
+def non_negative_days(value: str) -> float:
+    try:
+        days = float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"invalid number of days: {value!r}") from None
+    if not math.isfinite(days) or days < 0:
+        raise argparse.ArgumentTypeError(f"number of days must be a non-negative number: {value!r}")
+    return days
+
+
+def format_signed_size(size_bytes: int) -> str:
+    sign = "-" if size_bytes < 0 else "+"
+    return f"{sign}{format_size(abs(size_bytes))}"
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Clear cache files, temporary files, and Trash on macOS/Linux.\n\n"
+            "Clear cache files, logs, and Trash on macOS.\n\n"
             "Categories:\n"
             + "\n".join(
                 f"  {k:12s} – {v}" for k, v in CATEGORY_LABELS.items()
@@ -1351,7 +1509,7 @@ def main() -> int:
     parser.add_argument(
         "--sudo",
         action="store_true",
-        help="Re-execute with root privileges via sudo (automatyczne podniesienie uprawnień).",
+        help="Re-execute with root privileges via sudo if not already root.",
     )
     cat_group = parser.add_mutually_exclusive_group()
     cat_group.add_argument(
@@ -1395,7 +1553,7 @@ def main() -> int:
     parser.add_argument(
         "--older-than",
         metavar="DAYS",
-        type=float,
+        type=non_negative_days,
         default=None,
         help="Only remove items last modified more than DAYS days ago.",
     )
@@ -1437,22 +1595,29 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    if args.sudo:
-        elevate_with_sudo()
-
     if args.install_schedule:
+        if args.sudo or is_root_user():
+            parser.error("Schedule management must run as the logged-in user, without --sudo")
         install_schedule(args.install_schedule)
         return 0
     if args.uninstall_schedule:
+        if args.sudo or is_root_user():
+            parser.error("Schedule management must run as the logged-in user, without --sudo")
         uninstall_schedule()
         return 0
 
+    if args.to_trash and (args.sudo or is_root_user()):
+        parser.error("--to-trash cannot be used with --sudo or when running as root")
+
+    if args.sudo:
+        elevate_with_sudo()
+
     if args.all:
-        active_categories = ALL_CATEGORIES
+        active_categories = set(ALL_CATEGORIES)
     elif args.categories:
         active_categories = set(args.categories)
     else:
-        active_categories = DEFAULT_CATEGORIES
+        active_categories = set(DEFAULT_CATEGORIES)
 
     if args.exclude:
         active_categories -= set(args.exclude)
@@ -1468,8 +1633,10 @@ def main() -> int:
     for t in active_targets:
         cats_to_targets.setdefault(t.category, []).append(t)
 
-    # Compute and cache sizes up-front in parallel (avoids double disk scan)
-    size_cache: dict[Path, int] = sizes_in_parallel([t.path for t in active_targets])
+    # Scan every target once; the plan is reused for cleaning, so sizes and
+    # age checks are not recomputed.
+    cutoff = age_cutoff(args.older_than)
+    plans = plan_targets_in_parallel(active_targets, cutoff)
     apps_to_close = get_running_applications() if not args.no_kill_apps else []
 
     # Print plan grouped by category
@@ -1479,8 +1646,10 @@ def main() -> int:
             continue
         print(f"\n[{CATEGORY_LABELS[cat]}]")
         for t in cat_targets:
+            plan = plans[t.path]
             exists = "✓" if os.path.lexists(t.path) else "–"
-            print(f"  {exists} {t.label}  ({format_size(size_cache[t.path])})")
+            note = f", {plan.scan_errors} unreadable item(s)" if plan.scan_errors else ""
+            print(f"  {exists} {t.label}  ({format_size(plan.size)}{note})")
 
     brew_tasks = maintenance_tasks() if "maintenance" in active_categories else []
     if brew_tasks:
@@ -1493,13 +1662,15 @@ def main() -> int:
         for app in apps_to_close:
             print(f"  ▶ {app.name} (PID: {app.pid})")
 
-    total_size = sum(size_cache.values())
+    total_size = sum(plan.size for plan in plans.values())
 
     if not args.dry_run and not args.yes and not confirm(total_size, args.to_trash, apps_count=len(apps_to_close)):
         print("Cancelled.")
         return 1
 
-    if not args.no_kill_apps and apps_to_close:
+    if apps_to_close:
+        if not args.dry_run:
+            apps_to_close = still_running_apps(apps_to_close)
         close_running_applications(apps_to_close, dry_run=args.dry_run)
 
     disk_before = shutil.disk_usage(Path.home()).free if not args.dry_run else None
@@ -1520,15 +1691,18 @@ def main() -> int:
         cat_entries = 0
         cat_bytes = 0
         for t in cat_targets:
-            cleaner = remove_path if t.remove_self else clear_directory
-            lines, entries, size_bytes = cleaner(
-                t.path, args.dry_run, older_than_days=args.older_than, to_trash=args.to_trash
-            )
+            plan = plans[t.path]
+            if not args.dry_run:
+                refresh_plan(plan, cutoff)
+            lines, entries, size_bytes = execute_plan(plan, args.dry_run, to_trash=args.to_trash)
             grand_entries += entries
             grand_bytes += size_bytes
             cat_entries += entries
             cat_bytes += size_bytes
-            verb = "would remove" if args.dry_run else "removed"
+            if args.to_trash:
+                verb = "would move to Trash" if args.dry_run else "moved to Trash"
+            else:
+                verb = "would remove" if args.dry_run else "removed"
             if lines or entries:
                 cat_block.extend(lines)
                 if entries:
@@ -1542,7 +1716,10 @@ def main() -> int:
         if cat_entries:
             category_summary[cat] = {"entries": cat_entries, "bytes": cat_bytes}
 
-    verb = "Would reclaim" if args.dry_run else "Reclaimed"
+    if args.to_trash:
+        verb = "Would move to Trash" if args.dry_run else "Moved to Trash"
+    else:
+        verb = "Would reclaim" if args.dry_run else "Reclaimed"
     print(
         f"Done. {verb} ~{format_size(grand_bytes)} across {grand_entries} item(s)."
     )
@@ -1555,7 +1732,7 @@ def main() -> int:
     if disk_before is not None:
         disk_after = shutil.disk_usage(Path.home()).free
         print(f"Free disk space: {format_size(disk_before)} -> {format_size(disk_after)} "
-              f"(+{format_size(disk_after - disk_before)})")
+              f"({format_signed_size(disk_after - disk_before)})")
 
     if args.reindex:
         run_reindex(args.dry_run)
@@ -1571,10 +1748,13 @@ def main() -> int:
             "categories": category_summary,
         })
         if log_path:
-            print(f"Log zapisany: {log_path}")
+            print(f"Log written: {log_path}")
 
     if not args.dry_run and not args.no_notify:
-        send_notification("Clear Caches", f"Zwolniono {format_size(grand_bytes)} ({grand_entries} elementów).")
+        action = "Moved to Trash" if args.to_trash else "Reclaimed"
+        send_notification(
+            "Clear Caches", f"{action} {format_size(grand_bytes)} ({grand_entries} items)."
+        )
 
     return 0
 
