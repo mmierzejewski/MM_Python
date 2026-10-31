@@ -37,12 +37,11 @@ system reindexing.
   item in its tree is older than the threshold. If any item is newer or its
   age cannot be checked, the whole top-level item is skipped.
 - **Move to Trash option** – `--to-trash` moves items to `~/.Trash` instead of
-  permanently deleting them. It is unavailable when running as root or with
-  `--sudo`.
+  permanently deleting them.
 - **Interactive mode** – `--interactive` asks for per-category confirmation.
 - **External target config** – add extra paths without editing the script via
   a `targets.json` file (see [Custom targets](#custom-targets)).
-- **JSON run log** – a summary of non-root runs is written to
+- **JSON run log** – a summary of each run is written to
   `~/Library/Logs/clear_caches/` unless `--no-log` is passed.
 - **macOS notification** – a notification is shown on completion unless
   `--no-notify` is passed.
@@ -54,9 +53,11 @@ system reindexing.
 - **Scheduling** – `--install-schedule HH:MM` installs (or reinstalls) a
   `launchd` agent via `launchctl bootstrap` to run the cleanup daily;
   `--uninstall-schedule` removes it.
-- **System reindexing** – optionally runs Spotlight, DNS/mDNSResponder, Launch
-  Services, font-cache, QuickLook, Dock, and Finder maintenance tasks with
-  `--reindex` (off by default).
+- **System reindexing** – optionally runs DNS cache flush, Launch Services,
+  QuickLook, Dock, and Finder maintenance tasks with `--reindex` (off by
+  default).
+- **No sudo required** – everything runs as the logged-in user; the script
+  refuses to run as root.
 
 ## Requirements
 
@@ -88,24 +89,6 @@ supported. Scheduled runs use the executable directly.
 Rebuild the executable after every change to `clear_caches.py`; otherwise
 `dist/clear_caches` keeps running the old code.
 
-### Root-only cleanup wrapper
-
-`clear_caches_sudo.sh` runs the `stale` category with `sudo` and
-`--no-kill-apps` (needed for broken symlinks in `/usr/local/bin`):
-
-```bash
-./clear_caches_sudo.sh --dry-run   # preview as root
-./clear_caches_sudo.sh             # clean
-```
-
-- Uses `dist/clear_caches` when it is not older than `clear_caches.py`;
-  otherwise warns and falls back to Python.
-- The Python interpreter is resolved before `sudo` (so an active virtualenv
-  is used); override it with `PYTHON=/path/to/python3`. Python 3.10+ is
-  required.
-- Extra options (e.g. `--dry-run`, `--yes`) are passed through;
-  `--all`, `--categories`, and `--exclude` are rejected.
-
 ### Common examples
 
 ```bash
@@ -126,9 +109,6 @@ python3 clear_caches.py --all --exclude ios_backups
 
 # Remove stale leftovers and run Homebrew cleanup/autoremove (preview first)
 python3 clear_caches.py --categories stale maintenance --dry-run
-
-# Run with elevated privileges via sudo (e.g. for stale root symlinks or full reindexing)
-python3 clear_caches.py --sudo --categories stale
 
 # Clean caches without closing running applications
 python3 clear_caches.py --no-kill-apps
@@ -152,14 +132,13 @@ python3 clear_caches.py --uninstall-schedule
 | --- | --- |
 | `--dry-run` | Show what would be removed without deleting anything. |
 | `--yes` | Skip the confirmation prompt. |
-| `--sudo` | Re-execute script with root privileges via `sudo` if not already root. |
 | `--all` | Enable all categories. |
 | `--categories CAT [CAT ...]` | Space-separated list of categories to clean (default: `apps browsers crashreports quicklook system`). |
 | `--exclude CAT [CAT ...]` | Space-separated list of categories to exclude. |
-| `--reindex` | Run Spotlight/DNS/Launch Services/etc. maintenance after cleaning. |
+| `--reindex` | Run DNS/Launch Services/QuickLook/Dock/Finder maintenance after cleaning. |
 | `--no-reindex` | Keep the default of skipping reindexing (useful in scripts). |
 | `--older-than DAYS` | Only remove top-level items whose complete tree is older than `DAYS` (a non-negative number); newer or unverifiable trees are skipped. |
-| `--to-trash` | Move items to `~/.Trash` instead of permanently deleting them. Cannot be used with `--sudo` or as root. |
+| `--to-trash` | Move items to `~/.Trash` instead of permanently deleting them. |
 | `--interactive` | Ask for confirmation before cleaning each category. |
 | `--no-kill-apps` | Do not force-quit running applications before cleaning caches. |
 | `--no-log` | Do not write a JSON summary log. |
@@ -182,8 +161,8 @@ python3 clear_caches.py --uninstall-schedule
 | `developer` | Xcode/CoreSimulator artefacts, VS Code caches, JetBrains caches (re-generatable) | – |
 | `packages` | Package-manager caches: npm, Yarn, pnpm, Gradle, pip, Poetry, Cargo, CocoaPods, Composer, uv, Gem, Bundler, Go modules, Maven, Homebrew, virtualenv (re-downloadable) | – |
 | `logs` | JetBrains IDE logs | – |
-| `stale` | Leftovers removed as whole items: old per-version JetBrains IDE settings (newest per product is kept) and broken symlinks in `/usr/local/bin` and `/opt/homebrew/bin` (`/usr/local/bin` needs sudo) | – |
-| `maintenance` | Runs `brew autoremove` and `brew cleanup --prune=all -s` (Homebrew's own dry-run with `--dry-run`; skipped as root) | – |
+| `stale` | Leftovers removed as whole items: old per-version JetBrains IDE settings (newest per product is kept) and broken symlinks in `/opt/homebrew/bin` | – |
+| `maintenance` | Runs `brew autoremove` and `brew cleanup --prune=all -s` (Homebrew's own dry-run with `--dry-run`) | – |
 
 ## Custom targets
 
@@ -208,7 +187,7 @@ from the Categories table must be used; custom category names are not supported)
 
 ## Logs
 
-Unless `--no-log` is passed, non-root runs write a JSON summary to
+Unless `--no-log` is passed, each run writes a JSON summary to
 `~/Library/Logs/clear_caches/clear_caches_<timestamp>.json` containing the
 timestamp, dry-run/to-trash flags, total entries/bytes reclaimed, and a
 per-category breakdown.
@@ -226,10 +205,9 @@ per-category breakdown.
   selecting it.
 - The shared system `/tmp` directory is not a cleanup target because active
   processes may depend on its files and sockets.
-- Root runs do not write user-home logs or move files to the user's Trash.
-  Schedule management must also run as the logged-in user, without `--sudo`.
-- Spotlight operations, restarting `mDNSResponder`, and resetting the font
-  database may require elevated privileges. Failed tasks are reported as
-  warnings and do not stop the cleanup.
+- The script never needs `sudo` and exits with an error when run as root,
+  because it only cleans the logged-in user's files. Reindex tasks are
+  limited to ones that work without elevated privileges; failed tasks are
+  reported as warnings and do not stop the cleanup.
 - Prefer `--dry-run` first, especially when using `--all` or custom
   `--categories`.

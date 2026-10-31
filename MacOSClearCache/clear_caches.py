@@ -323,7 +323,7 @@ TARGETS: list[Target] = [
 # ---------------------------------------------------------------------------
 
 JETBRAINS_CONFIG_RE = re.compile(r"^([A-Za-z]+)(\d{4}(?:\.\d+)+)$")
-BROKEN_SYMLINK_DIRS = (Path("/usr/local/bin"), Path("/opt/homebrew/bin"))
+BROKEN_SYMLINK_DIRS = (Path("/opt/homebrew/bin"),)
 
 
 def stale_jetbrains_config_dirs(root: Path | None = None) -> list[Path]:
@@ -819,10 +819,6 @@ def execute_plan(
                 continue
             try:
                 lines.append(remove_item(item.path, to_trash))
-            except PermissionError as exc:
-                hint = " (try --sudo)" if plan.target.remove_self else ""
-                lines.append(f"  Warning – could not remove {item.path}: {exc}{hint}")
-                continue
             except OSError as exc:
                 lines.append(f"  Warning – could not remove {item.path}: {exc}")
                 continue
@@ -914,9 +910,6 @@ LOG_DIR = Path.home() / "Library" / "Logs" / "clear_caches"
 
 
 def write_log(summary: dict) -> Path | None:
-    if is_root_user():
-        print("  [info] Skipping JSON log while running as root")
-        return None
     try:
         LOG_DIR.mkdir(parents=True, exist_ok=True)
         log_path = LOG_DIR / f"clear_caches_{datetime.now():%Y%m%d_%H%M%S}.json"
@@ -1014,36 +1007,12 @@ def launchctl_error(result: subprocess.CompletedProcess[str]) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Privilege elevation & root utilities
+# Root detection
 # ---------------------------------------------------------------------------
 
 def is_root_user() -> bool:
     """Return True if running with root privileges (UID 0)."""
     return hasattr(os, "geteuid") and os.geteuid() == 0
-
-
-def elevate_with_sudo() -> None:
-    """Re-executes the current script with sudo if not already running as root."""
-    if is_root_user():
-        return
-
-    sudo_bin = shutil.which("sudo") or "/usr/bin/sudo"
-    if not os.path.exists(sudo_bin):
-        sys.exit("Error: the 'sudo' command is not available on this system.")
-
-    args_to_pass = list(sys.argv[1:])
-    if "--sudo" not in args_to_pass:
-        args_to_pass.insert(0, "--sudo")
-
-    if getattr(sys, "frozen", False):
-        exec_args = [sudo_bin, "-E", sys.executable] + args_to_pass
-    else:
-        exec_args = [sudo_bin, "-E", sys.executable, str(Path(__file__).resolve())] + args_to_pass
-
-    try:
-        os.execvp(sudo_bin, exec_args)
-    except OSError as exc:
-        sys.exit(f"Could not elevate privileges with sudo: {exc}")
 
 
 # ---------------------------------------------------------------------------
@@ -1055,16 +1024,9 @@ class ReindexTask:
     label: str
     cmd: list[str]
     note: str = ""
-    requires_sudo: bool = False
 
 
 REINDEX_TASKS: list[ReindexTask] = [
-    ReindexTask(
-        label="Spotlight – erase & rebuild index",
-        cmd=["mdutil", "-E", "/"],
-        note="Requires sudo",
-        requires_sudo=True,
-    ),
     ReindexTask(
         label="Launch Services – rebuild app database",
         cmd=[
@@ -1079,18 +1041,6 @@ REINDEX_TASKS: list[ReindexTask] = [
     ReindexTask(
         label="DNS cache – flush",
         cmd=["dscacheutil", "-flushcache"],
-    ),
-    ReindexTask(
-        label="mDNSResponder – restart",
-        cmd=["killall", "-HUP", "mDNSResponder"],
-        note="Requires sudo",
-        requires_sudo=True,
-    ),
-    ReindexTask(
-        label="Font cache – rebuild (atsutil)",
-        cmd=["atsutil", "databases", "-remove"],
-        note="Requires sudo; fonts reload on next login",
-        requires_sudo=True,
     ),
     ReindexTask(
         label="QuickLook cache – reset",
@@ -1109,14 +1059,10 @@ REINDEX_TASKS: list[ReindexTask] = [
 
 def run_reindex(dry_run: bool) -> None:
     print("\n[Reindexing & Service Restart]")
-    is_root = is_root_user()
     for task in REINDEX_TASKS:
         note = f"  ({task.note})" if task.note else ""
         if dry_run:
             print(f"  [dry-run] would run: {' '.join(task.cmd)}{note}")
-            continue
-        if task.requires_sudo and not is_root:
-            print(f"  ▶ {task.label}{note} … Skipped (requires root; use --sudo)")
             continue
         print(f"  ▶ {task.label}{note} … ", end="", flush=True)
         try:
@@ -1174,9 +1120,6 @@ def run_maintenance(tasks: list[MaintenanceTask], dry_run: bool) -> None:
     print(f"\n[{CATEGORY_LABELS['maintenance']}]")
     if not tasks:
         print("  Skipped (Homebrew not found)")
-        return
-    if is_root_user():
-        print("  Skipped (Homebrew must not be run as root)")
         return
     for task in tasks:
         cmd = task.dry_run_cmd if dry_run else task.cmd
@@ -1506,11 +1449,6 @@ def main() -> int:
         action="store_true",
         help="Skip confirmation prompt.",
     )
-    parser.add_argument(
-        "--sudo",
-        action="store_true",
-        help="Re-execute with root privileges via sudo if not already root.",
-    )
     cat_group = parser.add_mutually_exclusive_group()
     cat_group.add_argument(
         "--all",
@@ -1595,22 +1533,17 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    # Everything cleaned lives in the current user's home; root would target the wrong
+    # home and leave root-owned files behind.
+    if is_root_user():
+        parser.error("do not run as root or with sudo; run as the logged-in user")
+
     if args.install_schedule:
-        if args.sudo or is_root_user():
-            parser.error("Schedule management must run as the logged-in user, without --sudo")
         install_schedule(args.install_schedule)
         return 0
     if args.uninstall_schedule:
-        if args.sudo or is_root_user():
-            parser.error("Schedule management must run as the logged-in user, without --sudo")
         uninstall_schedule()
         return 0
-
-    if args.to_trash and (args.sudo or is_root_user()):
-        parser.error("--to-trash cannot be used with --sudo or when running as root")
-
-    if args.sudo:
-        elevate_with_sudo()
 
     if args.all:
         active_categories = set(ALL_CATEGORIES)

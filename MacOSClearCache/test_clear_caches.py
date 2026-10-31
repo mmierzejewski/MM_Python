@@ -238,29 +238,6 @@ class ClearCachesTests(unittest.TestCase):
         self.assertTrue(log_targets)
         self.assertFalse(any(clear_caches.LOG_DIR.is_relative_to(t.path) for t in log_targets))
 
-    def test_write_log_skips_root_runs(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary_directory:
-            log_dir = Path(temporary_directory) / "logs"
-            output = io.StringIO()
-            with patch.object(clear_caches, "LOG_DIR", log_dir):
-                with patch.object(clear_caches, "is_root_user", return_value=True):
-                    with contextlib.redirect_stdout(output):
-                        log_path = clear_caches.write_log({})
-
-            self.assertIsNone(log_path)
-            self.assertFalse(log_dir.exists())
-            self.assertIn("Skipping JSON log", output.getvalue())
-
-    def test_reindex_skips_sudo_tasks_when_not_root(self) -> None:
-        output = io.StringIO()
-        with patch("os.geteuid", return_value=1000, create=True):
-            with patch("subprocess.run") as mock_run:
-                mock_run.return_value.returncode = 0
-                with contextlib.redirect_stdout(output):
-                    clear_caches.run_reindex(dry_run=False)
-        stdout = output.getvalue()
-        self.assertIn("Skipped (requires root; use --sudo)", stdout)
-
     def test_get_protected_pids_includes_self_and_vscode_pid(self) -> None:
         with patch.dict(os.environ, {"VSCODE_PID": "99999"}):
             pids = clear_caches.get_protected_pids()
@@ -450,57 +427,18 @@ class ClearCachesTests(unittest.TestCase):
         with patch("os.geteuid", return_value=501):
             self.assertFalse(clear_caches.is_root_user())
 
-    def test_elevate_with_sudo_noop_when_root(self) -> None:
-        with patch("clear_caches.is_root_user", return_value=True):
-            with patch("os.execvp") as mock_exec:
-                clear_caches.elevate_with_sudo()
-                mock_exec.assert_not_called()
-
-    def test_elevate_with_sudo_executes_when_not_root(self) -> None:
-        with patch("clear_caches.is_root_user", return_value=False):
-            with patch("os.path.exists", return_value=True):
-                with patch("shutil.which", return_value="/usr/bin/sudo"):
-                    with patch("os.execvp") as mock_exec:
-                        clear_caches.elevate_with_sudo()
-                        mock_exec.assert_called_once()
-                        args = mock_exec.call_args[0]
-                        self.assertEqual(args[0], "/usr/bin/sudo")
-                        self.assertIn("-E", args[1])
-                        self.assertIn("--sudo", args[1])
-
-    def test_main_calls_elevate_with_sudo_flag(self) -> None:
-        output = io.StringIO()
-        with patch("sys.argv", ["clear_caches.py", "--sudo", "--dry-run", "--categories", "trash"]):
-            with patch("clear_caches.elevate_with_sudo") as mock_elevate, contextlib.redirect_stdout(output):
-                clear_caches.main()
-                mock_elevate.assert_called_once()
-
-    def test_main_does_not_call_elevate_without_sudo_flag(self) -> None:
-        output = io.StringIO()
-        with patch("sys.argv", ["clear_caches.py", "--dry-run", "--categories", "trash"]):
-            with patch("clear_caches.elevate_with_sudo") as mock_elevate, contextlib.redirect_stdout(output):
-                clear_caches.main()
-                mock_elevate.assert_not_called()
-
-    def test_main_rejects_root_trash_and_schedule_operations(self) -> None:
-        invocations = (
-            ["--sudo", "--to-trash"],
-            ["--to-trash"],
-            ["--sudo", "--install-schedule", "03:00"],
-            ["--install-schedule", "03:00"],
-        )
-        for arguments in invocations:
+    def test_main_rejects_running_as_root(self) -> None:
+        for arguments in (["--dry-run"], ["--install-schedule", "03:00"]):
             with self.subTest(arguments=arguments):
-                error_output = io.StringIO()
                 with patch("sys.argv", ["clear_caches.py", *arguments]):
                     with patch.object(clear_caches, "is_root_user", return_value=True):
-                        with patch.object(clear_caches, "elevate_with_sudo") as mock_elevate:
-                            with contextlib.redirect_stderr(error_output):
+                        with patch.object(clear_caches, "get_all_targets") as mock_targets:
+                            with contextlib.redirect_stderr(io.StringIO()):
                                 with self.assertRaises(SystemExit) as raised:
                                     clear_caches.main()
 
                 self.assertEqual(raised.exception.code, 2)
-                mock_elevate.assert_not_called()
+                mock_targets.assert_not_called()
 
 
 if __name__ == "__main__":
