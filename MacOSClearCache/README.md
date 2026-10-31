@@ -85,6 +85,27 @@ The executable runs without a separately installed Python. A `targets.json`
 beside the executable and `~/.config/clear_caches/targets.json` are both
 supported. Scheduled runs use the executable directly.
 
+Rebuild the executable after every change to `clear_caches.py`; otherwise
+`dist/clear_caches` keeps running the old code.
+
+### Root-only cleanup wrapper
+
+`clear_caches_sudo.sh` runs the `stale` category with `sudo` and
+`--no-kill-apps` (needed for broken symlinks in `/usr/local/bin`):
+
+```bash
+./clear_caches_sudo.sh --dry-run   # preview as root
+./clear_caches_sudo.sh             # clean
+```
+
+- Uses `dist/clear_caches` when it is not older than `clear_caches.py`;
+  otherwise warns and falls back to Python.
+- The Python interpreter is resolved before `sudo` (so an active virtualenv
+  is used); override it with `PYTHON=/path/to/python3`. Python 3.10+ is
+  required.
+- Extra options (e.g. `--dry-run`, `--yes`) are passed through;
+  `--all`, `--categories`, and `--exclude` are rejected.
+
 ### Common examples
 
 ```bash
